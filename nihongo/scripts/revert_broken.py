@@ -335,6 +335,7 @@ def one_pass(src, dst, request="", items=None):
     if not items:
         return dst, []
     S, D = spans(src), spans(dst)
+    req_text = norm(request)
     unchanged_texts = {d[2] for d in D if not is_heading(d[2])}
     owner = owner_of(S, D)  # 原文の各文が、直した文のどの文に当たるか
     # 依頼で頼まれた直しだけの文は、戻さない（電話番号を消した文、伏せた文など）
@@ -364,10 +365,10 @@ def one_pass(src, dst, request="", items=None):
         # 原文の1文を直した文で2文に分けていたら、隣の片割れも消す（片方だけ戻して中身を二重にしない）
         if len(group) == 1:
             for j in (i - 1, i + 1):
-                if 0 <= j < len(D) and j not in replace and j not in protected and split_part(j, sent):
+                if 0 <= j < len(D) and j not in replace and j not in protected and split_part(j, sent, D[i][2]):
                     drop.add(j)
 
-    def split_part(j, sent):
+    def split_part(j, sent, peer):
         """直した文 j が、原文の文 sent を分けた片割れか。"""
         t = D[j][2]
         if t in unchanged_texts and any(t.strip() == x[2].strip() for x in S):
@@ -377,6 +378,14 @@ def one_pass(src, dst, request="", items=None):
             return False
         # 短い片割れは長い原文の文との近さが低く出るので、片割れの何割が原文の文に含まれるかで見る
         a, b = norm(t), norm(sent)
+        # 同じ話題や語尾だけでは分割の根拠にならない。隣の文が、戻す側の下書きにない
+        # 原文の内容を受け持っていることを確かめる。依頼で加えた内容があれば文を残す。
+        facts = set(CONTENT.findall(a)) | {v.strip() for v in NUM.findall(a)}
+        peer = norm(peer)
+        if not any(w in b and w not in peer for w in facts):
+            return False
+        if a.strip() in req_text or any(w not in b and w in req_text for w in facts):
+            return False
         hit = sum(m.size for m in difflib.SequenceMatcher(None, a, b).get_matching_blocks())
         return hit / max(len(a), 1) >= 0.5
 
