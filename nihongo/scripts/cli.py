@@ -401,6 +401,12 @@ def cmd_diff(args: argparse.Namespace) -> int:
         except (OSError, UnicodeDecodeError) as exc:
             print(f"プロフィールファイルを読み込めませんでした: {exc}", file=sys.stderr)
             return 2
+    elif getattr(args, "auto_profile", False):
+        store = inbox_mod.LocalFileStorage(home=getattr(args, "home", None))
+        proj_dir = getattr(args, "project", None) or os.path.dirname(os.path.abspath(args.draft))
+        info = inbox_mod.read_profile(storage=store, project_dir=proj_dir, include_project=True)
+        if info["exists"]:
+            forbidden = parse_profile_text(info["raw"], scene=args.scene)
 
     request = _load_request(args.request)
     items = revert_broken.remaining(src, dst, request)
@@ -515,6 +521,14 @@ def cmd_git(args: argparse.Namespace) -> int:
                 print(f"プロフィールファイルを読み込めませんでした: {exc}", file=sys.stderr)
                 return 2
             forbidden = []
+    elif getattr(args, "auto_profile", False):
+        store = inbox_mod.LocalFileStorage(home=getattr(args, "home", None))
+        proj_dir = getattr(args, "project", None) or (
+            os.path.dirname(os.path.abspath(hook_path)) if hook_path else os.getcwd()
+        )
+        info = inbox_mod.read_profile(storage=store, project_dir=proj_dir, include_project=True)
+        if info["exists"]:
+            forbidden = parse_profile_text(info["raw"], scene=args.scene)
 
     probe_dir = os.getcwd()
     if hook_path is not None:
@@ -885,6 +899,138 @@ def cmd_profile_show(args: argparse.Namespace) -> int:
     return 0
 
 
+PROJECT_PROFILE_TEMPLATE = """# プロジェクト専用ルール（共通の ~/.nihongo/profile.md に自動で重ねて適用されます）
+
+## [common]
+- 絶対に言わない表現：
+- 書く時の考え方：
+
+## [work]
+- 口調・記号：
+
+## [formal]
+- 口調・記号：
+"""
+
+
+def cmd_profile_init(args: argparse.Namespace) -> int:
+    if args.project is not None:
+        base_dir = os.path.abspath(os.path.expanduser(args.project or os.getcwd()))
+        target_path = os.path.join(base_dir, ".nihongo", "profile.md")
+        template = PROJECT_PROFILE_TEMPLATE
+        layer_kind = "project"
+    else:
+        store = _cli_storage(args)
+        target_path = store.profile_location
+        template = inbox_mod.DEFAULT_PROFILE_TEMPLATE
+        layer_kind = "global"
+
+    existed = os.path.isfile(target_path)
+    if existed and not args.force:
+        payload = {
+            "created": False,
+            "existed": True,
+            "layer": layer_kind,
+            "profile_path": target_path,
+            "message": f"すでに profile.md が存在するため上書きしませんでした: {target_path}",
+        }
+        if args.json:
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+        else:
+            print(payload["message"])
+            print("上書きしたい場合のみ --force を指定してください。")
+        return 0
+
+    inbox_mod._atomic_write_utf8(target_path, template)
+    payload = {
+        "created": True,
+        "existed": existed,
+        "layer": layer_kind,
+        "profile_path": target_path,
+        "message": f"profile.md を作成しました（{layer_kind}）: {target_path}",
+    }
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(payload["message"])
+    return 0
+
+
+def cmd_doctor(args: argparse.Namespace) -> int:
+    if __package__:
+        from . import mcp_server as mcp_mod
+    else:
+        import mcp_server as mcp_mod  # noqa: E402
+
+    store = _cli_storage(args)
+    proj_arg = getattr(args, "project", None)
+    info = inbox_mod.read_profile(
+        storage=store,
+        project_dir=proj_arg,
+        include_project=True,
+    )
+    forbidden = parse_profile_text(info["raw"]) if info["exists"] else []
+    sync_folders = inbox_mod.detect_sync_folders()
+
+    mcp_clients: list[dict[str, object]] = []
+    for target in mcp_mod.INIT_TARGETS:
+        cfg_path = mcp_mod.resolve_client_config_path(target)
+        exists = os.path.isfile(cfg_path)
+        configured = False
+        parse_error: str | None = None
+        if exists:
+            try:
+                with open(cfg_path, encoding="utf-8-sig") as f:
+                    raw = f.read()
+                if raw.strip():
+                    parsed = json.loads(raw)
+                    if isinstance(parsed, dict) and isinstance(parsed.get("mcpServers"), dict):
+                        configured = "nihongo" in parsed["mcpServers"]
+            except Exception as exc:
+                parse_error = str(exc)
+        mcp_clients.append({
+            "target": target,
+            "config_path": cfg_path,
+            "config_exists": exists,
+            "nihongo_configured": configured,
+            "error": parse_error,
+        })
+
+    report = {
+        "version": __version__,
+        "python": sys.version.split()[0],
+        "profile_path": info["profile_path"],
+        "global_profile_exists": info["global_exists"],
+        "project_profile_path": info["project_profile_path"],
+        "active_layers": info["layers"],
+        "forbidden_count": len(forbidden),
+        "pending_inbox_count": info["pending_inbox_count"],
+        "sync_folders": sync_folders,
+        "mcp_clients": mcp_clients,
+    }
+
+    if args.json:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 0
+
+    print(f"nihongo-check doctor (v{__version__} / Python {report['python']})")
+    g_mark = "あり" if info["global_exists"] else "未作成（nihongo-check profile init で作成可）"
+    print(f"- 共通プロフィール: {info['profile_path']} [{g_mark}]")
+    if info["project_profile_path"]:
+        print(f"- 案件別上書き（2層適用中）: {info['project_profile_path']}")
+    print(f"- 登録済みの避ける表現: {len(forbidden)} 件 / 承認待ち受信箱: {info['pending_inbox_count']} 件")
+    if sync_folders:
+        providers = ", ".join(f"{x['provider']} ({x['suggested_home']})" for x in sync_folders)
+        print(f"- 検出した同期フォルダ候補: {providers}")
+    else:
+        print("- 検出した同期フォルダ候補: なし（ローカル既定を使用）")
+    print("- AI アプリの MCP 登録状況:")
+    for c in mcp_clients:
+        status = "登録済み" if c["nihongo_configured"] else ("JSONエラー" if c["error"] else "未登録")
+        print(f"  - {c['target']}: {status} ({c['config_path']})")
+    return 0
+
+
 def cmd_ui(args: argparse.Namespace) -> int:
     if __package__:
         from . import ui_server
@@ -914,6 +1060,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_diff.add_argument("--request", default="", help="依頼文（ファイルパスまたは文字列）")
     p_diff.add_argument("--profile", default=None, help="書き方メモ（profile.md）のパス")
     p_diff.add_argument(
+        "--auto-profile",
+        action="store_true",
+        help="共通の ~/.nihongo/profile.md と作業フォルダの .nihongo/profile.md を自動で2層読み込みする",
+    )
+    p_diff.add_argument("--home", default=None, help="--auto-profile 時のデータディレクトリ")
+    p_diff.add_argument("--project", default=None, help="--auto-profile 時の作業フォルダ")
+    p_diff.add_argument(
         "--scene",
         choices=("casual", "work", "formal"),
         default=None,
@@ -937,6 +1090,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_git.add_argument("--ext", default=".md,.txt", help="対象とする拡張子（カンマ区切り、既定: .md,.txt）")
     p_git.add_argument("--request", default="", help="依頼文（ファイルパスまたは文字列）")
     p_git.add_argument("--profile", default=None, help="書き方メモ（profile.md）のパス")
+    p_git.add_argument(
+        "--auto-profile",
+        action="store_true",
+        help="共通の ~/.nihongo/profile.md と作業フォルダの .nihongo/profile.md を自動で2層読み込みする",
+    )
+    p_git.add_argument("--home", default=None, help="--auto-profile 時のデータディレクトリ")
+    p_git.add_argument("--project", default=None, help="--auto-profile 時の作業フォルダ")
     p_git.add_argument(
         "--scene",
         choices=("casual", "work", "formal"),
@@ -1016,6 +1176,26 @@ def build_parser() -> argparse.ArgumentParser:
     p_pshow.add_argument("--project", default=None, help="作業フォルダ（.nihongo/profile.md を2層マージ）")
     p_pshow.add_argument("--json", action="store_true", help="JSON 形式で出力する")
     p_pshow.set_defaults(func=cmd_profile_show)
+
+    p_pinit = prof_sub.add_parser("init", help="profile.md のひな形を作成する（既存ファイルは保護）")
+    p_pinit.add_argument("--home", default=None, help="グローバルデータディレクトリ（既定: ~/.nihongo）")
+    p_pinit.add_argument(
+        "--project",
+        nargs="?",
+        const="",
+        default=None,
+        help="作業フォルダ専用の .nihongo/profile.md を作成する（パス省略時はカレントディレクトリ）",
+    )
+    p_pinit.add_argument("--force", action="store_true", help="既存ファイルがある場合もひな形で上書きする")
+    p_pinit.add_argument("--json", action="store_true", help="JSON 形式で出力する")
+    p_pinit.set_defaults(func=cmd_profile_init)
+
+    # Read-only health check subcommand
+    p_doc = sub.add_parser("doctor", help="プロフィール・2層設定・同期フォルダ・MCP 登録状況を一括診断する")
+    p_doc.add_argument("--home", default=None, help="データディレクトリ（既定: ~/.nihongo）")
+    p_doc.add_argument("--project", default=None, help="作業フォルダ（.nihongo/profile.md 検出用）")
+    p_doc.add_argument("--json", action="store_true", help="JSON 形式で出力する")
+    p_doc.set_defaults(func=cmd_doctor)
 
     # Local Approval UI subcommand
     p_ui = sub.add_parser("ui", help="ローカル承認・ルール管理画面をブラウザで開く（127.0.0.1 のみ・外部通信なし）")
