@@ -25,14 +25,23 @@ AIが書いた日本語は一見きれいに見えても、敬語が1段高す�
 - **会話で育つ Personal**：`~/.nihongo/profile.md` に自分の書き方を4つの箱（`[common]` / `[casual]` / `[work]` / `[formal]`）と「絶対に言わない表現」に分けて保存します。会話で直した癖だけを1行確認してから追記し、裏で勝手に書き換えることはありません。
 - **0トークン自動チェッカー（`nihongo-check`）**：Python 3.10+ の標準ライブラリだけで動くCLIです。原文と編集後の文を比べ、日時・数字・否定・条件・求める強さ（「必ず」など）のズレや、避けたい表現の混入など**見直す候補**を0トークンで見つけます。Claude Code の Hook や GitHub Actions にもそのまま組み込めます。
 
-## まず試す（Claude Code）
+## まず試す
+
+**普段の ChatGPT / Claude（Web・アプリ／コマンド不要）**
+
+1. [nihongo/ALWAYS.md](nihongo/ALWAYS.md) を開き、右上のコピーボタンを押す
+2. 設定画面の「カスタム指示（ChatGPT）」または「応答の好み（Claude）」にそのまま貼って保存する
+
+普段使いの方はこれだけで始められます（下の CLI・Hook・MCP は開発環境でさらに自動化したい方向けの追加機能です）。
+
+**Claude Code（開発環境）**
 
 ```bash
 npx skills add AnIT012/nihongo -g -a claude-code
 echo '@~/.claude/skills/nihongo/ALWAYS.md' >> ~/.claude/CLAUDE.md
 ```
 
-1行目でスキルを入れ、2行目でLiteが毎回読み込まれるようにします。自動チェッカーやほかの環境での入れ方は[インストール](#インストール)にあります。
+1行目でスキルを入れ、2行目でLiteが毎回読み込まれるようにします。ほかの環境での入れ方は[インストール](#インストール)にあります。
 
 ## 特徴
 
@@ -203,9 +212,14 @@ npx skills add AnIT012/nihongo -g
 </details>
 
 <details>
-<summary><b>Claude / ChatGPT アプリ</b></summary>
+<summary><b>Claude / ChatGPT アプリ（コマンド不要）</b></summary>
 
-[最新のリリース](https://github.com/AnIT012/nihongo/releases/latest)から `nihongo-v（版番号）.zip` を落とし、そのままスキルの画面からアップロードしてください。GitHub の「Code」→「Download ZIP」で落としたzipは、`SKILL.md` の場所が1段深いため、そのままではアップロードできません。ChatGPTでは、Skills の Create から「Upload from your computer」を選びます。Liteを入れるには、`ALWAYS.md` の中身を設定にあるAIへの指示や好みを書く欄にそのまま貼ってください。
+- **いちばん簡単（Lite）**：[nihongo/ALWAYS.md](nihongo/ALWAYS.md) を開いて右上のコピーボタンを押し、ChatGPT の「設定 → パーソナライズ → カスタム指示」または Claude の「設定 → プロフィール → 応答の好み」に貼って保存します（無料プランでも使えます）。
+- **メール・資料・ES まで本格的に使う（Full）**：[最新のリリース](https://github.com/AnIT012/nihongo/releases/latest)から `nihongo-v3.0.0.zip` をダウンロードします。
+  - **Claude（Web / デスクトップアプリ）**：設定のスキル画面から `nihongo-v3.0.0.zip` をそのままアップロード（または解凍してプロジェクトのナレッジに追加）します。
+  - **ChatGPT**：My GPTs のナレッジに解凍したファイルを追加します（Skills 画面が使える環境では `nihongo-v3.0.0.zip` をそのままアップロードできます）。
+- ※GitHub トップの緑色の「Code → Download ZIP」はフォルダ構造が1段深いため、そのままではアップロードできません。必ず上の最新リリースページにある `nihongo-v3.0.0.zip` を使ってください。
+- Web / スマホ版で自分の書き方を1行ずつ育てたい時は、言い回しを直したあとに「設定欄にそのまま足せる1行を作って」と頼めば、ファイル保存や MCP なしでもカスタム指示に1行足すだけで育てられます。
 
 </details>
 
@@ -238,6 +252,23 @@ pip で入れると `nihongo-check` コマンド（`nihongo_check` 名前空間�
 
 - **Claude Code Hook**：[examples/hooks/claude-code-hook.json](examples/hooks/claude-code-hook.json) — `PostToolUse`（`Edit|Write`）で0トークン実行し、意味のズレ候補があれば終了コード `2` で通知します。
 - **GitHub Actions**：[examples/hooks/github-actions-docs-check.yml](examples/hooks/github-actions-docs-check.yml) — PR で変更した Markdown ファイルに意図しない意味のズレがないか自動で確かめます。
+
+### Personal を育てる HITL 受信箱（`inbox`）と MCP 連携（`nihongo-mcp`）
+
+普段使いの Chat（Claude Desktop・Cursor・Claude Code など）で直した言い回しを環境に縛られず資産化するため、**「候補を拾うのは自動、反映は本人承認（HITL）」** の受信箱とローカル MCP サーバーを用意しています（Python 3.10+ 標準ライブラリのみ、追加依存ゼロ）。
+
+- **受信箱（`~/.nihongo/inbox.jsonl`）**：`propose` は一時置き場に追記候補を溜めるだけで、`~/.nihongo/profile.md` 本体は書き換えません。
+- **本人承認（HITL）**：`nihongo-check inbox review`（または `approve`）で承認した候補だけが `~/.nihongo/profile.md`（唯一の正）へ反映されます。個人情報（メール・電話番号・APIキー等）の自動拒否と、`[formal]` 場面への崩し混入ガード付きです。
+- **MCP サーバー（`nihongo-mcp` / `python3 nihongo/scripts/mcp_server.py`）**：どの MCP 対応ツールからでも `get_profile`・`propose_profile_entry`・`list_inbox`・`review_inbox_entry`（`confirmed_by_user: true` 必須）・`check_meaning_diff`（0トークン意味ズレ検査）を直接呼べます。設定例は [examples/mcp/](examples/mcp/) にあります。
+
+| コマンド | できること |
+|---|---|
+| `nihongo-check inbox propose --scene common --kind forbidden --value "ご査収のほど"` | 追記候補を受信箱へ積む（`profile.md` は未変更） |
+| `nihongo-check inbox list` | 本人承認待ち（`pending`）の候補を一覧表示する |
+| `nihongo-check inbox review` | 保留候補を対話形式で1件ずつ承認・却下する |
+| `nihongo-check inbox approve <id> [--dry-run]` / `reject <id>` | 指定した候補を承認して `profile.md` へ反映、または却下する |
+| `nihongo-check profile show [--scene formal]` | 現在の `~/.nihongo/profile.md` と保留件数を表示する |
+| `nihongo-mcp`（または `python3 nihongo/scripts/mcp_server.py`） | stdio 経由のローカル MCP サーバーを起動する |
 
 ## 評価
 

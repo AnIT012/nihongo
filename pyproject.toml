@@ -27,6 +27,7 @@ Issues = "https://github.com/AnIT012/nihongo/issues"
 
 [project.scripts]
 nihongo-check = "nihongo_check.cli:main"
+nihongo-mcp = "nihongo_check.mcp_server:main"
 
 [tool.setuptools]
 packages = ["nihongo_check"]

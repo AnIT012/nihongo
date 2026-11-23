@@ -21,11 +21,13 @@ import unicodedata
 __version__ = "3.0.0"
 
 if __package__:
+    from . import inbox as inbox_mod
     from . import revert_broken, trim_commas
 else:
     _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     if _SCRIPT_DIR not in sys.path:
         sys.path.insert(0, _SCRIPT_DIR)
+    import inbox as inbox_mod  # noqa: E402
     import revert_broken  # noqa: E402
     import trim_commas  # noqa: E402
 
@@ -41,7 +43,7 @@ def _ensure_utf8_stdio() -> None:
 
 
 def _read_utf8(path: str) -> str:
-    with open(path, encoding="utf-8") as f:
+    with open(path, encoding="utf-8-sig") as f:
         return f.read()
 
 
@@ -77,7 +79,38 @@ _CASUAL_SSU_RE = re.compile(r"っす(?![ぐうる])")
 _CASUAL_LAUGH_RE = re.compile(
     r"(?:(?<![A-Za-z0-9./])[wｗ]{2,}(?![A-Za-z0-9./])|(?<![A-Za-z0-9])[wｗ](?=$|[\s。、！？!?\n]))"
 )
-_EMOJI_RE = re.compile(r"[\U0001F300-\U0001FAFF\u2600-\u27BF]")
+# 業務記号（✓✔✕★☆☐☑ 等）を誤検知しないよう、顔文字・絵文字レンジと代表絵文字記号に絞る
+_EMOJI_RE = re.compile(r"[\U0001F300-\U0001FAFF\u2728\u2764\u2763\u2757\u2753\u2600\u2601\u2614\u26A1\u2615]")
+
+
+def _split_forbidden_rhs(rhs: str) -> list[str]:
+    """「...」や "..." の内側にある読点・中黒では分割せず、外側の区切り文字だけで分割する。"""
+    quote_pairs = {"「": "」", "『": "』", '"': '"', "'": "'", "“": "”"}
+    seps = set("、,／/・")
+    tokens: list[str] = []
+    buf: list[str] = []
+    closing: str | None = None
+    for ch in rhs:
+        if closing is not None:
+            buf.append(ch)
+            if ch == closing:
+                closing = None
+            continue
+        if ch in quote_pairs:
+            closing = quote_pairs[ch]
+            buf.append(ch)
+            continue
+        if ch in seps:
+            piece = "".join(buf).strip()
+            if piece:
+                tokens.append(piece)
+            buf = []
+            continue
+        buf.append(ch)
+    tail = "".join(buf).strip()
+    if tail:
+        tokens.append(tail)
+    return tokens
 
 
 def _clean_forbidden_token(raw: str) -> str:
@@ -100,9 +133,9 @@ def _clean_forbidden_token(raw: str) -> str:
     return token
 
 
-def parse_profile(path: str, scene: str | None = None) -> list[str]:
-    """profile.md から「絶対に言わない表現」の一覧を抽出する。"""
-    text = _normalize_newlines(_read_utf8(os.path.expanduser(path)))
+def parse_profile_text(raw_text: str, scene: str | None = None) -> list[str]:
+    """profile.md のテキストから「絶対に言わない表現」の一覧を抽出する。"""
+    text = _normalize_newlines(raw_text)
     common_items: list[str] = []
     scoped_items: dict[str, list[str]] = {}
     current_section: str | None = None
@@ -123,7 +156,7 @@ def parse_profile(path: str, scene: str | None = None) -> list[str]:
             continue
 
         parsed: list[str] = []
-        for raw_token in _FORBIDDEN_SPLIT_RE.split(rhs):
+        for raw_token in _split_forbidden_rhs(rhs):
             cleaned = _clean_forbidden_token(raw_token)
             if cleaned:
                 parsed.append(cleaned)
@@ -150,6 +183,11 @@ def parse_profile(path: str, scene: str | None = None) -> list[str]:
             seen.add(item)
             deduped.append(item)
     return deduped
+
+
+def parse_profile(path: str, scene: str | None = None) -> list[str]:
+    """profile.md から「絶対に言わない表現」の一覧を抽出する。"""
+    return parse_profile_text(_read_utf8(os.path.expanduser(path)), scene=scene)
 
 
 def check_profile_drift(
@@ -605,6 +643,240 @@ def cmd_git(args: argparse.Namespace) -> int:
     return 1 if flagged_files else 0
 
 
+def _cli_storage(args: argparse.Namespace) -> inbox_mod.LocalFileStorage:
+    return inbox_mod.LocalFileStorage(
+        home=getattr(args, "home", None),
+        profile_path=getattr(args, "profile", None),
+        inbox_path=getattr(args, "inbox", None),
+    )
+
+
+def cmd_inbox_propose(args: argparse.Namespace) -> int:
+    store = _cli_storage(args)
+    try:
+        res = inbox_mod.propose_entry(
+            scene=args.scene,
+            kind=args.kind,
+            value=args.value,
+            reason=args.reason,
+            example_before=args.before,
+            example_after=args.after,
+            source=args.source,
+            storage=store,
+        )
+    except ValueError as exc:
+        if args.json:
+            print(json.dumps({"error": str(exc)}, ensure_ascii=False, indent=2))
+        else:
+            print(f"エラー: {exc}", file=sys.stderr)
+        return 2
+
+    if args.json:
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+    else:
+        print(res["message"])
+        if res.get("warning"):
+            print(res["warning"])
+        if res.get("already_in_profile"):
+            print("※似た表現がすでに profile.md に含まれている可能性があります。")
+    return 0
+
+
+def cmd_inbox_list(args: argparse.Namespace) -> int:
+    store = _cli_storage(args)
+    items = inbox_mod.list_inbox(
+        status=args.status,
+        scene=args.scene,
+        storage=store,
+    )
+    if args.json:
+        print(json.dumps({"count": len(items), "items": items}, ensure_ascii=False, indent=2))
+        return 0
+
+    if not items:
+        label = "保留中" if args.status == "pending" else args.status
+        print(f"受信箱（{label}）に候補はありません。")
+        return 0
+
+    print(f"受信箱の候補（{len(items)}件）:")
+    for item in items:
+        line = (
+            f"- {item['id']} [{item.get('status')}] "
+            f"[{item.get('scene')}/{item.get('kind')}] {item.get('value')}"
+        )
+        if item.get("reason"):
+            line += f"（理由: {item['reason']}）"
+        print(line)
+        if item.get("warning"):
+            print(f"  {item['warning']}")
+    return 0
+
+
+def cmd_inbox_approve(args: argparse.Namespace) -> int:
+    store = _cli_storage(args)
+    try:
+        res = inbox_mod.approve_entries(
+            list(args.ids),
+            approve_all=args.all,
+            dry_run=args.dry_run,
+            force=args.force,
+            storage=store,
+        )
+    except ValueError as exc:
+        if args.json:
+            print(json.dumps({"error": str(exc)}, ensure_ascii=False, indent=2))
+        else:
+            print(f"エラー: {exc}", file=sys.stderr)
+        return 2
+
+    if args.json:
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+    else:
+        if res["dry_run"]:
+            print(f"ドライラン（{res['approved_count']}件が反映対象・profile.md は未変更）:")
+        elif res["approved_count"] > 0:
+            print(f"{res['approved_count']}件を承認し、{res['profile_path']} に反映しました。")
+        else:
+            print("承認された候補はありません。")
+        for r in res["results"]:
+            print(f"- {r['id']}: {r['message']}")
+        if res["not_found"]:
+            print("見つからなかった ID: " + ", ".join(res["not_found"]), file=sys.stderr)
+
+    if res["not_found"] or res["blocked_by_guard"]:
+        return 1
+    return 0
+
+
+def cmd_inbox_reject(args: argparse.Namespace) -> int:
+    store = _cli_storage(args)
+    try:
+        res = inbox_mod.reject_entries(
+            list(args.ids),
+            reject_all=args.all,
+            reason=args.reason,
+            storage=store,
+        )
+    except ValueError as exc:
+        if args.json:
+            print(json.dumps({"error": str(exc)}, ensure_ascii=False, indent=2))
+        else:
+            print(f"エラー: {exc}", file=sys.stderr)
+        return 2
+
+    if args.json:
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+    else:
+        print(f"{res['rejected_count']}件を却下しました（profile.md は変更していません）。")
+        for r in res["results"]:
+            print(f"- {r['id']}: {r['message']}")
+        if res["not_found"]:
+            print("見つからなかった ID: " + ", ".join(res["not_found"]), file=sys.stderr)
+
+    return 1 if res["not_found"] else 0
+
+
+def cmd_inbox_review(args: argparse.Namespace) -> int:
+    store = _cli_storage(args)
+    pending = inbox_mod.list_inbox(status="pending", storage=store)
+    if not pending:
+        print("保留中の候補はありません。")
+        return 0
+
+    print(f"保留中の候補が {len(pending)} 件あります。1件ずつ承認（a）/ 却下（r）/ スキップ（s）/ 終了（q）を選んでください。")
+    approved_total = 0
+    rejected_total = 0
+    stopped = False
+    for idx, item in enumerate(pending, 1):
+        print(f"\n[{idx}/{len(pending)}] {item['id']} ({item['scene']} / {item['kind']})")
+        print(f"  内容: {item['value']}")
+        if item.get("reason"):
+            print(f"  理由: {item['reason']}")
+        if item.get("example_before") or item.get("example_after"):
+            print(f"  例: {item.get('example_before', '')} -> {item.get('example_after', '')}")
+        if item.get("warning"):
+            print(f"  {item['warning']}")
+
+        while True:
+            try:
+                ans = input("  判定 [a=承認 / r=却下 / s=スキップ / q=終了]: ").strip().lower()
+            except EOFError:
+                stopped = True
+                break
+
+            if ans in ("q", "quit"):
+                stopped = True
+                break
+            if ans in ("a", "approve", "y", "yes"):
+                force_flag = False
+                if item.get("warning"):
+                    try:
+                        confirm = input("  警告付きの候補です。本当に [formal] へ反映しますか？ [y/N]: ").strip().lower()
+                    except EOFError:
+                        stopped = True
+                        break
+                    if confirm not in ("y", "yes"):
+                        print("  -> 反映を取りやめてスキップしました。")
+                        break
+                    force_flag = True
+                res = inbox_mod.approve_entries(
+                    [item["id"]],
+                    force=force_flag,
+                    storage=store,
+                )
+                if res["approved_count"]:
+                    approved_total += 1
+                    print("  -> 承認して profile.md に反映しました。")
+                break
+            if ans in ("r", "reject", "n", "no"):
+                inbox_mod.reject_entries([item["id"]], storage=store)
+                rejected_total += 1
+                print("  -> 却下しました。")
+                break
+            if ans in ("s", "skip", ""):
+                print("  -> スキップしました。")
+                break
+            print("  a / r / s / q のいずれかを入力してください。")
+
+        if stopped:
+            break
+
+    print(f"\nレビュー完了: 承認 {approved_total} 件 / 却下 {rejected_total} 件")
+    return 0
+
+
+def cmd_profile_show(args: argparse.Namespace) -> int:
+    store = _cli_storage(args)
+    try:
+        info = inbox_mod.read_profile(
+            storage=store,
+            scene=args.scene,
+        )
+    except ValueError as exc:
+        print(f"エラー: {exc}", file=sys.stderr)
+        return 2
+
+    forbidden: list[str] = []
+    if info["exists"]:
+        forbidden = parse_profile_text(info["raw"], scene=args.scene)
+    info["forbidden"] = forbidden
+
+    if args.json:
+        print(json.dumps(info, ensure_ascii=False, indent=2))
+        return 0
+
+    if not info["exists"]:
+        print(f"profile.md がまだありません（既定パス: {info['profile_path']}）。")
+        if info["pending_inbox_count"]:
+            print(f"保留中の受信箱候補が {info['pending_inbox_count']} 件あります（`nihongo-check inbox list` で確認）。")
+        return 0
+
+    print(info["markdown"].rstrip("\n"))
+    if info["pending_inbox_count"]:
+        print(f"\n（保留中の受信箱候補: {info['pending_inbox_count']}件）")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="nihongo-check",
@@ -652,6 +924,74 @@ def build_parser() -> argparse.ArgumentParser:
     p_git.add_argument("--json", action="store_true", help="JSON 形式で出力する")
     p_git.add_argument("paths", nargs="*", help="対象を絞るファイルまたはディレクトリ")
     p_git.set_defaults(func=cmd_git)
+
+    # HITL inbox subcommands
+    p_inbox = sub.add_parser("inbox", help="個人プロフィールの追記候補（HITL 受信箱）を管理する")
+    inbox_sub = p_inbox.add_subparsers(dest="inbox_command", required=True)
+
+    p_prop = inbox_sub.add_parser("propose", help="追記候補を受信箱へ追加する（profile.md は変更しない）")
+    p_prop.add_argument("--scene", choices=inbox_mod.VALID_SCENES, default="common", help="対象場面")
+    p_prop.add_argument("--kind", choices=inbox_mod.VALID_KINDS, default="rule", help="候補の種類")
+    p_prop.add_argument("--value", required=True, help="追記したい表現やルール")
+    p_prop.add_argument("--reason", default="", help="なぜ直したか（根拠メモ）")
+    p_prop.add_argument("--before", default="", help="修正前の文例（任意）")
+    p_prop.add_argument("--after", default="", help="修正後の文例（任意）")
+    p_prop.add_argument("--source", default="cli", help="収集元（chatgpt / claude / cursor / cli 等）")
+    p_prop.add_argument("--home", default=None, help="データディレクトリ（既定: ~/.nihongo）")
+    p_prop.add_argument("--inbox", default=None, help="受信箱ファイルのパス（既定: ~/.nihongo/inbox.jsonl）")
+    p_prop.add_argument("--profile", default=None, help="profile.md のパス（既定: ~/.nihongo/profile.md）")
+    p_prop.add_argument("--json", action="store_true", help="JSON 形式で出力する")
+    p_prop.set_defaults(func=cmd_inbox_propose)
+
+    p_list = inbox_sub.add_parser("list", help="受信箱の候補を一覧表示する")
+    p_list.add_argument(
+        "--status",
+        choices=("pending", "approved", "rejected", "all"),
+        default="pending",
+        help="絞り込む状態（既定: pending）",
+    )
+    p_list.add_argument("--scene", choices=inbox_mod.VALID_SCENES, default=None, help="場面で絞り込む")
+    p_list.add_argument("--home", default=None, help="データディレクトリ（既定: ~/.nihongo）")
+    p_list.add_argument("--inbox", default=None, help="受信箱ファイルのパス")
+    p_list.add_argument("--json", action="store_true", help="JSON 形式で出力する")
+    p_list.set_defaults(func=cmd_inbox_list)
+
+    p_appr = inbox_sub.add_parser("approve", help="保留中の候補を承認して profile.md へ反映する")
+    p_appr.add_argument("ids", nargs="*", help="承認する候補 ID")
+    p_appr.add_argument("--all", action="store_true", help="保留中の候補をすべて承認する")
+    p_appr.add_argument("--dry-run", action="store_true", help="profile.md を書き換えずに結果だけ確認する")
+    p_appr.add_argument("--force", action="store_true", help="場面ガード警告のある候補も承認する")
+    p_appr.add_argument("--home", default=None, help="データディレクトリ（既定: ~/.nihongo）")
+    p_appr.add_argument("--inbox", default=None, help="受信箱ファイルのパス")
+    p_appr.add_argument("--profile", default=None, help="profile.md のパス")
+    p_appr.add_argument("--json", action="store_true", help="JSON 形式で出力する")
+    p_appr.set_defaults(func=cmd_inbox_approve)
+
+    p_rej = inbox_sub.add_parser("reject", help="保留中の候補を却下する（profile.md は変更しない）")
+    p_rej.add_argument("ids", nargs="*", help="却下する候補 ID")
+    p_rej.add_argument("--all", action="store_true", help="保留中の候補をすべて却下する")
+    p_rej.add_argument("--reason", default="", help="却下理由（任意）")
+    p_rej.add_argument("--home", default=None, help="データディレクトリ（既定: ~/.nihongo）")
+    p_rej.add_argument("--inbox", default=None, help="受信箱ファイルのパス")
+    p_rej.add_argument("--json", action="store_true", help="JSON 形式で出力する")
+    p_rej.set_defaults(func=cmd_inbox_reject)
+
+    p_rev = inbox_sub.add_parser("review", help="保留中の候補を対話形式で1件ずつ承認・却下する")
+    p_rev.add_argument("--home", default=None, help="データディレクトリ（既定: ~/.nihongo）")
+    p_rev.add_argument("--inbox", default=None, help="受信箱ファイルのパス")
+    p_rev.add_argument("--profile", default=None, help="profile.md のパス")
+    p_rev.set_defaults(func=cmd_inbox_review)
+
+    # Profile inspection subcommand
+    p_prof = sub.add_parser("profile", help="個人プロフィール（~/.nihongo/profile.md）を確認する")
+    prof_sub = p_prof.add_subparsers(dest="profile_command", required=True)
+    p_pshow = prof_sub.add_parser("show", help="現在の profile.md と保留件数を表示する")
+    p_pshow.add_argument("--scene", choices=inbox_mod.VALID_SCENES, default=None, help="特定場面のみ表示")
+    p_pshow.add_argument("--home", default=None, help="データディレクトリ（既定: ~/.nihongo）")
+    p_pshow.add_argument("--profile", default=None, help="profile.md のパス")
+    p_pshow.add_argument("--inbox", default=None, help="受信箱ファイルのパス")
+    p_pshow.add_argument("--json", action="store_true", help="JSON 形式で出力する")
+    p_pshow.set_defaults(func=cmd_profile_show)
 
     return parser
 
