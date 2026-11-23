@@ -140,18 +140,58 @@ a { color: inherit; text-decoration: none; }
   max-width: 620px;
   margin: 0 auto 36px;
 }
-.hero-jump {
-  display: inline-flex;
+.hero-actions {
+  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 8px;
-  background: var(--ink);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.hero-dl {
+  appearance: none;
+  border: 2.5px solid var(--red);
+  background: var(--red);
   color: #FFFFFF;
+  font: inherit;
   font-size: 15.5px;
-  font-weight: 700;
+  font-weight: 800;
   padding: 13px 26px;
   border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease, transform 0.08s ease;
 }
-.hero-jump:hover { background: var(--red); }
+.hero-dl:hover { background: var(--red-hover); border-color: var(--red-hover); }
+.hero-dl:active { transform: translateY(1px); }
+.hero-jump {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFFFF;
+  border: 2.5px solid var(--ink);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 13px 24px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.hero-jump:hover { background: var(--ink); color: #FFFFFF; }
+.hero-status {
+  display: none;
+  margin: 16px auto 0;
+  max-width: 560px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 2px solid var(--ok);
+  background: #F2FAF4;
+  color: var(--ok);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.hero-status.show { display: block; }
 .hero-meta {
   margin-top: 24px;
   font-family: "Space Grotesk", sans-serif;
@@ -712,7 +752,11 @@ footer code b { color: var(--red); }
       <p class="hero-lead">
         AIの過剰な敬語や意味のズレを防ぎ、自分の書き方を残せる日本語ガード。
       </p>
-      <a class="hero-jump" href="#install">導入する ↓</a>
+      <div class="hero-actions">
+        <button type="button" class="hero-dl" id="btn-hero-dl">今すぐダウンロード ↓</button>
+        <button type="button" class="hero-jump" id="btn-hero-custom">設定してから作る ↓</button>
+      </div>
+      <div class="hero-status" id="hero-status" role="status" aria-live="polite"></div>
       <div class="hero-meta">
         <span>無料・登録不要</span>
         <span>運営サーバー保存ゼロ</span>
@@ -1092,6 +1136,26 @@ function renderChips() {
 function refreshPreview() {
   document.getElementById('setup-preview').textContent = buildSetupMarkdown(true);
 }
+
+document.getElementById('btn-hero-dl').addEventListener('click', () => {
+  downloadMarkdown('nihongo-setup.md', buildSetupMarkdown(false));
+  const hs = document.getElementById('hero-status');
+  hs.textContent = 'nihongo-setup.md をダウンロードしました。そのまま今お使いのAIチャットに添付してください。';
+  hs.classList.add('show');
+});
+
+document.getElementById('btn-hero-custom').addEventListener('click', () => {
+  const drawer = document.getElementById('customizer');
+  const btn = document.getElementById('btn-open-custom');
+  if (!drawer.classList.contains('open')) {
+    drawer.classList.add('open');
+    btn.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+    btn.textContent = '設定を閉じる';
+    refreshPreview();
+  }
+  document.getElementById('install').scrollIntoView({ behavior: 'smooth' });
+});
 
 document.getElementById('btn-quick-dl').addEventListener('click', () => {
   downloadMarkdown('nihongo-setup.md', buildSetupMarkdown(false));
