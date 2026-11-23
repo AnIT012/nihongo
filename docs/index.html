@@ -185,7 +185,7 @@ a { color: inherit; text-decoration: none; }
 .sec-p {
   font-size: 15.5px;
   color: var(--body);
-  max-width: 680px;
+  max-width: 740px;
   margin-bottom: 28px;
 }
 
@@ -383,52 +383,66 @@ a { color: inherit; text-decoration: none; }
 .install-box {
   border: 3.5px solid var(--ink);
   border-radius: 30px;
-  padding: 38px 38px 34px;
+  padding: 32px 32px 28px;
   background: #FFFFFF;
 }
 .opt-pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 18px;
   margin-bottom: 20px;
 }
-.opt-btn {
-  appearance: none;
-  font: inherit;
-  border-radius: 18px;
-  padding: 22px 22px;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.14s ease, transform 0.1s ease;
-}
-.opt-btn:active { transform: translateY(1px); }
-.opt-btn.primary {
-  background: var(--red);
-  border: 3px solid var(--red);
-  color: #FFFFFF;
-}
-.opt-btn.primary:hover { background: var(--red-hover); border-color: var(--red-hover); }
-.opt-btn.secondary {
+.opt-card {
+  border: 2.5px solid var(--line);
+  border-radius: 20px;
+  padding: 22px 22px 20px;
   background: #FFFFFF;
-  border: 3px solid var(--ink);
-  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
 }
-.opt-btn.secondary:hover { background: var(--soft); }
-.opt-btn.secondary.open {
-  background: var(--ink);
-  color: #FFFFFF;
+.opt-card.featured {
+  border-color: var(--ink);
 }
-.opt-btn b {
-  display: block;
+.opt-card h3 {
   font-size: 19px;
   font-weight: 900;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
-.opt-btn small {
-  display: block;
+.opt-card p {
   font-size: 13.5px;
-  line-height: 1.5;
-  opacity: 0.92;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.action-btn {
+  appearance: none;
+  width: 100%;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 800;
+  padding: 13px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.14s ease, color 0.14s ease, transform 0.08s ease;
+}
+.action-btn:active { transform: translateY(1px); }
+.action-btn.primary {
+  background: var(--red);
+  border: 2.5px solid var(--red);
+  color: #FFFFFF;
+}
+.action-btn.primary:hover { background: var(--red-hover); border-color: var(--red-hover); }
+.action-btn.secondary {
+  background: #FFFFFF;
+  border: 2.5px solid var(--ink);
+  color: var(--ink);
+}
+.action-btn.secondary:hover { background: var(--soft); }
+.action-btn.secondary.open {
+  background: var(--ink);
+  color: #FFFFFF;
 }
 
 .quick-links {
@@ -617,22 +631,26 @@ a { color: inherit; text-decoration: none; }
 
 /* After-download calm explanation */
 .after-flow {
-  margin-top: 26px;
-  padding-top: 22px;
+  margin-top: 22px;
+  padding-top: 18px;
   border-top: 1.5px solid var(--line);
-  font-size: 14.5px;
-  color: var(--body);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--muted);
 }
-.after-flow h4 {
-  font-size: 15px;
-  font-weight: 900;
-  margin-bottom: 6px;
+.after-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+}
+.after-row b {
   color: var(--ink);
+  font-size: 13.5px;
+  white-space: nowrap;
 }
-.after-flow p { font-size: 14px; line-height: 1.7; color: var(--muted); }
 
 /* Footer */
 footer {
@@ -688,14 +706,13 @@ footer code b { color: var(--red); }
       <div class="hero-logo" aria-hidden="true">nih<i></i>ngo</div>
       <h1 class="hero-title">「上出来だけど出せない」を<span>1ファイル</span>で減らす。</h1>
       <p class="hero-lead">
-        AIの日本語が自然な今、手直しが残るのは過剰な敬語や意味のズレです。<br>
-        文章ルール・0トークン検査・会話で育つ個人ルールを1つにまとめ、運営サーバーにデータは保存しません。
+        AIの過剰な敬語や意味のズレを防ぎ、自分の書き方を残せる日本語ガード。
       </p>
       <a class="hero-jump" href="#install">導入する ↓</a>
       <div class="hero-meta">
         <span>無料・登録不要</span>
         <span>運営サーバー保存ゼロ</span>
-        <span>外部依存ゼロ・MIT</span>
+        <span>MIT</span>
       </div>
     </section>
 
@@ -704,7 +721,7 @@ footer code b { color: var(--red); }
       <div class="sec-cap">WHAT IT FIXES</div>
       <h2 class="sec-h">きれいな文章ほど、ズレに気づきにくい。</h2>
       <p class="sec-p">
-        最近のChatGPTやClaudeは素のままでも自然な日本語を書きます。ただ、仕事のメールや資料を任せると、頼んでいない約束が足されたり、自分が普段使わない硬い敬語が混ざったりします。
+        素のAIでも日本語は自然ですが、頼んでいない約束や普段使わない硬い敬語が混ざります。
       </p>
 
       <div class="ba-card">
@@ -733,25 +750,24 @@ footer code b { color: var(--red); }
       <div class="sec-cap">CAPABILITIES</div>
       <h2 class="sec-h">書く仕事はAI、守る仕事はコードへ分ける。</h2>
       <p class="sec-p">
-        プロンプトに長いルールを詰め込むほど、AIは見落としやすくなります。文章を整える作業は軽いルールでAIに任せ、変えてはいけない事実や避ける表現はローカルのコードで止めます（下の自動検査と承認画面はPCの開発ツール向け機能で、ブラウザやスマホのチャットは下の導入ルールだけで使えます）。
+        文章を整える作業はAIに任せ、変えてはいけない事実や避ける表現はローカルのコードで止めます。
       </p>
 
       <div class="cap-main">
         <h3>編集後のズレを0トークンで検出する</h3>
         <p>
-          原文とAIが直した文を比べ、数値・日時・否定・「必ず」の弱まり・自分で登録した避ける表現をPythonの標準ライブラリだけで検出します。Claude CodeのPostToolUseフックやgit差分チェックにも組み込めます。
+          数値・日時・「必ず」の弱まり・避ける表現をPython標準ライブラリだけで機械検出します。
         </p>
         <div class="term" aria-label="nihongo-check 実行例">
-          $ nihongo-check diff orig.md draft.md --profile ~/.nihongo/profile.md --scene formal<br>
+          $ nihongo-check diff orig.md draft.md --scene formal<br>
           <span class="r">- [確度・必須度] 「必須」表現が減少（1→0）</span><br>
-          <span class="r">- [程度・約束] 「必ず」が減少（1→0）</span><br>
           <span class="r">- [程度・約束] 「頃」が増加（0→1）</span><br>
           <span class="r">- [個人ルール] 避ける表現を検出: 「いただけますと幸いです」</span><br>
-          <span class="g">0 tokens / ローカル実行 / 追加パッケージ不要</span>
+          <span class="g">0 tokens / Claude Codeフック対応</span>
         </div>
 
         <details class="mini-demo">
-          <summary>このブラウザ内で0トークン検査を試す（データは外部へ送信されません）</summary>
+          <summary>このブラウザ内で0トークン検査を試す（外部送信なし）</summary>
           <div class="demo-grid">
             <div>
               <label for="demo-orig">元のメモ</label>
@@ -773,19 +789,14 @@ footer code b { color: var(--red); }
         <div class="cap-box">
           <h3>会話で直した癖は承認して残す</h3>
           <p>
-            普段のチャットで「この言い回しは使わない」と直した内容だけ、MCP経由で受信箱（<code>inbox.jsonl</code>）に一時保存されます。勝手に上書きせず、ローカルの承認画面（<code>nihongo-check ui</code>）でOKを押したものだけが自分の <code>profile.md</code> に反映されます。メールアドレスやAPIキーなどの個人情報は自動で拒否します。
+            直した表現は受信箱に一時保存され、ローカル承認画面（<code>nihongo-check ui</code>）でOKした分だけ反映されます。個人情報は自動で拒否します。
           </p>
         </div>
         <div class="cap-box">
           <h3>複数PCでも案件別でも使い分ける</h3>
           <p>
-            保存先はすべてユーザー本人の管理下に置きます。すでに <code>nihongo</code> を使っている場合も既存の <code>profile.md</code> を消さずに最新版へ更新できます。
+            Google Drive等で全端末と共有しつつ、フォルダ内の <code>.nihongo/profile.md</code> で案件別に重ねられます。既存ユーザーの更新にも対応。
           </p>
-          <ul class="cap-sub-list">
-            <li>同じPCの複数AIへ <code>nihongo-mcp init</code> で一括設定</li>
-            <li>自分のGoogle Drive等の同期フォルダで複数PC共有</li>
-            <li>作業フォルダに <code>.nihongo/profile.md</code> を置けば分野別に重ねがけ</li>
-          </ul>
         </div>
       </div>
     </section>
@@ -795,35 +806,41 @@ footer code b { color: var(--red); }
       <div class="sec-cap">GET STARTED</div>
       <h2 class="sec-h">今のチャットに1ファイルを貼るだけ。</h2>
       <p class="sec-p">
-        ダウンロードしたメモファイル（<code>nihongo-setup.md</code>）を普段のAIチャットに添付するだけです。ChatGPTやClaudeのブラウザ・スマホ版ならその場からルールが効き、PCの開発ツール（Claude Code / Cursor / Antigravity等）なら安全確認と2回の承認を経て自動セットアップまで進みます。
+        落とした <code>nihongo-setup.md</code> をAIに添付するだけ。ブラウザ版ならその場で効き、開発ツールなら承認後に自動設定まで終わります。
       </p>
 
       <div class="install-box">
         <div class="opt-pair">
-          <button type="button" class="opt-btn primary" id="btn-quick-dl">
-            <b>とりあえず入れてみる</b>
-            <small>標準設定の nihongo-setup.md をすぐダウンロードします。すでに導入済みの方の更新にも対応しています。</small>
-          </button>
-          <button type="button" class="opt-btn secondary" id="btn-open-custom" aria-expanded="false" aria-controls="customizer">
-            <b>ちょっと設定してから入れる</b>
-            <small>避ける表現や場面、保存先の希望を選んでから自分用のファイルを作ります。</small>
-          </button>
+          <div class="opt-card featured">
+            <div>
+              <h3>とりあえず入れてみる</h3>
+              <p>標準設定のまま始められます。すでに導入済みの方の更新にも対応。</p>
+            </div>
+            <button type="button" class="action-btn primary" id="btn-quick-dl">ファイルをダウンロード ↓</button>
+          </div>
+          <div class="opt-card">
+            <div>
+              <h3>ちょっと設定してから入れる</h3>
+              <p>避ける表現や場面、保存先を選んでから自分用のファイルを作ります。</p>
+            </div>
+            <button type="button" class="action-btn secondary" id="btn-open-custom" aria-expanded="false" aria-controls="customizer">設定を開いて作る</button>
+          </div>
         </div>
 
         <div class="quick-links">
-          <span>スマホ・ブラウザで貼るだけの方：</span>
-          <button type="button" class="link-btn" id="btn-copy-chat">今のチャットに貼るルールをコピーする</button>
+          <span>貼るだけの方：</span>
+          <button type="button" class="link-btn" id="btn-copy-chat">チャット用ルールをコピー</button>
+          <details style="display:inline-block;">
+            <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);list-style:none;">開発者・既存ユーザー向け ▾</summary>
+            <div class="quick-links" style="margin-top:8px;">
+              <button type="button" class="link-btn" id="btn-copy-npx">npx skills add AnIT012/nihongo をコピー</button>
+              <label class="link-btn" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                <span>既存の profile.md を読み込む</span>
+                <input type="file" id="import-profile" accept=".md,.txt" style="display:none;">
+              </label>
+            </div>
+          </details>
         </div>
-        <details style="margin-top:12px;">
-          <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);">開発者・すでに nihongo を使っている方向け</summary>
-          <div class="quick-links" style="margin-top:8px;">
-            <button type="button" class="link-btn" id="btn-copy-npx">npx skills add AnIT012/nihongo をコピー</button>
-            <label class="link-btn" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
-              <span>既存の profile.md を読み込んで引き継ぐ</span>
-              <input type="file" id="import-profile" accept=".md,.txt" style="display:none;">
-            </label>
-          </div>
-        </details>
 
         <div class="status-bar" id="status-bar" role="status" aria-live="polite"></div>
 
@@ -853,7 +870,7 @@ footer code b { color: var(--red); }
           <div class="cust-group">
             <div class="cust-lbl">
               PC開発ツール導入時の保存先（初期候補）
-              <span>ブラウザ・スマホだけで使う方はそのままでも使えます</span>
+              <span>ブラウザ・スマホの方はそのままでも使えます</span>
             </div>
             <div class="radio-grid two" id="sync-radios">
               <label class="r-opt on"><input type="radio" name="sync" value="local" checked><b>このPCだけで使う</b><small>~/.nihongo/profile.md</small></label>
@@ -862,8 +879,8 @@ footer code b { color: var(--red); }
           </div>
 
           <div class="cust-actions">
-            <button type="button" class="btn-dl" id="btn-custom-dl">この設定で nihongo-setup.md をダウンロードする</button>
-            <button type="button" class="btn-outline" id="btn-custom-copy">この設定をチャット用にコピーする</button>
+            <button type="button" class="btn-dl" id="btn-custom-dl">この設定でダウンロード ↓</button>
+            <button type="button" class="btn-outline" id="btn-custom-copy">この設定をチャット用にコピー</button>
           </div>
 
           <details class="preview-details">
@@ -873,14 +890,8 @@ footer code b { color: var(--red); }
         </div>
 
         <div class="after-flow">
-          <div>
-            <h4>ブラウザ・スマホのチャット（ChatGPT / Claude / Gemini）の場合</h4>
-            <p>いつものチャット画面で「＋（ファイル添付）」から選ぶか、上のボタンでコピーしたルールをそのまま送ってください。毎回貼りたくない場合は、ChatGPTのプロジェクト／カスタム指示、ClaudeのProjects、または自分のGoogle Driveに入れておくと便利です。</p>
-          </div>
-          <div>
-            <h4>PCの開発ツール（Claude Code / Cursor / Antigravity等）の場合</h4>
-            <p>AIが最初にGitHub正本の安全性（依存ゼロ・外部送信ゼロ）を確認し、「導入・更新してよいか」「保存先をローカルかGoogle Driveにするか」の2回の承認を求めます。OKを押すと既存設定を退避した上で自動設定が終わります。</p>
-          </div>
+          <div class="after-row"><b>ChatGPT / Claude（Web・スマホ）</b><span>「＋」から添付するかコピー文を送信（ProjectsやGoogle Driveに置くと次回から自動）</span></div>
+          <div class="after-row"><b>Claude Code / Cursor / Antigravity</b><span>AIがGitHub正本の安全性を確認し、2回の承認後に既存設定を守りつつ自動導入</span></div>
         </div>
       </div>
     </section>
@@ -1077,6 +1088,7 @@ document.getElementById('btn-open-custom').addEventListener('click', () => {
   const isOpen = drawer.classList.toggle('open');
   btn.classList.toggle('open', isOpen);
   btn.setAttribute('aria-expanded', String(isOpen));
+  btn.textContent = isOpen ? '設定を閉じる' : '設定を開いて作る';
   if (isOpen) refreshPreview();
 });
 
