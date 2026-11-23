@@ -265,54 +265,94 @@ a { color: inherit; text-decoration: none; }
   color: var(--muted);
 }
 
-/* Capability Layout (Organic, Non-Uniform — avoids AI 3-equal-cards cliché) */
-.cap-main {
-  border: 3px solid var(--ink);
-  border-radius: 26px;
-  padding: 30px 34px;
-  background: #FFFFFF;
-  margin-bottom: 20px;
+/* Capability 2x2 Grid (Canonical Check / Lite / Full / Personal — extends v3.0.0 promo card) */
+.cap-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
 }
-.cap-main h3 {
-  font-size: 22px;
-  font-weight: 900;
+.cap-box {
+  border: 2.5px solid var(--ink);
+  border-radius: 22px;
+  padding: 24px 26px;
+  background: #FFFFFF;
+}
+.cap-box.accent {
+  background: var(--red);
+  border-color: var(--red);
+  color: #FFFFFF;
+}
+.cap-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
   margin-bottom: 10px;
 }
-.cap-main > p {
-  font-size: 15px;
+.cap-box h3 {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.cap-tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.cap-box.accent .cap-tag {
+  color: rgba(255, 255, 255, 0.9);
+}
+.cap-box p {
+  font-size: 14.5px;
   color: var(--body);
-  margin-bottom: 18px;
-  max-width: 680px;
+  line-height: 1.7;
 }
-.term {
-  background: #141416;
-  color: #EAEAEA;
-  border-radius: 16px;
-  padding: 18px 20px;
-  font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 13px;
-  line-height: 1.75;
-  overflow-x: auto;
+.cap-box.accent p {
+  color: rgba(255, 255, 255, 0.95);
 }
-.term .r { color: #FF7870; }
-.term .g { color: #6BE097; }
-
-.mini-demo {
+.cap-box code {
+  font-family: "Space Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  background: var(--soft);
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+.cap-box.accent code {
+  background: rgba(0, 0, 0, 0.18);
+  color: #FFFFFF;
+}
+.demo-fold {
   margin-top: 18px;
-  padding-top: 18px;
-  border-top: 1.5px solid var(--line);
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  padding: 16px 20px;
+  background: #FFFFFF;
 }
-.mini-demo summary {
+.demo-fold summary {
   cursor: pointer;
   font-size: 14px;
   font-weight: 700;
   color: var(--ink);
 }
+.term {
+  margin-top: 14px;
+  background: #141416;
+  color: #EAEAEA;
+  border-radius: 14px;
+  padding: 16px 18px;
+  font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.75;
+  overflow-x: auto;
+}
+.term .r { color: #FF7870; }
+.term .g { color: #6BE097; }
 .demo-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 .demo-grid label {
   display: block;
@@ -342,42 +382,6 @@ a { color: inherit; text-decoration: none; }
   border-color: var(--red);
   background: var(--warn-bg);
 }
-
-.cap-split {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 20px;
-}
-.cap-box {
-  border: 2.5px solid var(--ink);
-  border-radius: 22px;
-  padding: 24px 26px;
-  background: #FFFFFF;
-}
-.cap-box h3 {
-  font-size: 18.5px;
-  font-weight: 900;
-  margin-bottom: 10px;
-}
-.cap-box p {
-  font-size: 14.5px;
-  color: var(--body);
-  line-height: 1.75;
-}
-.cap-box code {
-  font-family: "Space Mono", ui-monospace, monospace;
-  font-size: 12.5px;
-  background: var(--soft);
-  padding: 1px 6px;
-  border-radius: 5px;
-}
-.cap-sub-list {
-  margin-top: 12px;
-  padding-left: 18px;
-  font-size: 14px;
-  color: var(--body);
-}
-.cap-sub-list li { margin-top: 5px; }
 
 /* Section 4: Install / Download 2 Options */
 .install-box {
@@ -681,7 +685,7 @@ footer code b { color: var(--red); }
   .sec { padding-top: 64px; }
   .sec-h { font-size: 24px; }
   .ba-card, .cap-main, .install-box { padding: 22px 18px; border-radius: 22px; }
-  .cap-split, .opt-pair, .demo-grid, .after-flow, .radio-grid, .radio-grid.two {
+  .cap-grid, .opt-pair, .demo-grid, .radio-grid, .radio-grid.two {
     grid-template-columns: 1fr;
   }
 }
@@ -748,57 +752,69 @@ footer code b { color: var(--red); }
     <!-- 3. できること -->
     <section class="sec" id="capabilities">
       <div class="sec-cap">CAPABILITIES</div>
-      <h2 class="sec-h">書く仕事はAI、守る仕事はコードへ分ける。</h2>
+      <h2 class="sec-h">仕上げと確認を4つの機能で引き受ける。</h2>
       <p class="sec-p">
-        文章を整える作業はAIに任せ、変えてはいけない事実や避ける表現はローカルのコードで止めます。
+        普段の返事から重要な資料・編集後の検査まで、場面に応じて自動で切り替わります。
       </p>
 
-      <div class="cap-main">
-        <h3>編集後のズレを0トークンで検出する</h3>
-        <p>
-          数値・日時・「必ず」の弱まり・避ける表現をPython標準ライブラリだけで機械検出します。
-        </p>
+      <div class="cap-grid">
+        <div class="cap-box">
+          <div class="cap-head">
+            <h3>Lite</h3>
+            <span class="cap-tag">普段の返事を軽く整える</span>
+          </div>
+          <p>約1,100〜1,260字の軽量ルール。雑談や短い連絡でも重くならず、ブラウザやスマホでもそのまま使えます。</p>
+        </div>
+
+        <div class="cap-box">
+          <div class="cap-head">
+            <h3>Full</h3>
+            <span class="cap-tag">メール・資料・技術文書まで</span>
+          </div>
+          <p>93行の本編と21本の場面別資料。必要な資料だけを読み込み、敬語の段や構成まで場面に合わせます。</p>
+        </div>
+
+        <div class="cap-box accent">
+          <div class="cap-head">
+            <h3>Check</h3>
+            <span class="cap-tag">0トークンで意味ズレ検出</span>
+          </div>
+          <p>編集後の日時・数字・「必ず」の弱まりと避ける表現をPython標準ライブラリだけで検出。Claude Codeフック対応。</p>
+        </div>
+
+        <div class="cap-box">
+          <div class="cap-head">
+            <h3>Personal</h3>
+            <span class="cap-tag">会話で育つ4場面の個人ルール</span>
+          </div>
+          <p>直した癖は受信箱に一時保存し、承認画面（<code>nihongo-check ui</code>）でOKした分だけ反映。Google Drive共有や案件別2層に対応。</p>
+        </div>
+      </div>
+
+      <details class="demo-fold">
+        <summary>Check（0トークン検査）の実行例とブラウザ内お試しを開く</summary>
         <div class="term" aria-label="nihongo-check 実行例">
           $ nihongo-check diff orig.md draft.md --scene formal<br>
           <span class="r">- [確度・必須度] 「必須」表現が減少（1→0）</span><br>
           <span class="r">- [程度・約束] 「頃」が増加（0→1）</span><br>
           <span class="r">- [個人ルール] 避ける表現を検出: 「いただけますと幸いです」</span><br>
-          <span class="g">0 tokens / Claude Codeフック対応</span>
+          <span class="g">0 tokens / ローカル実行 / 追加パッケージ不要</span>
         </div>
-
-        <details class="mini-demo">
-          <summary>このブラウザ内で0トークン検査を試す（外部送信なし）</summary>
-          <div class="demo-grid">
-            <div>
-              <label for="demo-orig">元のメモ</label>
-              <textarea id="demo-orig" rows="3">資料は明日15時までに必ず送ってください。</textarea>
-            </div>
-            <div>
-              <label for="demo-draft">AIが直した文</label>
-              <textarea id="demo-draft" rows="3">恐れ入りますが、資料は明日15時頃までにご送付いただけますと幸いです。</textarea>
-            </div>
+        <div class="demo-grid">
+          <div>
+            <label for="demo-orig">元のメモ</label>
+            <textarea id="demo-orig" rows="3">資料は明日15時までに必ず送ってください。</textarea>
           </div>
-          <div style="margin-top:10px;">
-            <button type="button" class="link-btn" id="btn-demo-check">今の文を検査する</button>
+          <div>
+            <label for="demo-draft">AIが直した文</label>
+            <textarea id="demo-draft" rows="3">恐れ入りますが、資料は明日15時頃までにご送付いただけますと幸いです。</textarea>
           </div>
-          <div class="demo-out" id="demo-out" style="display:none;"></div>
-        </details>
-      </div>
-
-      <div class="cap-split">
-        <div class="cap-box">
-          <h3>会話で直した癖は承認して残す</h3>
-          <p>
-            直した表現は受信箱に一時保存され、ローカル承認画面（<code>nihongo-check ui</code>）でOKした分だけ反映されます。個人情報は自動で拒否します。
-          </p>
         </div>
-        <div class="cap-box">
-          <h3>複数PCでも案件別でも使い分ける</h3>
-          <p>
-            Google Drive等で全端末と共有しつつ、フォルダ内の <code>.nihongo/profile.md</code> で案件別に重ねられます。既存ユーザーの更新にも対応。
-          </p>
+        <div style="margin-top:10px;">
+          <button type="button" class="link-btn" id="btn-demo-check">今の文を検査する</button>
         </div>
-      </div>
+        <div class="demo-out" id="demo-out" style="display:none;"></div>
+      </details>
     </section>
 
     <!-- 4. 導入する（2つのダウンロードオプション） -->
