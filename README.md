@@ -29,7 +29,7 @@ AIが書いた日本語は一見きれいに見えても、敬語が1段高す�
 
 **普段の ChatGPT / Claude（Web・アプリ／コマンド不要）**
 
-1. [nihongo/ALWAYS.md](nihongo/ALWAYS.md) を開き、右上のコピーボタンを押す
+1. [nihongo/WEB.md](nihongo/WEB.md) を開き、右上のコピーボタンを押す
 2. 設定画面の「カスタム指示（ChatGPT）」または「応答の好み（Claude）」にそのまま貼って保存する
 
 普段使いの方はこれだけで始められます（下の CLI・Hook・MCP は開発環境でさらに自動化したい方向けの追加機能です）。
@@ -214,7 +214,7 @@ npx skills add AnIT012/nihongo -g
 <details>
 <summary><b>Claude / ChatGPT アプリ（コマンド不要）</b></summary>
 
-- **いちばん簡単（Lite）**：[nihongo/ALWAYS.md](nihongo/ALWAYS.md) を開いて右上のコピーボタンを押し、ChatGPT の「設定 → パーソナライズ → カスタム指示」または Claude の「設定 → プロフィール → 応答の好み」に貼って保存します（無料プランでも使えます）。
+- **いちばん簡単（Web版）**：[nihongo/WEB.md](nihongo/WEB.md) を開いて右上のコピーボタンを押し、ChatGPT の「設定 → パーソナライズ → カスタム指示」または Claude の「設定 → プロフィール → 応答の好み」に貼って保存します（無料プランでも使えます）。
 - **メール・資料・ES まで本格的に使う（Full）**：[最新のリリース](https://github.com/AnIT012/nihongo/releases/latest)から `nihongo-v3.0.0.zip` をダウンロードします。
   - **Claude（Web / デスクトップアプリ）**：設定のスキル画面から `nihongo-v3.0.0.zip` をそのままアップロード（または解凍してプロジェクトのナレッジに追加）します。
   - **ChatGPT**：My GPTs のナレッジに解凍したファイルを追加します（Skills 画面が使える環境では `nihongo-v3.0.0.zip` をそのままアップロードできます）。
@@ -267,7 +267,9 @@ pip で入れると `nihongo-check` コマンド（`nihongo_check` 名前空間�
 | `nihongo-check inbox list` | 本人承認待ち（`pending`）の候補を一覧表示する |
 | `nihongo-check inbox review` | 保留候補を対話形式で1件ずつ承認・却下する |
 | `nihongo-check inbox approve <id> [--dry-run]` / `reject <id>` | 指定した候補を承認して `profile.md` へ反映、または却下する |
-| `nihongo-check profile show [--scene formal]` | 現在の `~/.nihongo/profile.md` と保留件数を表示する |
+| `nihongo-check ui` | ブラウザ画面（`127.0.0.1` のみ・外部通信ゼロ）で承認・`profile.md` 編集・0トークン検査・1ファイル書き出しを行う |
+| `nihongo-check profile show [--scene formal] [--project <dir>]` | 現在の `profile.md`（作業フォルダの `.nihongo/profile.md` 2層マージ対応）と保留件数を表示する |
+| `nihongo-mcp init --target all [--home <同期フォルダ>]` | PC 内の AI アプリへ自動登録する（`--detect-sync` で Google Drive 等の同期フォルダを検出。詳細は [google-drive-sync.md](examples/mcp/google-drive-sync.md)） |
 | `nihongo-mcp`（または `python3 nihongo/scripts/mcp_server.py`） | stdio 経由のローカル MCP サーバーを起動する |
 
 ## 評価

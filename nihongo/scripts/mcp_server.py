@@ -353,11 +353,15 @@ class NihongoMcpServer:
 
     def _tool_get_profile(self, args: dict[str, Any]) -> dict[str, Any]:
         scene = args.get("scene")
-        project_dir = args.get("project_dir")
+        raw_proj = args.get("project_dir")
+        if raw_proj is not None and not isinstance(raw_proj, str):
+            raise ValueError("project_dir は文字列で指定してください。")
+        project_dir = raw_proj.strip() if isinstance(raw_proj, str) else None
+        project_dir = project_dir or None
         info = inbox_mod.read_profile(
             storage=self.storage,
             scene=scene,
-            project_dir=str(project_dir) if project_dir else None,
+            project_dir=project_dir,
             include_project=bool(project_dir),
         )
         forbidden: list[str] = []
@@ -423,8 +427,14 @@ class NihongoMcpServer:
         force = args.get("force") is True
 
         if action == "batch":
-            approve_ids = [str(x) for x in (args.get("approve_ids") or [])]
-            reject_ids = [str(x) for x in (args.get("reject_ids") or [])]
+            raw_approve = args.get("approve_ids")
+            raw_reject = args.get("reject_ids")
+            if raw_approve is not None and not isinstance(raw_approve, list):
+                raise ValueError("approve_ids は文字列の配列で指定してください。")
+            if raw_reject is not None and not isinstance(raw_reject, list):
+                raise ValueError("reject_ids は文字列の配列で指定してください。")
+            approve_ids = [str(x) for x in (raw_approve or [])]
+            reject_ids = [str(x) for x in (raw_reject or [])]
             if not approve_ids and not reject_ids:
                 raise ValueError("action='batch' では approve_ids または reject_ids を1件以上指定してください。")
             if not confirmed:
@@ -538,11 +548,15 @@ class NihongoMcpServer:
         request = str(args.get("request", ""))
         scene = args.get("scene")
         check_commas = args.get("check_commas") is True
-        project_dir = args.get("project_dir")
+        raw_proj = args.get("project_dir")
+        if raw_proj is not None and not isinstance(raw_proj, str):
+            raise ValueError("project_dir は文字列で指定してください。")
+        project_dir = raw_proj.strip() if isinstance(raw_proj, str) else None
+        project_dir = project_dir or None
 
         prof_info = inbox_mod.read_profile(
             storage=self.storage,
-            project_dir=str(project_dir) if project_dir else None,
+            project_dir=project_dir,
             include_project=bool(project_dir),
         )
         forbidden: list[str] = []

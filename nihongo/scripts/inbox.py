@@ -14,6 +14,7 @@ import json
 import os
 import re
 import tempfile
+import time
 import unicodedata
 import uuid
 from typing import Any, Protocol, runtime_checkable
@@ -210,7 +211,19 @@ def _atomic_write_utf8(path: str, content: str) -> None:
             f.write(content)
             f.flush()
             os.fsync(f.fileno())
-        os.replace(tmp_path, path)
+        last_err: OSError | None = None
+        for attempt in range(5):
+            try:
+                os.replace(tmp_path, path)
+                last_err = None
+                break
+            except PermissionError as exc:
+                last_err = exc
+                if os.name != "nt" or attempt == 4:
+                    raise
+                time.sleep(0.03 * (attempt + 1))
+        if last_err is not None:
+            raise last_err
     except Exception:
         try:
             os.unlink(tmp_path)
@@ -699,6 +712,9 @@ def reject_entries(
     rejected: list[str] = []
     results: list[dict[str, Any]] = []
     note = _normalize_value(reason)
+    pii_err = _check_pii([note])
+    if pii_err:
+        raise ValueError(pii_err)
 
     for item in entries:
         item_id = str(item.get("id", ""))
@@ -736,6 +752,9 @@ def reject_entries(
     }
 
 
+MAX_PROJECT_PROFILE_BYTES = 256 * 1024
+
+
 def find_project_profile(
     start_dir: str | None = None,
     *,
@@ -743,17 +762,39 @@ def find_project_profile(
 ) -> str | None:
     """作業ディレクトリから上位へ辿り、プロジェクト固有の `.nihongo/profile.md` を探す。
 
-    グローバルの `~/.nihongo/profile.md`（または `global_profile_path`）と同一ファイルは除外する。
+    セキュリティ対策:
+    - 明示指定された start_dir が存在しない場合は None を返す。
+    - `.nihongo` および `.nihongo/profile.md` のシンボリックリンク経由の外部ファイル読み取りを拒否する。
+    - ホームディレクトリ（$HOME）より上、および共有 temp ディレクトリ直下は探索対象外とする。
+    - グローバルの `~/.nihongo/profile.md`（または `global_profile_path`）と同一ファイルは除外する。
     """
-    cur = os.path.abspath(os.path.expanduser(start_dir or os.getcwd()))
+    if start_dir is not None:
+        raw_start = start_dir.strip()
+        if not raw_start:
+            return None
+        cur = os.path.abspath(os.path.expanduser(raw_start))
+        if not os.path.exists(cur):
+            return None
+    else:
+        cur = os.path.abspath(os.getcwd())
+
     if os.path.isfile(cur):
         cur = os.path.dirname(cur)
+
     home_real = os.path.normcase(os.path.realpath(os.path.expanduser("~")))
-    global_real = (
-        os.path.normcase(os.path.realpath(os.path.abspath(os.path.expanduser(global_profile_path))))
-        if global_profile_path
-        else os.path.normcase(os.path.realpath(default_profile_path()))
-    )
+    temp_real = os.path.normcase(os.path.realpath(tempfile.gettempdir()))
+    if global_profile_path and "://" in global_profile_path:
+        global_real: str | None = None
+    elif global_profile_path:
+        global_real = os.path.normcase(os.path.realpath(os.path.abspath(os.path.expanduser(global_profile_path))))
+    else:
+        global_real = os.path.normcase(os.path.realpath(default_profile_path()))
+
+    start_real = os.path.normcase(os.path.realpath(cur))
+    try:
+        under_home = os.path.commonpath([home_real, start_real]) == home_real
+    except ValueError:
+        under_home = False
 
     visited: set[str] = set()
     while True:
@@ -762,14 +803,26 @@ def find_project_profile(
             break
         visited.add(cur_real)
 
-        # ホームディレクトリ直下の ~/.nihongo/profile.md はグローバル層なので飛ばす
-        if cur_real != home_real:
-            cand = os.path.join(cur, ".nihongo", "profile.md")
-            if os.path.isfile(cand):
-                cand_real = os.path.normcase(os.path.realpath(cand))
-                if cand_real != global_real:
+        # ホームディレクトリ直下と共有 temp ルート直下はプロジェクト層から除外
+        if cur_real != home_real and cur_real != temp_real:
+            dot_dir = os.path.join(cur, ".nihongo")
+            cand = os.path.join(dot_dir, "profile.md")
+            if (
+                not os.path.islink(dot_dir)
+                and not os.path.islink(cand)
+                and os.path.isfile(cand)
+            ):
+                try:
+                    cand_real = os.path.normcase(os.path.realpath(cand))
+                    inside_cur = os.path.commonpath([cur_real, cand_real]) == cur_real
+                except (OSError, ValueError):
+                    inside_cur = False
+                    cand_real = ""
+                if inside_cur and (global_real is None or cand_real != global_real):
                     return os.path.abspath(cand)
 
+        if under_home and cur_real == home_real:
+            break
         parent = os.path.dirname(cur)
         if parent == cur:
             break
@@ -777,38 +830,49 @@ def find_project_profile(
     return None
 
 
-def _split_profile_sections(raw_text: str) -> tuple[str, dict[str, list[str]], list[str]]:
-    """profile.md を (先頭ヘッダ, 4場面セクション行マップ, その他末尾行) に分解する。"""
+def _split_profile_sections(raw_text: str) -> tuple[str, dict[str, list[str]], list[str], list[str]]:
+    """profile.md を (先頭ヘッダ, 4場面セクション行マップ, 先頭のタグ無しルール行, その他末尾行) に分解する。"""
     text = _normalize_newlines(raw_text)
     if not text.strip():
-        return ("# 私の書き方", {}, [])
+        return ("# 私の書き方", {}, [], [])
     lines = text.split("\n")
     sections: dict[str, list[str]] = {}
-    preamble: list[str] = []
+    preamble_headers: list[str] = []
+    preamble_rules: list[str] = []
     extra: list[str] = []
     current_scene: str | None = None
+    current_level = 2
     seen_any_scene = False
 
     for line in lines:
         m = _HEADING_RE.match(line)
         if m:
+            level = len(m.group(1))
             tag_m = _SCENE_TAG_RE.search(m.group(2))
             if tag_m:
                 current_scene = tag_m.group(1).lower()
+                current_level = level
                 seen_any_scene = True
                 sections.setdefault(current_scene, [])
                 continue
-            elif seen_any_scene:
+            if current_scene is not None and level > current_level:
+                # `## [work]` 配下の `### サブ見出し` はそのまま現セクションに保持
+                sections[current_scene].append(line)
+                continue
+            if seen_any_scene:
                 current_scene = None
         if current_scene is not None:
             sections[current_scene].append(line)
         elif not seen_any_scene:
-            preamble.append(line)
+            if m:
+                preamble_headers.append(line)
+            elif line.strip():
+                preamble_rules.append(line)
         else:
             extra.append(line)
 
-    header = "\n".join(preamble).strip() or "# 私の書き方"
-    return (header, sections, extra)
+    header = "\n".join(preamble_headers).strip() or "# 私の書き方"
+    return (header, sections, preamble_rules, extra)
 
 
 def _merge_section_lines(base_lines: list[str], overlay_lines: list[str]) -> list[str]:
@@ -865,8 +929,13 @@ def merge_profile_texts(base_text: str | None, overlay_text: str | None) -> str:
     if not base_raw:
         return over_raw + "\n"
 
-    header, base_secs, base_extra = _split_profile_sections(base_raw)
-    _, over_secs, over_extra = _split_profile_sections(over_raw)
+    header, base_secs, base_preamble_rules, base_extra = _split_profile_sections(base_raw)
+    _, over_secs, over_preamble_rules, over_extra = _split_profile_sections(over_raw)
+
+    if base_preamble_rules:
+        base_secs["common"] = _merge_section_lines(base_preamble_rules, base_secs.get("common", []))
+    if over_preamble_rules:
+        over_secs["common"] = _merge_section_lines(over_preamble_rules, over_secs.get("common", []))
 
     out_parts: list[str] = [header]
     for sc in VALID_SCENES:
@@ -908,10 +977,11 @@ def detect_sync_folders(home_dir: str | None = None) -> list[dict[str, str]]:
     home = os.path.abspath(os.path.expanduser(home_dir or "~"))
     candidates: list[tuple[str, str]] = []
 
-    # Google Drive (Windows / macOS)
-    for drive_letter in ("G", "H", "I"):
-        for sub in ("マイドライブ", "My Drive"):
-            candidates.append(("Google Drive", f"{drive_letter}:\\{sub}"))
+    # Google Drive (Windows の仮想ドライブレターは実機かつ home_dir 未指定時のみ探索)
+    if os.name == "nt" and home_dir is None:
+        for drive_letter in ("G", "H", "I"):
+            for sub in ("マイドライブ", "My Drive"):
+                candidates.append(("Google Drive", f"{drive_letter}:\\{sub}"))
     candidates.extend([
         ("Google Drive", os.path.join(home, "Google Drive", "My Drive")),
         ("Google Drive", os.path.join(home, "Google Drive", "マイドライブ")),
@@ -938,9 +1008,12 @@ def detect_sync_folders(home_dir: str | None = None) -> list[dict[str, str]]:
     found: list[dict[str, str]] = []
     seen_roots: set[str] = set()
     for provider, root in candidates:
-        if not os.path.isdir(root):
+        try:
+            if not os.path.isdir(root):
+                continue
+            norm = os.path.normcase(os.path.realpath(root))
+        except OSError:
             continue
-        norm = os.path.normcase(os.path.realpath(root))
         if norm in seen_roots:
             continue
         seen_roots.add(norm)
@@ -971,8 +1044,8 @@ def build_setup_markdown(
         "formal": "社外メール・目上・公式お知らせ",
     }[scene_norm]
 
-    clean_forbidden = [w.strip() for w in (forbidden or []) if w and w.strip()]
-    clean_rules = [r.strip() for r in (rules or []) if r and r.strip()]
+    clean_forbidden = [_normalize_value(w) for w in (forbidden or []) if _normalize_value(w)]
+    clean_rules = [_normalize_value(r) for r in (rules or []) if _normalize_value(r)]
     pii_err = _check_pii([*clean_forbidden, *clean_rules])
     if pii_err:
         raise ValueError(pii_err)
@@ -998,24 +1071,29 @@ def build_setup_markdown(
     lines = [
         "# nihongo-setup.md — nihongo 導入・適用ガイド（AI向け）",
         "",
-        "このファイルを添付された AI は、自分の環境（PC エージェントか、Web/スマホチャットか）に応じて次の手順どおりに動いてください。",
+        "このファイルを添付された AI は、自分の動作環境に応じて次の A か B のどちらか 1 つだけを実行してください。",
         "",
-        "## 1. 安全性とプライバシーの前提（最初に検証してユーザーへ1行報告）",
+        "## A. ブラウザ・スマホのチャット（ChatGPT / Claude / Gemini 等）の場合",
+        "※ChatGPT の Code Interpreter や Claude の Artifacts などのサンドボックス環境も含みます。GitHub へのアクセスやコマンド導入は行わないでください。",
+        "- 下の「ユーザーの初期ルール」と「共通ルール」を、**今開いているこの会話から直ちに適用**する。",
+        "- 最初の返答は専門用語（Python / MCP / JSON 等）を出さず、「nihongo の日本語ルールを適用しました。このまま文章作成や手直しをどうぞ（毎回貼りたくない場合は Projects や Google Drive に置いておけます）」と 1〜2 行で返す。",
+        "",
+        "## B. ローカル PC の開発エージェント（Claude Code / Cursor / Codex / Antigravity 等）の場合",
+        "ユーザー自身の PC のファイルシステムとシェルへ直接アクセスできる環境でのみ実行してください。**勝手に実行せず**、必ず次の順序と 2 回の承認を守ってください。",
+        "",
+        "### 1. 安全性チェック（最初に確認して1行報告）",
         "- 正本リポジトリ: `https://github.com/AnIT012/nihongo`（MIT ライセンス）",
         "- 外部パッケージ依存ゼロ（Python 3.10+ の標準ライブラリのみで動作）",
         "- 運営者サーバーへのデータ送信・保存は一切なし（`profile.md` と `inbox.jsonl` はユーザー端末または本人所有の Google Drive のみに保存）",
         "- 実名・住所・メールアドレス・電話番号・APIキーなどの個人情報は記録しない",
         "",
-        "## 2. PC の AI エージェント（Claude Code / Cursor / Antigravity / Codex 等）の場合",
-        "コマンド実行やファイル作成ができる環境では、**勝手に実行せず**必ず次の 2 回の確認カードをユーザーに出してから進めてください。",
-        "",
-        "### 確認カード 1（導入・更新の承認・必須）",
+        "### 2. 確認カード 1（導入・更新の承認・必須）",
         "正本リポジトリの安全性を確認したうえで、既存の `nihongo` や `profile.md` の有無を調べ、ユーザーに以下を提示して OK を待つ:",
         "- `https://github.com/AnIT012/nihongo` から最新版を取得（未導入なら新規導入、導入済みなら既存設定を保ったまま最新版へ更新）",
         "- 下の初期ルールを `profile.md` に反映（**既存の `profile.md` がある場合は絶対に上書きせず、未登録の項目だけ追記マージ**）",
         "- この PC に入っている AI（Claude Desktop / Claude Code / Cursor / Antigravity）へ `nihongo-mcp init` で自動登録（既存設定は `.bak` に退避してから追記）",
         "",
-        "### 確認カード 2（保存先と同期の選択・必須）",
+        "### 3. 確認カード 2（保存先と同期の選択・必須）",
         "導入承認のあと、保存先を 1 つ選んでもらう（ユーザーの事前希望: " + sync_label + "）:",
         "- A: この PC だけで使う（`~/.nihongo/profile.md`）",
         "- B: 自分の Google Drive / Dropbox / iCloud の同期フォルダに置く（`nihongo-mcp init --home <同期フォルダ>/nihongo` で複数 PC 同期＋スマホから添付可能）",
@@ -1023,16 +1101,12 @@ def build_setup_markdown(
         "",
         "承認後に導入・設定を完了したら、`nihongo-mcp --self-test` で疎通を確認し、「以降は普段どおり話すだけで自動適用されます。承認画面は `nihongo-check ui` で開けます」と 1 行で案内する。",
         "",
-        "## 3. Web / スマホチャット（ChatGPT / Claude / Gemini 等）の場合",
-        "コマンド実行ができない環境では、この下の「共通ルール」と「ユーザーの初期ルール」を**今開いているこの会話から直ちに適用**してください。",
-        "また、毎回添付しなくて済むよう「このファイルを Claude Projects / ChatGPT Projects / Google Drive に置いておくと次回から1タップで呼べます」と 1 行だけ案内してください。",
-        "",
-        "## 4. ユーザーの初期ルール（profile.md 互換）",
+        "## ユーザーの初期ルール（profile.md 互換）",
         f"- よく使う場面：{scene_ja}（`[{scene_norm}]`）",
-        f"- 絶対に言わない表現：{forbidden_line}",
+        f"- 避ける表現（絶対に言わない表現）：{forbidden_line}",
         f"- 書く時の考え方：{rules_line}",
         "",
-        "## 5. 共通ルール（Webチャット即適用フォールバック）",
+        "## 共通ルール（ブラウザ・スマホチャット即適用）",
         fallback,
         "",
     ]
@@ -1061,10 +1135,11 @@ def read_profile(
         cand_proj = find_project_profile(project_dir, global_profile_path=p_path)
         if cand_proj and os.path.isfile(cand_proj):
             try:
-                with open(cand_proj, encoding="utf-8-sig") as f:
-                    proj_raw = _normalize_newlines(f.read())
-                proj_path = cand_proj
-            except OSError:
+                if os.path.getsize(cand_proj) <= MAX_PROJECT_PROFILE_BYTES:
+                    with open(cand_proj, encoding="utf-8-sig") as f:
+                        proj_raw = _normalize_newlines(f.read())
+                    proj_path = cand_proj
+            except (OSError, UnicodeDecodeError):
                 proj_path = None
                 proj_raw = ""
 

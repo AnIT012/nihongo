@@ -85,6 +85,31 @@ class LayeredProfileAndSyncTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             inbox_mod.build_setup_markdown(forbidden=["secret@example.com"])
 
+    def test_security_audit_regressions_inbox_and_layers(self) -> None:
+        # 1. reject_entries blocks PII in reason
+        with tempfile.TemporaryDirectory() as d:
+            store = inbox_mod.LocalFileStorage(home=d)
+            p = inbox_mod.propose_entry(scene="common", kind="forbidden", value="ご査収のほど", storage=store)
+            with self.assertRaises(ValueError):
+                inbox_mod.reject_entries([p["entry"]["id"]], reason="連絡先 test@example.com", storage=store)
+
+        # 2. Markdown newline injection flattened in build_setup_markdown
+        md = inbox_mod.build_setup_markdown(forbidden=["表現A\n## 乗っ取り見出し"])
+        self.assertNotIn("\n## 乗っ取り見出し", md)
+
+        # 3. Tagless project overlay + ### subheading preserved in 2-layer merge
+        base = "# 私の書き方\n\n## [common]\n- 絶対に言わない表現：「いただけますと幸いです」\n\n## [work]\n### PR向け\n- 短めに書く\n"
+        overlay = "- 絶対に言わない表現：「ご査収のほど」\n"
+        merged = inbox_mod.merge_profile_texts(base, overlay)
+        self.assertIn("ご査収のほど", merged)
+        self.assertIn("いただけますと幸いです", merged)
+        self.assertIn("### PR向け", merged)
+        self.assertIn("- 短めに書く", merged)
+
+        # 4. Non-existent / whitespace project_dir and URI global_profile_path handled safely
+        self.assertIsNone(inbox_mod.find_project_profile("   ", global_profile_path="gdrive://nihongo/profile.md"))
+        self.assertIsNone(inbox_mod.find_project_profile("/nonexistent_nihongo_dir_12345", global_profile_path="gdrive://nihongo/profile.md"))
+
 
 class FakeDriveBackend:
     """Google Drive REST API v3 のインメモリ擬似バックエンド（単体テスト用）。"""
@@ -138,7 +163,9 @@ class FakeDriveBackend:
                 if gd_mod.FOLDER_MIME in q and meta["mimeType"] != gd_mod.FOLDER_MIME:
                     continue
                 parents = meta.get("parents") or []
-                if "in parents" in q and not any(f"'{p}' in parents" in q for p in parents):
+                if "'root' in parents" in q and "root" not in parents:
+                    continue
+                if "in parents" in q and "'root' in parents" not in q and not any(f"'{p}' in parents" in q for p in parents):
                     continue
                 matches.append({"id": fid, "name": name})
             return (200, json.dumps({"files": matches}).encode("utf-8"))
@@ -222,6 +249,8 @@ class GoogleDriveStorageTests(unittest.TestCase):
         self.assertIn("いただけますと幸いです", prof["forbidden"])
 
     def test_oauth_refresh_on_401_and_no_token_leak(self) -> None:
+        import time as _time
+
         backend = FakeDriveBackend(expire_first_call=True)
         store = gd_mod.GoogleDriveStorage(
             client_id="cid_secret",
@@ -229,8 +258,13 @@ class GoogleDriveStorageTests(unittest.TestCase):
             refresh_token="rtok_secret_do_not_leak",
             http_transport=backend.transport,
         )
+        # Simulate a cached token that was revoked/expired server-side -> 401 triggers 1 auto-refresh
+        store._cached_token = "tok_stale"
+        store._cached_token_expiry = _time.monotonic() + 600
         store.write_profile_text("# 私の書き方\n")
         self.assertEqual(store.read_profile_text(), "# 私の書き方\n")
+        refresh_calls = [u for m, u in backend.calls if u == gd_mod.OAUTH_TOKEN_URL]
+        self.assertEqual(len(refresh_calls), 1)
 
         # 失敗時にもトークン文字列が例外へ漏れないこと
         def failing_transport(m, u, h, b, t):
@@ -243,6 +277,28 @@ class GoogleDriveStorageTests(unittest.TestCase):
         with self.assertRaises(gd_mod.GoogleDriveStorageError) as ctx:
             bad_store.read_profile_text()
         self.assertNotIn("SUPER_SECRET_BEARER_TOKEN_12345", str(ctx.exception))
+
+    def test_gdrive_owner_root_scope_and_stale_404_recovery(self) -> None:
+        backend = FakeDriveBackend()
+        # Attacker's shared folder named 'nihongo' NOT in root must be ignored
+        backend.files["attacker_fid"] = {
+            "name": "nihongo",
+            "mimeType": gd_mod.FOLDER_MIME,
+            "parents": ["shared_external_parent"],
+            "content": b"",
+        }
+        store = gd_mod.GoogleDriveStorage(access_token="tok_initial", http_transport=backend.transport)
+        store.write_profile_text("# v1\n")
+        self.assertNotEqual(store._folder_id_cache, "attacker_fid")
+        # Confirm query strictly enforced 'root' in parents and 'me' in owners
+        search_urls = [u for m, u in backend.calls if m == "GET" and "/drive/v3/files?" in u]
+        self.assertTrue(any("root" in urllib.parse.unquote(u) and "me" in urllib.parse.unquote(u) for u in search_urls))
+
+        # Simulate stale file deleted remotely -> PATCH 404 recovers cleanly by recreating
+        old_fid = store._file_id_cache["profile.md"]
+        del backend.files[old_fid]
+        store.write_profile_text("# v2\n")
+        self.assertEqual(store.read_profile_text(), "# v2\n")
 
 
 class LocalUiServerTests(unittest.TestCase):
@@ -313,7 +369,7 @@ class LocalUiServerTests(unittest.TestCase):
         )
         self.assertEqual(bad_origin_status, 403)
 
-        # Direct profile save blocks PII
+        # Direct profile save blocks PII and rejects missing content (no accidental wipe)
         pii_status, _, _ = self._request(
             "POST",
             "/api/profile/save",
@@ -321,6 +377,32 @@ class LocalUiServerTests(unittest.TestCase):
             headers={"X-Nihongo-CSRF": self.csrf},
         )
         self.assertEqual(pii_status, 400)
+
+        missing_content_status, _, _ = self._request(
+            "POST",
+            "/api/profile/save",
+            body={},
+            headers={"X-Nihongo-CSRF": self.csrf},
+        )
+        self.assertEqual(missing_content_status, 400)
+
+        # Non-list ids rejected cleanly with 400
+        bad_ids_status, _, _ = self._request(
+            "POST",
+            "/api/inbox/approve",
+            body={"ids": "not_a_list"},
+            headers={"X-Nihongo-CSRF": self.csrf},
+        )
+        self.assertEqual(bad_ids_status, 400)
+
+        # Port-less Origin rejected on non-80 port
+        portless_origin_status, _, _ = self._request(
+            "POST",
+            "/api/inbox/propose",
+            body={"scene": "common", "kind": "forbidden", "value": "test"},
+            headers={"X-Nihongo-CSRF": self.csrf, "Origin": "http://localhost"},
+        )
+        self.assertEqual(portless_origin_status, 403)
 
         # Oversized body blocked with 413 before reading payload
         conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)

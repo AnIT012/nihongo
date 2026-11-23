@@ -19,6 +19,7 @@ import json
 import os
 import secrets
 import sys
+import threading
 import time
 import urllib.parse
 import webbrowser
@@ -936,7 +937,7 @@ loadState();
 class NihongoUiServer(http.server.ThreadingHTTPServer):
     """ローカル承認 UI 用の軽量 HTTP サーバー（127.0.0.1 専用）。"""
 
-    allow_reuse_address = True
+    allow_reuse_address = os.name != "nt"
 
     def __init__(
         self,
@@ -961,6 +962,7 @@ class NihongoUiServer(http.server.ThreadingHTTPServer):
             )
         )
         self.project_dir = project_dir
+        self.state_lock = threading.RLock()
         self.csrf_token = secrets.token_urlsafe(32)
         self.html_bytes = _render_ui_html(self.csrf_token).encode("utf-8")
         super().__init__(("127.0.0.1", int(port)), _UiRequestHandler)
@@ -975,7 +977,10 @@ class _UiRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def _allowed_hosts(self) -> set[str]:
         port = self.server.server_address[1]
-        return {f"127.0.0.1:{port}", f"localhost:{port}", "127.0.0.1", "localhost"}
+        allowed = {f"127.0.0.1:{port}", f"localhost:{port}"}
+        if port == 80:
+            allowed.update({"127.0.0.1", "localhost"})
+        return allowed
 
     def _check_host(self) -> bool:
         host = (self.headers.get("Host") or "").strip().lower()
@@ -1059,25 +1064,29 @@ class _UiRequestHandler(http.server.BaseHTTPRequestHandler):
             return
 
         if path == "/api/state":
-            prof = inbox_mod.read_profile(
-                storage=self.server.storage,
-                project_dir=self.server.project_dir,
-                include_project=True,
-            )
-            all_items = inbox_mod.list_inbox(status="all", storage=self.server.storage)
-            pending = [x for x in all_items if x.get("status") == "pending"]
-            history = [x for x in all_items if x.get("status") != "pending"][-20:][::-1]
-            self._send_json(
-                200,
-                {
-                    "version": cli_mod.__version__,
-                    "profile": prof,
-                    "default_template": inbox_mod.DEFAULT_PROFILE_TEMPLATE,
-                    "pending_inbox": self._enrich_items(pending),
-                    "history_inbox": self._enrich_items(history),
-                    "sync_folders": inbox_mod.detect_sync_folders(),
-                },
-            )
+            try:
+                with self.server.state_lock:
+                    prof = inbox_mod.read_profile(
+                        storage=self.server.storage,
+                        project_dir=self.server.project_dir,
+                        include_project=True,
+                    )
+                    all_items = inbox_mod.list_inbox(status="all", storage=self.server.storage)
+                pending = [x for x in all_items if x.get("status") == "pending"]
+                history = [x for x in all_items if x.get("status") != "pending"][-20:][::-1]
+                self._send_json(
+                    200,
+                    {
+                        "version": cli_mod.__version__,
+                        "profile": prof,
+                        "default_template": inbox_mod.DEFAULT_PROFILE_TEMPLATE,
+                        "pending_inbox": self._enrich_items(pending),
+                        "history_inbox": self._enrich_items(history),
+                        "sync_folders": inbox_mod.detect_sync_folders(),
+                    },
+                )
+            except Exception as exc:
+                self._send_json(500, {"error": f"状態の読み込みに失敗しました: {exc}"})
             return
 
         self._send_json(404, {"error": "Not Found"})
@@ -1099,46 +1108,57 @@ class _UiRequestHandler(http.server.BaseHTTPRequestHandler):
         path = urllib.parse.urlparse(self.path).path
         try:
             if path == "/api/inbox/propose":
-                res = inbox_mod.propose_entry(
-                    scene=str(data.get("scene") or "common"),
-                    kind=str(data.get("kind") or "rule"),
-                    value=str(data.get("value") or ""),
-                    reason=str(data.get("reason") or ""),
-                    source="local-ui",
-                    storage=self.server.storage,
-                )
+                with self.server.state_lock:
+                    res = inbox_mod.propose_entry(
+                        scene=str(data.get("scene") or "common"),
+                        kind=str(data.get("kind") or "rule"),
+                        value=str(data.get("value") or ""),
+                        reason=str(data.get("reason") or ""),
+                        source="local-ui",
+                        storage=self.server.storage,
+                    )
                 self._send_json(200, res)
                 return
 
             if path == "/api/inbox/approve":
-                ids = [str(x) for x in (data.get("ids") or [])]
+                raw_ids = data.get("ids")
+                if raw_ids is not None and not isinstance(raw_ids, list):
+                    raise ValueError("ids は文字列の配列で指定してください。")
+                ids = [str(x) for x in (raw_ids or [])]
                 approve_all = data.get("approve_all") is True
                 force = data.get("force") is True
-                res = inbox_mod.approve_entries(
-                    ids,
-                    approve_all=approve_all,
-                    force=force,
-                    storage=self.server.storage,
-                )
+                with self.server.state_lock:
+                    res = inbox_mod.approve_entries(
+                        ids,
+                        approve_all=approve_all,
+                        force=force,
+                        storage=self.server.storage,
+                    )
                 self._send_json(200, res)
                 return
 
             if path == "/api/inbox/reject":
-                ids = [str(x) for x in (data.get("ids") or [])]
+                raw_ids = data.get("ids")
+                if raw_ids is not None and not isinstance(raw_ids, list):
+                    raise ValueError("ids は文字列の配列で指定してください。")
+                ids = [str(x) for x in (raw_ids or [])]
                 reject_all = data.get("reject_all") is True
                 reason = str(data.get("reason") or "")
-                res = inbox_mod.reject_entries(
-                    ids,
-                    reject_all=reject_all,
-                    reason=reason,
-                    storage=self.server.storage,
-                )
+                with self.server.state_lock:
+                    res = inbox_mod.reject_entries(
+                        ids,
+                        reject_all=reject_all,
+                        reason=reason,
+                        storage=self.server.storage,
+                    )
                 self._send_json(200, res)
                 return
 
             if path == "/api/profile/save":
-                content = str(data.get("content") or "")
-                res = inbox_mod.save_profile_direct(content, storage=self.server.storage)
+                if "content" not in data or not isinstance(data["content"], str):
+                    raise ValueError("content は文字列で指定してください。")
+                with self.server.state_lock:
+                    res = inbox_mod.save_profile_direct(data["content"], storage=self.server.storage)
                 self._send_json(200, res)
                 return
 
