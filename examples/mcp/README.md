@@ -49,6 +49,21 @@ python3 nihongo/scripts/mcp_server.py init --target claude-desktop --strict-hitl
 }
 ```
 
+## ローカル承認 UI（`nihongo-check ui`）
+
+ターミナルを使わずブラウザ画面で受信箱の承認・却下、`profile.md` の編集、0トークン検査、他端末用 `nihongo-setup.md` の書き出しができます（`127.0.0.1` のみで動作、外部通信ゼロ）。
+
+```bash
+nihongo-check ui
+# または
+python3 nihongo/scripts/cli.py ui
+```
+
+## 複数 PC 同期と分野別ルール（2層プロファイル）
+
+- **複数 PC 同期**：`python3 nihongo/scripts/mcp_server.py init --detect-sync` で PC 内の Google Drive / Dropbox / iCloud フォルダを検出し、`--home "<同期フォルダ>/nihongo"` を指定すると複数 PC で共有できます（API 直接連携の `GoogleDriveStorage` を含めた手順は [google-drive-sync.md](google-drive-sync.md) を参照）。
+- **分野・案件別の別ルール**：作業フォルダ内に `.nihongo/profile.md` を置くと、`get_profile(project_dir=...)` や `nihongo-check profile show --project <dir>` で共通プロフィールに自動で重ねて適用されます。
+
 ## 動作確認
 
 ```bash

@@ -699,10 +699,14 @@ def cmd_inbox_list(args: argparse.Namespace) -> int:
         return 0
 
     print(f"受信箱の候補（{len(items)}件）:")
-    for item in items:
+    scene_ja = {"common": "共通", "casual": "普段・雑談", "work": "社内・同僚", "formal": "社外・目上"}
+    kind_ja = {"forbidden": "NG表現", "rule": "書く時の考え方", "tone": "口調・記号", "first_person": "一人称"}
+    for idx, item in enumerate(items, 1):
+        sc = str(item.get("scene", ""))
+        kd = str(item.get("kind", ""))
         line = (
-            f"- {item['id']} [{item.get('status')}] "
-            f"[{item.get('scene')}/{item.get('kind')}] {item.get('value')}"
+            f"- {idx}. {item['id']} [{item.get('status')}] "
+            f"[{scene_ja.get(sc, sc)} / {kind_ja.get(kd, kd)}] {item.get('value')}"
         )
         if item.get("reason"):
             line += f"（理由: {item['reason']}）"
@@ -851,6 +855,8 @@ def cmd_profile_show(args: argparse.Namespace) -> int:
         info = inbox_mod.read_profile(
             storage=store,
             scene=args.scene,
+            project_dir=getattr(args, "project", None),
+            include_project=bool(getattr(args, "project", None)),
         )
     except ValueError as exc:
         print(f"エラー: {exc}", file=sys.stderr)
@@ -872,9 +878,26 @@ def cmd_profile_show(args: argparse.Namespace) -> int:
         return 0
 
     print(info["markdown"].rstrip("\n"))
+    if info.get("project_profile_path"):
+        print(f"\n（2層マージ適用: {info['project_profile_path']}）")
     if info["pending_inbox_count"]:
         print(f"\n（保留中の受信箱候補: {info['pending_inbox_count']}件）")
     return 0
+
+
+def cmd_ui(args: argparse.Namespace) -> int:
+    if __package__:
+        from . import ui_server
+    else:
+        import ui_server  # noqa: E402
+    return ui_server.run_ui_server(
+        port=args.port,
+        home=args.home,
+        profile_path=args.profile,
+        inbox_path=args.inbox,
+        project_dir=args.project,
+        open_browser=not args.no_browser,
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -990,8 +1013,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_pshow.add_argument("--home", default=None, help="データディレクトリ（既定: ~/.nihongo）")
     p_pshow.add_argument("--profile", default=None, help="profile.md のパス")
     p_pshow.add_argument("--inbox", default=None, help="受信箱ファイルのパス")
+    p_pshow.add_argument("--project", default=None, help="作業フォルダ（.nihongo/profile.md を2層マージ）")
     p_pshow.add_argument("--json", action="store_true", help="JSON 形式で出力する")
     p_pshow.set_defaults(func=cmd_profile_show)
+
+    # Local Approval UI subcommand
+    p_ui = sub.add_parser("ui", help="ローカル承認・ルール管理画面をブラウザで開く（127.0.0.1 のみ・外部通信なし）")
+    p_ui.add_argument("--port", type=int, default=8765, help="待受ポート（既定: 8765）")
+    p_ui.add_argument("--home", default=None, help="データディレクトリ（既定: ~/.nihongo）")
+    p_ui.add_argument("--profile", default=None, help="profile.md のパス")
+    p_ui.add_argument("--inbox", default=None, help="inbox.jsonl のパス")
+    p_ui.add_argument("--project", default=None, help="作業フォルダ（.nihongo/profile.md を2層表示）")
+    p_ui.add_argument("--no-browser", action="store_true", help="ブラウザを自動で開かずに起動する")
+    p_ui.set_defaults(func=cmd_ui)
 
     return parser
 

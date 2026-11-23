@@ -95,6 +95,10 @@ TOOLS_SPEC: list[dict[str, Any]] = [
                     "enum": list(inbox_mod.VALID_SCENES),
                     "description": "特定場面のみ返す場合に指定（common / casual / work / formal）。省略時は全文を返す。",
                 },
+                "project_dir": {
+                    "type": "string",
+                    "description": "作業フォルダのパス。フォルダ内に .nihongo/profile.md があれば共通プロフィールへ2層マージして返す（任意）。",
+                },
             },
             "additionalProperties": False,
         },
@@ -280,6 +284,10 @@ TOOLS_SPEC: list[dict[str, Any]] = [
                     "default": False,
                     "description": "true の場合、trim_commas.py による不要読点の整理案も併せて返す",
                 },
+                "project_dir": {
+                    "type": "string",
+                    "description": "作業フォルダのパス。フォルダ内に .nihongo/profile.md があれば共通ルールと合算して検査する（任意）。",
+                },
             },
             "required": ["orig", "draft"],
             "additionalProperties": False,
@@ -345,9 +353,12 @@ class NihongoMcpServer:
 
     def _tool_get_profile(self, args: dict[str, Any]) -> dict[str, Any]:
         scene = args.get("scene")
+        project_dir = args.get("project_dir")
         info = inbox_mod.read_profile(
             storage=self.storage,
             scene=scene,
+            project_dir=str(project_dir) if project_dir else None,
+            include_project=bool(project_dir),
         )
         forbidden: list[str] = []
         if info["exists"]:
@@ -527,11 +538,16 @@ class NihongoMcpServer:
         request = str(args.get("request", ""))
         scene = args.get("scene")
         check_commas = args.get("check_commas") is True
+        project_dir = args.get("project_dir")
 
-        raw_profile = self.storage.read_profile_text()
+        prof_info = inbox_mod.read_profile(
+            storage=self.storage,
+            project_dir=str(project_dir) if project_dir else None,
+            include_project=bool(project_dir),
+        )
         forbidden: list[str] = []
-        if raw_profile is not None:
-            forbidden = cli_mod.parse_profile_text(raw_profile, scene=scene)
+        if prof_info["exists"]:
+            forbidden = cli_mod.parse_profile_text(prof_info["raw"], scene=scene)
 
         findings = revert_broken.remaining(orig, draft, request)
         if forbidden or scene:
@@ -542,7 +558,8 @@ class NihongoMcpServer:
             "clean": len(formatted) == 0,
             "count": len(formatted),
             "findings": formatted,
-            "profile_used": raw_profile is not None,
+            "profile_used": prof_info["exists"],
+            "layers": prof_info["layers"],
             "scene": scene,
         }
         if check_commas:
@@ -930,8 +947,27 @@ def _main_init(argv: list[str]) -> int:
         help="PATH 上に nihongo-mcp コマンドがある場合はそれを登録に使う",
     )
     parser.add_argument("--dry-run", action="store_true", help="ファイルを書き換えずに登録内容だけ確認する")
+    parser.add_argument(
+        "--detect-sync",
+        action="store_true",
+        help="PC 内の Google Drive / Dropbox / iCloud Drive 同期フォルダ候補を検出して終了する",
+    )
     parser.add_argument("--json", action="store_true", help="JSON 形式で出力する")
     args = parser.parse_args(argv)
+
+    if args.detect_sync:
+        folders = inbox_mod.detect_sync_folders()
+        if args.json:
+            print(json.dumps({"count": len(folders), "folders": folders}, ensure_ascii=False, indent=2))
+            return 0
+        if not folders:
+            print("既知のクラウド同期フォルダは見つかりませんでした。ローカル既定（~/.nihongo）が使えます。")
+            return 0
+        print(f"同期フォルダ候補を {len(folders)} 件見つけました:")
+        for f in folders:
+            print(f"- [{f['provider']}] {f['suggested_home']}")
+        print("反映例: nihongo-mcp init --target all --home \"<上の suggested_home>\"")
+        return 0
 
     targets = list(INIT_TARGETS) if args.target == "all" else [args.target]
     if args.config and len(targets) > 1:

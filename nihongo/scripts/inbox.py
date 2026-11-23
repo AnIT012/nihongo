@@ -736,19 +736,343 @@ def reject_entries(
     }
 
 
+def find_project_profile(
+    start_dir: str | None = None,
+    *,
+    global_profile_path: str | None = None,
+) -> str | None:
+    """作業ディレクトリから上位へ辿り、プロジェクト固有の `.nihongo/profile.md` を探す。
+
+    グローバルの `~/.nihongo/profile.md`（または `global_profile_path`）と同一ファイルは除外する。
+    """
+    cur = os.path.abspath(os.path.expanduser(start_dir or os.getcwd()))
+    if os.path.isfile(cur):
+        cur = os.path.dirname(cur)
+    home_real = os.path.normcase(os.path.realpath(os.path.expanduser("~")))
+    global_real = (
+        os.path.normcase(os.path.realpath(os.path.abspath(os.path.expanduser(global_profile_path))))
+        if global_profile_path
+        else os.path.normcase(os.path.realpath(default_profile_path()))
+    )
+
+    visited: set[str] = set()
+    while True:
+        cur_real = os.path.normcase(os.path.realpath(cur))
+        if cur_real in visited:
+            break
+        visited.add(cur_real)
+
+        # ホームディレクトリ直下の ~/.nihongo/profile.md はグローバル層なので飛ばす
+        if cur_real != home_real:
+            cand = os.path.join(cur, ".nihongo", "profile.md")
+            if os.path.isfile(cand):
+                cand_real = os.path.normcase(os.path.realpath(cand))
+                if cand_real != global_real:
+                    return os.path.abspath(cand)
+
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            break
+        cur = parent
+    return None
+
+
+def _split_profile_sections(raw_text: str) -> tuple[str, dict[str, list[str]], list[str]]:
+    """profile.md を (先頭ヘッダ, 4場面セクション行マップ, その他末尾行) に分解する。"""
+    text = _normalize_newlines(raw_text)
+    if not text.strip():
+        return ("# 私の書き方", {}, [])
+    lines = text.split("\n")
+    sections: dict[str, list[str]] = {}
+    preamble: list[str] = []
+    extra: list[str] = []
+    current_scene: str | None = None
+    seen_any_scene = False
+
+    for line in lines:
+        m = _HEADING_RE.match(line)
+        if m:
+            tag_m = _SCENE_TAG_RE.search(m.group(2))
+            if tag_m:
+                current_scene = tag_m.group(1).lower()
+                seen_any_scene = True
+                sections.setdefault(current_scene, [])
+                continue
+            elif seen_any_scene:
+                current_scene = None
+        if current_scene is not None:
+            sections[current_scene].append(line)
+        elif not seen_any_scene:
+            preamble.append(line)
+        else:
+            extra.append(line)
+
+    header = "\n".join(preamble).strip() or "# 私の書き方"
+    return (header, sections, extra)
+
+
+def _merge_section_lines(base_lines: list[str], overlay_lines: list[str]) -> list[str]:
+    """2層のセクション行をフィールド単位でマージする（絶対に言わない表現や口調を結合）。"""
+    field_re = re.compile(r"^(\s*[-*・]\s*(?:\*\*)?([^：:]+?)(?:\*\*)?\s*[：:])(.*)$")
+    result = [ln for ln in base_lines if ln.strip() != ""]
+    label_to_idx: dict[str, int] = {}
+    for i, ln in enumerate(result):
+        m = field_re.match(ln)
+        if m:
+            label_to_idx[m.group(2).strip()] = i
+
+    for ln in overlay_lines:
+        if not ln.strip():
+            continue
+        m = field_re.match(ln)
+        if m:
+            lbl = m.group(2).strip()
+            rhs = m.group(3).strip()
+            if not rhs:
+                continue
+            if lbl in label_to_idx:
+                idx = label_to_idx[lbl]
+                bm = field_re.match(result[idx])
+                assert bm is not None
+                b_prefix, b_rhs = bm.group(1), bm.group(3).strip()
+                if not b_rhs:
+                    result[idx] = f"{b_prefix}{rhs}"
+                elif unicodedata.normalize("NFKC", rhs) not in unicodedata.normalize("NFKC", b_rhs):
+                    sep = "、" if lbl == "絶対に言わない表現" else ("／" if lbl == "一人称" else "。")
+                    if sep == "。" and b_rhs.endswith(("。", "！", "!", "？", "?")):
+                        result[idx] = f"{b_prefix}{b_rhs}{rhs}"
+                    elif sep == "、" and b_rhs.endswith(("、", ",")):
+                        result[idx] = f"{b_prefix}{b_rhs}{rhs}"
+                    else:
+                        result[idx] = f"{b_prefix}{b_rhs}{sep}{rhs}"
+                continue
+            label_to_idx[lbl] = len(result)
+            result.append(ln)
+        else:
+            if ln not in result:
+                result.append(ln)
+    return result
+
+
+def merge_profile_texts(base_text: str | None, overlay_text: str | None) -> str:
+    """グローバル profile.md とプロジェクト固有 .nihongo/profile.md を2層マージする。"""
+    base_raw = _normalize_newlines(base_text or "").strip()
+    over_raw = _normalize_newlines(overlay_text or "").strip()
+    if not base_raw and not over_raw:
+        return ""
+    if not over_raw:
+        return base_raw + "\n"
+    if not base_raw:
+        return over_raw + "\n"
+
+    header, base_secs, base_extra = _split_profile_sections(base_raw)
+    _, over_secs, over_extra = _split_profile_sections(over_raw)
+
+    out_parts: list[str] = [header]
+    for sc in VALID_SCENES:
+        if sc not in base_secs and sc not in over_secs:
+            continue
+        merged_lines = _merge_section_lines(base_secs.get(sc, []), over_secs.get(sc, []))
+        block = [f"## [{sc}]", *merged_lines]
+        out_parts.append("\n".join(block).rstrip())
+
+    extras = [ln for ln in (*base_extra, *over_extra) if ln.strip()]
+    if extras:
+        out_parts.append("\n".join(extras))
+    return "\n\n".join(out_parts).rstrip("\n") + "\n"
+
+
+def save_profile_direct(
+    content: str,
+    *,
+    storage: ProfileStorage | None = None,
+    profile_path: str | None = None,
+) -> dict[str, Any]:
+    """profile.md を直接保存する（ローカル承認UI向け。PII ガードを必ず通す）。"""
+    normalized = _normalize_newlines(content)
+    pii_err = _check_pii([normalized])
+    if pii_err:
+        raise ValueError(pii_err)
+    store = _resolve_storage(storage, profile_path=profile_path)
+    out_text = normalized.rstrip("\n") + "\n" if normalized.strip() else ""
+    store.write_profile_text(out_text)
+    return {
+        "saved": True,
+        "profile_path": store.profile_location,
+        "bytes": len(out_text.encode("utf-8")),
+    }
+
+
+def detect_sync_folders(home_dir: str | None = None) -> list[dict[str, str]]:
+    """PC 内に既にある Google Drive / Dropbox / iCloud Drive / OneDrive の同期フォルダ候補を検出する。"""
+    home = os.path.abspath(os.path.expanduser(home_dir or "~"))
+    candidates: list[tuple[str, str]] = []
+
+    # Google Drive (Windows / macOS)
+    for drive_letter in ("G", "H", "I"):
+        for sub in ("マイドライブ", "My Drive"):
+            candidates.append(("Google Drive", f"{drive_letter}:\\{sub}"))
+    candidates.extend([
+        ("Google Drive", os.path.join(home, "Google Drive", "My Drive")),
+        ("Google Drive", os.path.join(home, "Google Drive", "マイドライブ")),
+        ("Google Drive", os.path.join(home, "Google ドライブ")),
+    ])
+    cloud_storage = os.path.join(home, "Library", "CloudStorage")
+    if os.path.isdir(cloud_storage):
+        try:
+            for name in sorted(os.listdir(cloud_storage)):
+                if name.startswith("GoogleDrive-"):
+                    for sub in ("マイドライブ", "My Drive"):
+                        candidates.append(("Google Drive", os.path.join(cloud_storage, name, sub)))
+        except OSError:
+            pass
+
+    # Dropbox / iCloud Drive / OneDrive
+    candidates.extend([
+        ("Dropbox", os.path.join(home, "Dropbox")),
+        ("iCloud Drive", os.path.join(home, "Library", "Mobile Documents", "com~apple~CloudDocs")),
+        ("iCloud Drive", os.path.join(home, "iCloudDrive")),
+        ("OneDrive", os.path.join(home, "OneDrive")),
+    ])
+
+    found: list[dict[str, str]] = []
+    seen_roots: set[str] = set()
+    for provider, root in candidates:
+        if not os.path.isdir(root):
+            continue
+        norm = os.path.normcase(os.path.realpath(root))
+        if norm in seen_roots:
+            continue
+        seen_roots.add(norm)
+        found.append({
+            "provider": provider,
+            "root": os.path.abspath(root),
+            "suggested_home": os.path.join(os.path.abspath(root), "nihongo"),
+        })
+    return found
+
+
+def build_setup_markdown(
+    *,
+    forbidden: list[str] | None = None,
+    scene: str = "work",
+    rules: list[str] | None = None,
+    sync_preference: str = "local",
+    web_fallback_text: str | None = None,
+) -> str:
+    """AI にそのまま添付できる 1 ファイル導入プロトコル（nihongo-setup.md）を生成する。"""
+    scene_norm = scene.strip().lower() if scene else "work"
+    if scene_norm not in VALID_SCENES:
+        scene_norm = "work"
+    scene_ja = {
+        "common": "全場面共通",
+        "casual": "普段のチャット・雑談",
+        "work": "仕事・社内チャット・ドキュメント",
+        "formal": "社外メール・目上・公式お知らせ",
+    }[scene_norm]
+
+    clean_forbidden = [w.strip() for w in (forbidden or []) if w and w.strip()]
+    clean_rules = [r.strip() for r in (rules or []) if r and r.strip()]
+    pii_err = _check_pii([*clean_forbidden, *clean_rules])
+    if pii_err:
+        raise ValueError(pii_err)
+
+    sync_label = (
+        "自分の Google Drive 同期フォルダ（複数PC・スマホ共有）"
+        if sync_preference == "gdrive"
+        else "この PC のローカル（~/.nihongo/profile.md）"
+    )
+    forbidden_line = "、".join(f"「{_strip_outer_quotes(w)}」" for w in clean_forbidden) if clean_forbidden else "（未設定・会話しながら追加）"
+    rules_line = "。".join(clean_rules) if clean_rules else "（未設定・会話しながら追加）"
+
+    fallback = (web_fallback_text or "").strip()
+    if not fallback:
+        fallback = (
+            "1. 事実を作らない。依頼や資料にない数字・理由・約束（調整します等）を足さず、不明な値だけ【日時】等の空欄にする。\n"
+            "2. なりすまし・詐欺・個人情報窃取の文は断る。\n"
+            "3. 敬語は迷ったら1段低くし、読点は読み違える所と長い前置きの後にだけ打つ。\n"
+            "4. 前置き・言い直し・不要なまとめを省き、推敲では元の意味や必須度（必ず等）を弱めない。\n"
+            "5. 友達向けのくだけた語尾や絵文字を目上・社外向けへ持ち込まない。"
+        )
+
+    lines = [
+        "# nihongo-setup.md — nihongo 導入・適用ガイド（AI向け）",
+        "",
+        "このファイルを添付された AI は、自分の環境（PC エージェントか、Web/スマホチャットか）に応じて次の手順どおりに動いてください。",
+        "",
+        "## 1. 安全性とプライバシーの前提（最初に検証してユーザーへ1行報告）",
+        "- 正本リポジトリ: `https://github.com/AnIT012/nihongo`（MIT ライセンス）",
+        "- 外部パッケージ依存ゼロ（Python 3.10+ の標準ライブラリのみで動作）",
+        "- 運営者サーバーへのデータ送信・保存は一切なし（`profile.md` と `inbox.jsonl` はユーザー端末または本人所有の Google Drive のみに保存）",
+        "- 実名・住所・メールアドレス・電話番号・APIキーなどの個人情報は記録しない",
+        "",
+        "## 2. PC の AI エージェント（Claude Code / Cursor / Antigravity / Codex 等）の場合",
+        "コマンド実行やファイル作成ができる環境では、**勝手に実行せず**必ず次の 2 回の確認カードをユーザーに出してから進めてください。",
+        "",
+        "### 確認カード 1（導入・更新の承認・必須）",
+        "正本リポジトリの安全性を確認したうえで、既存の `nihongo` や `profile.md` の有無を調べ、ユーザーに以下を提示して OK を待つ:",
+        "- `https://github.com/AnIT012/nihongo` から最新版を取得（未導入なら新規導入、導入済みなら既存設定を保ったまま最新版へ更新）",
+        "- 下の初期ルールを `profile.md` に反映（**既存の `profile.md` がある場合は絶対に上書きせず、未登録の項目だけ追記マージ**）",
+        "- この PC に入っている AI（Claude Desktop / Claude Code / Cursor / Antigravity）へ `nihongo-mcp init` で自動登録（既存設定は `.bak` に退避してから追記）",
+        "",
+        "### 確認カード 2（保存先と同期の選択・必須）",
+        "導入承認のあと、保存先を 1 つ選んでもらう（ユーザーの事前希望: " + sync_label + "）:",
+        "- A: この PC だけで使う（`~/.nihongo/profile.md`）",
+        "- B: 自分の Google Drive / Dropbox / iCloud の同期フォルダに置く（`nihongo-mcp init --home <同期フォルダ>/nihongo` で複数 PC 同期＋スマホから添付可能）",
+        "- C: 今開いている作業フォルダ専用にする（`./.nihongo/profile.md`）",
+        "",
+        "承認後に導入・設定を完了したら、`nihongo-mcp --self-test` で疎通を確認し、「以降は普段どおり話すだけで自動適用されます。承認画面は `nihongo-check ui` で開けます」と 1 行で案内する。",
+        "",
+        "## 3. Web / スマホチャット（ChatGPT / Claude / Gemini 等）の場合",
+        "コマンド実行ができない環境では、この下の「共通ルール」と「ユーザーの初期ルール」を**今開いているこの会話から直ちに適用**してください。",
+        "また、毎回添付しなくて済むよう「このファイルを Claude Projects / ChatGPT Projects / Google Drive に置いておくと次回から1タップで呼べます」と 1 行だけ案内してください。",
+        "",
+        "## 4. ユーザーの初期ルール（profile.md 互換）",
+        f"- よく使う場面：{scene_ja}（`[{scene_norm}]`）",
+        f"- 絶対に言わない表現：{forbidden_line}",
+        f"- 書く時の考え方：{rules_line}",
+        "",
+        "## 5. 共通ルール（Webチャット即適用フォールバック）",
+        fallback,
+        "",
+    ]
+    return "\n".join(lines)
+
+
 def read_profile(
     *,
     profile_path: str | None = None,
     inbox_path: str | None = None,
     scene: str | None = None,
     storage: ProfileStorage | None = None,
+    project_dir: str | None = None,
+    include_project: bool = False,
 ) -> dict[str, Any]:
-    """profile.md の生テキスト・セクション別内容・保留中 inbox 件数を返す。"""
+    """profile.md の生テキスト・セクション別内容・保留中 inbox 件数を返す（2層マージ対応）。"""
     store = _resolve_storage(storage, profile_path=profile_path, inbox_path=inbox_path)
     p_path = store.profile_location
     loaded = store.read_profile_text()
-    exists = loaded is not None
-    raw = _normalize_newlines(loaded) if loaded is not None else ""
+    global_exists = loaded is not None
+    global_raw = _normalize_newlines(loaded) if loaded is not None else ""
+
+    proj_path: str | None = None
+    proj_raw = ""
+    if project_dir is not None or include_project:
+        cand_proj = find_project_profile(project_dir, global_profile_path=p_path)
+        if cand_proj and os.path.isfile(cand_proj):
+            try:
+                with open(cand_proj, encoding="utf-8-sig") as f:
+                    proj_raw = _normalize_newlines(f.read())
+                proj_path = cand_proj
+            except OSError:
+                proj_path = None
+                proj_raw = ""
+
+    exists = global_exists or bool(proj_path)
+    if proj_path:
+        raw = merge_profile_texts(global_raw, proj_raw)
+    else:
+        raw = global_raw
 
     sections: dict[str, str] = {}
     if raw:
@@ -773,12 +1097,22 @@ def read_profile(
             parts.append(sections[sc])
         filtered_markdown = "\n\n".join(parts)
 
+    layers: list[str] = []
+    if global_exists:
+        layers.append(p_path)
+    if proj_path:
+        layers.append(proj_path)
+
     return {
         "exists": exists,
+        "global_exists": global_exists,
         "profile_path": p_path,
+        "project_profile_path": proj_path,
+        "layers": layers,
         "scene": scene.lower() if scene else None,
         "pending_inbox_count": pending_count,
         "sections": sections,
         "markdown": filtered_markdown,
         "raw": raw,
+        "global_raw": global_raw,
     }
