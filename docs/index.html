@@ -385,16 +385,40 @@ a { color: inherit; text-decoration: none; }
   border: 0;
   border-top: 1px solid #ECECE8;
 }
+.dl-modal-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.dl-modal-pal {
+  width: 72px;
+  height: 83px;
+  flex: none;
+  background: url("pal-bow.png") 0 0 / 200% 100% no-repeat;
+  image-rendering: pixelated;
+  animation: palBow 2.6s steps(1) infinite;
+}
+@keyframes palBow {
+  0%, 42% { background-position: 0 0; }
+  43%, 100% { background-position: 100% 0; }
+}
 .dl-modal h3 {
-  font-size: 22px;
+  font-size: 21.5px;
   font-weight: 900;
   letter-spacing: -0.025em;
   color: var(--ink);
-  line-height: 1.45;
+  line-height: 1.4;
+}
+.dl-modal-lead {
+  margin-top: 5px;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--red);
+  line-height: 1.4;
 }
 .dl-modal-support-txt {
-  margin-top: 12px;
-  font-size: 15.5px;
+  margin-top: 14px;
+  font-size: 14.5px;
   line-height: 1.8;
   color: var(--body);
 }
@@ -436,12 +460,16 @@ a { color: inherit; text-decoration: none; }
 .dl-modal-dismiss:hover { color: var(--ink); background: var(--soft); }
 @media (max-width: 520px) {
   .dl-modal { padding: 26px 22px 20px; border-radius: 18px; }
-  .dl-modal h3 { font-size: 19px; }
-  .dl-modal-support-txt { font-size: 14.5px; }
+  .dl-modal-hero { gap: 14px; }
+  .dl-modal-pal { width: 60px; height: 69px; }
+  .dl-modal h3 { font-size: 18px; }
+  .dl-modal-lead { font-size: 16px; }
+  .dl-modal-support-txt { font-size: 14px; }
   .dl-modal-primary { font-size: 15px; padding: 14px 18px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dl-modal-backdrop, .dl-modal { transition: none !important; }
+  .dl-modal-pal { animation: none !important; background-position: 100% 0; }
 }
 .hero-meta {
   margin-top: 28px;
@@ -2008,8 +2036,14 @@ footer code b { color: var(--ink); }
     <div class="dl-modal-file" id="dl-modal-file">nihongo-setup.md を保存しました</div>
     <p class="dl-modal-step" id="dl-modal-step">そのまま ChatGPT・Claude・Cursor などのチャット欄に添付して送るだけで使えます。</p>
     <hr class="dl-modal-sep">
-    <h3 id="dl-modal-title">もし役立ったら、100円から応援してもらえると嬉しいです。</h3>
-    <p class="dl-modal-support-txt">20歳の大学生が個人で開発・維持しています。nihongo は無料のまま使い続けられるので、気に入ったら開発費のカンパをお願いします（OFUSE・登録不要）。</p>
+    <div class="dl-modal-hero">
+      <div class="dl-modal-pal" role="img" aria-label="お辞儀するキャラクター"></div>
+      <div>
+        <h3 id="dl-modal-title">もし役に立ったら、<br>応援お願いします！</h3>
+        <p class="dl-modal-lead">100円からできます！</p>
+      </div>
+    </div>
+    <p class="dl-modal-support-txt">20歳の大学生が個人で開発・維持しています。本体はずっと無料のまま使えるので、開発環境の維持に少しだけ力を貸してもらえると嬉しいです（クレカ・Apple Pay・Google Pay対応／会員登録不要）。</p>
     <div class="dl-modal-actions">
       <a class="dl-modal-primary" href="https://ofuse.me/754edfb1" target="_blank" rel="noopener">OFUSEで応援する（100円〜）→</a>
       <button type="button" class="dl-modal-dismiss" id="dl-modal-dismiss">閉じる</button>
