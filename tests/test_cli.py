@@ -317,6 +317,24 @@ class CliGitTests(unittest.TestCase):
 
 
 class CliProfileAndSceneTests(unittest.TestCase):
+    def test_adjacent_quoted_expressions_in_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            profile = os.path.join(d, "profile.md")
+            orig = os.path.join(d, "orig.md")
+            draft = os.path.join(d, "draft.md")
+            write_utf8(profile, "## [common]\n- 絶対に言わない表現：「〜させていただきます」「恐れ入りますが」「アサイン」「コミット」、絵文字の連打\n")
+            write_utf8(orig, "担当を決めます。")
+            write_utf8(draft, "担当をアサインします。")
+            result = run_cli(["diff", orig, draft, "--profile", profile, "--json"])
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            self.assertIn("「アサイン」", json.loads(result.stdout)["findings"][0])
+
+    def test_quoted_expressions_keep_internal_separators(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            profile = os.path.join(d, "profile.md")
+            write_utf8(profile, "## [common]\n- 絶対に言わない表現：『企画／制作』 「さて、次は」 / ご査収のほど\n")
+            self.assertEqual(cli_mod.parse_profile(profile), ["企画／制作", "さて、次は", "ご査収のほど"])
+
     SAMPLE_PROFILE = (
         "# 私の書き方\n\n"
         "## [common]\n"

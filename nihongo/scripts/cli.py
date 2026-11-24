@@ -70,7 +70,9 @@ _PLACEHOLDER_PAREN_RE = re.compile(
     r"[（(]\s*(?:例|記入例|未記入)\s*(?:[：:][^）)]*)?[）)]"
 )
 _PLACEHOLDER_PREFIX_RE = re.compile(r"^(?:例|記入例|未記入)\s*[：:]")
-_FORBIDDEN_SPLIT_RE = re.compile(r"[、,／/・]+")
+# 公式例の「A」「B」にも区切りを補う。括弧で囲んだ語の中の読点やスラッシュは語の一部。
+_ADJACENT_QUOTES_RE = re.compile(r"(?<=[」』])\s*(?=[「『])")
+_FORBIDDEN_ITEM_RE = re.compile(r"(?:「[^」]*」|『[^』]*』|[^、,／/・])+")
 _SKIP_FORBIDDEN_TOKENS = frozenset({"", "...", "…", "-", "—", "なし", "特になし"})
 
 _CASUAL_SSU_RE = re.compile(r"っす(?![ぐうる])")
@@ -123,7 +125,7 @@ def parse_profile(path: str, scene: str | None = None) -> list[str]:
             continue
 
         parsed: list[str] = []
-        for raw_token in _FORBIDDEN_SPLIT_RE.split(rhs):
+        for raw_token in _FORBIDDEN_ITEM_RE.findall(_ADJACENT_QUOTES_RE.sub("、", rhs)):
             cleaned = _clean_forbidden_token(raw_token)
             if cleaned:
                 parsed.append(cleaned)
