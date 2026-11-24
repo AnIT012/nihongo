@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nihongo-check"
-version = "3.0.0"
+version = "3.1.0"
 description = "原文と直した文の意味のズレ検出・自動復旧・読点整理を行う日本語チェック CLI"
 readme = "README.md"
 license = { text = "MIT" }
@@ -27,6 +27,7 @@ Issues = "https://github.com/AnIT012/nihongo/issues"
 
 [project.scripts]
 nihongo-check = "nihongo_check.cli:main"
+nihongo-mcp = "nihongo_check.mcp_server:main"
 
 [tool.setuptools]
 packages = ["nihongo_check"]

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "nihongo": {
+      "command": "python3",
+      "args": [
+        "/path/to/nihongo/nihongo/scripts/mcp_server.py"
+      ]
+    }
+  }
+}

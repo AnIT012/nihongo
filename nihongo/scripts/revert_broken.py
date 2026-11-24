@@ -71,9 +71,9 @@ def words_of(item):
     m = re.match(r"\[確かさ・強さ\] 「(.+?)」の言い方が(減った|増えた)", item)
     if m:
         return MODALITY[m.group(1)], ("lost" if m.group(2) == "減った" else "added")
-    m = re.match(r"\[程度・約束\] 「(.+?)」が減った", item)
+    m = re.match(r"\[程度・約束\] 「(.+?)」が(減った|増えた)", item)
     if m:
-        return [m.group(1)], "lost"
+        return [m.group(1)], ("lost" if m.group(2) == "減った" else "added")
     m = re.match(r"\[(数値・日時|曜日|コード|URL)\] 直した文で増えたもの: (.*)", item)
     if m:
         return [x.strip() for x in m.group(2).split(", ") if x.strip()], "added"
@@ -397,9 +397,9 @@ def one_pass(src, dst, request="", items=None):
         ws, kind = words_of(item)
         if kind == "pair":
             # 話題の語を含む文どうしで、いちばん近い組を戻す（似た形の別の文と取り違えない）
-            idx = [k for k, d in enumerate(D) if ws[0] in d[2]]
+            idx = [k for k, d in enumerate(D) if ws[0] in norm(d[2])]
             for s in S:
-                if ws[0] in s[2] and idx:
+                if ws[0] in norm(s[2]) and idx:
                     j, sc = best(s[2], [D[k] for k in idx])
                     if j is not None and sc >= 0.45:
                         put(idx[j], s[2])
@@ -426,7 +426,7 @@ def one_pass(src, dst, request="", items=None):
                 if j is not None and not has(S[j][2], ws):
                     put(i, S[j][2])
         elif kind == "gone":
-            s = next((x for x in S if x[2].strip().startswith(ws[:20])), None)
+            s = next((x for x in S if norm(x[2]).strip().startswith(ws[:20])), None)
             if s is None:
                 continue
             # 伏字化して残っている文を、消えた文として原文のまま差し込まない。
