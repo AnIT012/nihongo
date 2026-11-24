@@ -301,27 +301,25 @@ def _git_changed_files(
     repo_root: str,
     base: str,
     staged: bool,
-    pathspecs: list[str] | None = None,
-) -> list[str]:
-    cmd = ["-c", "core.quotepath=false", "diff", "-z", "--name-only", "--diff-filter=M"]
+) -> dict[str, str]:
+    """変更先のパスから、比較元コミットでのパスを引けるようにする。"""
+    cmd = ["diff", "-z", "--name-status", "--find-renames", "--diff-filter=MR"]
     if staged:
         cmd.append("--cached")
     cmd.append(base)
-    if pathspecs:
-        cmd.append("--")
-        cmd.extend(pathspecs)
+    cmd.append("--")
     proc = _run_git(cmd, cwd=repo_root)
     if proc.returncode != 0:
-        return []
-    out: list[str] = []
-    for chunk in proc.stdout.split(b"\x00"):
-        if not chunk:
-            continue
+        return {}
+    out: dict[str, str] = {}
+    fields = iter(proc.stdout.split(b"\x00")[:-1])
+    for status in fields:
+        old = next(fields)
+        new = next(fields) if status.startswith(b"R") else old
         try:
-            rel = chunk.decode("utf-8")
+            out[new.decode("utf-8")] = old.decode("utf-8")
         except UnicodeDecodeError:
             continue
-        out.append(rel.replace("\\", "/"))
     return out
 
 
@@ -503,6 +501,8 @@ def cmd_git(args: argparse.Namespace) -> int:
         print(f"比較元のコミットが見つかりません: {args.base}", file=sys.stderr)
         return 2
 
+    # パスで絞ってから diff を取ると、別ディレクトリからの移動を追加と誤認する。
+    sources = _git_changed_files(repo_root, args.base, args.staged)
     targets: list[str] = []
     seen: set[str] = set()
 
@@ -523,22 +523,23 @@ def cmd_git(args: argparse.Namespace) -> int:
                 if rel != ".":
                     dir_specs.append(rel)
                 else:
-                    for changed in _git_changed_files(repo_root, args.base, args.staged):
+                    for changed in sources:
                         _add_target(changed)
             else:
                 _add_target(rel)
         if dir_specs:
-            for changed in _git_changed_files(repo_root, args.base, args.staged, dir_specs):
-                _add_target(changed)
+            for changed in sources:
+                if any(changed.startswith(directory + "/") for directory in dir_specs):
+                    _add_target(changed)
     else:
-        for changed in _git_changed_files(repo_root, args.base, args.staged):
+        for changed in sources:
             _add_target(changed)
 
     checked = 0
     flagged_files: list[dict[str, object]] = []
 
     for rel in targets:
-        orig_raw = _git_show_utf8(repo_root, f"{args.base}:{rel}")
+        orig_raw = _git_show_utf8(repo_root, f"{args.base}:{sources.get(rel, rel)}")
         if orig_raw is None:
             continue
         if args.staged:
