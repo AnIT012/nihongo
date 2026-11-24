@@ -299,13 +299,30 @@ class _UiRequestHandler(http.server.BaseHTTPRequestHandler):
 
         self._send_json(404, {"error": "Not Found"})
 
+    def _drain_small_body(self) -> None:
+        """Windows で未読 POST ボディを残したままソケットを閉じた際の RST (WinError 10053) を防ぐ。"""
+        raw_len = self.headers.get("Content-Length")
+        if not raw_len:
+            return
+        try:
+            length = int(raw_len)
+        except ValueError:
+            return
+        if 0 < length <= 8192:
+            try:
+                self.rfile.read(length)
+            except OSError:
+                pass
+
     def do_POST(self) -> None:
         if not self._check_host():
-            self._send_json(403, {"error": "不正な Host ヘッダのため拒否しました。"})
+            self._drain_small_body()
+            self._send_json(403, {"error": "不正な Host ヘッダのため拒否しました。"}, close=True)
             return
         csrf_err = self._check_origin_and_csrf()
         if csrf_err:
-            self._send_json(403, {"error": csrf_err})
+            self._drain_small_body()
+            self._send_json(403, {"error": csrf_err}, close=True)
             return
 
         data, err_status, err_msg = self._read_json_body()
