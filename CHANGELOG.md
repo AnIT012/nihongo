@@ -6,7 +6,7 @@
 
 - **HITL 受信箱（`~/.nihongo/inbox.jsonl`）とローカル MCP サーバー（`nihongo-mcp`）**：会話で直した言い回しをまず受信箱へ積み、本人が承認した項目だけを `~/.nihongo/profile.md` へ反映する仕組みを追加しました（Python 3.10+ 標準ライブラリのみ・外部パッケージ依存ゼロ）。個人情報（メール・電話番号・APIキー等）の自動ブロック、`[formal]` 場面への崩し表現ガード、`--strict-hitl` モードに対応しています。
 - **2層プロファイル自動マージ**：グローバルの `~/.nihongo/profile.md` に加え、作業フォルダ配下の `.nihongo/profile.md` を自動検出してマージ適用できるようにしました（シンボリックリンク・上位ディレクトリ逸脱・256KB 上限ガード付き）。
-- **複数端末・Google Drive 同期**：PC 内の Google Drive / Dropbox / iCloud Drive / OneDrive 同期フォルダを自動検出する `nihongo-mcp init --detect-sync` と、標準ライブラリ実装の `GoogleDriveStorage`（OAuth2 トークン自動更新・所有者／マイドライブ直下スコープ固定）を追加しました。
+- **複数端末・クラウド同期フォルダ対応**：PC 内の Google Drive / Dropbox / iCloud Drive / OneDrive 同期フォルダを自動検出する `nihongo-mcp init --detect-sync` を追加しました。`--home "<同期フォルダ>/nihongo"` を指定するだけで、API キーや OAuth 設定なしで複数 PC 同期とスマホからの参照ができます。
 
 ### チャット完結のルール管理・CLI 強化・公式 LP
 

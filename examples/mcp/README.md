@@ -60,7 +60,7 @@ python3 nihongo/scripts/mcp_server.py init --target claude-desktop --strict-hitl
 
 ## 複数 PC 同期と分野別ルール（2層プロファイル）
 
-- **複数 PC 同期**：`python3 nihongo/scripts/mcp_server.py init --detect-sync` で PC 内の Google Drive / Dropbox / iCloud フォルダを検出し、`--home "<同期フォルダ>/nihongo"` を指定すると複数 PC で共有できます（API 直接連携の `GoogleDriveStorage` を含めた手順は [google-drive-sync.md](google-drive-sync.md) を参照）。
+- **複数 PC・スマホ同期**：`python3 nihongo/scripts/mcp_server.py init --detect-sync` で PC 内の Google Drive / Dropbox / iCloud / OneDrive フォルダを検出し、`--home "<同期フォルダ>/nihongo"` を指定すると、API キーや OAuth 設定なしで複数 PC から同じ `profile.md` を共有できます（スマホアプリからも同期フォルダ内の `profile.md` をそのまま添付できます）。
 - **分野・案件別の別ルール**：作業フォルダ内に `.nihongo/profile.md` を置くと、`get_profile(project_dir=...)` や `nihongo-check profile show --project <dir>` で共通プロフィールに自動で重ねて適用されます。
 
 ## 動作確認

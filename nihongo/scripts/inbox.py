@@ -990,27 +990,6 @@ def merge_profile_texts(base_text: str | None, overlay_text: str | None) -> str:
     return "\n\n".join(out_parts).rstrip("\n") + "\n"
 
 
-def save_profile_direct(
-    content: str,
-    *,
-    storage: ProfileStorage | None = None,
-    profile_path: str | None = None,
-) -> dict[str, Any]:
-    """profile.md を直接保存する（ローカル承認UI向け。PII ガードを必ず通す）。"""
-    normalized = _normalize_newlines(content)
-    pii_err = _check_pii([normalized])
-    if pii_err:
-        raise ValueError(pii_err)
-    store = _resolve_storage(storage, profile_path=profile_path)
-    out_text = normalized.rstrip("\n") + "\n" if normalized.strip() else ""
-    store.write_profile_text(out_text)
-    return {
-        "saved": True,
-        "profile_path": store.profile_location,
-        "bytes": len(out_text.encode("utf-8")),
-    }
-
-
 def _split_quoted_tokens(rhs: str) -> list[str]:
     """引用符「...」の内側を守りながら、外側の区切り（、,／/・）で分割する。"""
     quote_pairs = {"「": "」", "『": "』", '"': '"', "'": "'", "“": "”"}
@@ -1186,52 +1165,6 @@ def format_profile_summary(profile_info: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def add_profile_rule_direct(
-    *,
-    scene: str,
-    kind: str,
-    value: str,
-    force: bool = False,
-    storage: ProfileStorage | None = None,
-    profile_path: str | None = None,
-) -> dict[str, Any]:
-    """ローカルUIから本人操作で1件のルール／避ける表現を直接 profile.md に追加する（PII・formalガード付き）。"""
-    sc = scene.strip().lower()
-    kd = kind.strip().lower()
-    if sc not in VALID_SCENES:
-        raise ValueError(f"不正な scene です: {scene!r}")
-    if kd not in VALID_KINDS:
-        raise ValueError(f"不正な kind です: {kind!r}")
-    val = _normalize_value(value)
-    if not val:
-        raise ValueError("追加する内容を入力してください。")
-    if len(val) > MAX_VALUE_LEN:
-        raise ValueError(f"内容が長すぎます（上限 {MAX_VALUE_LEN} 文字）。")
-    if kd == "first_person":
-        sc = "common"
-
-    pii_err = _check_pii([val])
-    if pii_err:
-        raise ValueError(pii_err)
-    warning = _check_formal_boundary(sc, kd, val)
-    if warning and not force:
-        raise ValueError(warning)
-
-    store = _resolve_storage(storage, profile_path=profile_path)
-    current = store.read_profile_text() or ""
-    updated, changed, summary = apply_entry_to_profile_text(
-        current,
-        {"scene": sc, "kind": kd, "value": val},
-    )
-    if changed or not current.strip():
-        store.write_profile_text(updated)
-    return {
-        "added": changed,
-        "profile_path": store.profile_location,
-        "message": summary,
-    }
-
-
 def remove_forbidden_from_profile(
     *,
     scene: str,
@@ -1334,94 +1267,6 @@ def detect_sync_folders(home_dir: str | None = None) -> list[dict[str, str]]:
             "suggested_home": os.path.join(os.path.abspath(root), "nihongo"),
         })
     return found
-
-
-def build_setup_markdown(
-    *,
-    forbidden: list[str] | None = None,
-    scene: str = "work",
-    rules: list[str] | None = None,
-    sync_preference: str = "local",
-    web_fallback_text: str | None = None,
-) -> str:
-    """AI にそのまま添付できる 1 ファイル導入プロトコル（nihongo-setup.md）を生成する。"""
-    scene_norm = scene.strip().lower() if scene else "work"
-    if scene_norm not in VALID_SCENES:
-        scene_norm = "work"
-    scene_ja = {
-        "common": "全場面共通",
-        "casual": "普段のチャット・雑談",
-        "work": "仕事・社内チャット・ドキュメント",
-        "formal": "社外メール・目上・公式お知らせ",
-    }[scene_norm]
-
-    clean_forbidden = [_normalize_value(w) for w in (forbidden or []) if _normalize_value(w)]
-    clean_rules = [_normalize_value(r) for r in (rules or []) if _normalize_value(r)]
-    pii_err = _check_pii([*clean_forbidden, *clean_rules])
-    if pii_err:
-        raise ValueError(pii_err)
-
-    sync_label = (
-        "自分の Google Drive 同期フォルダ（複数PC・スマホ共有）"
-        if sync_preference == "gdrive"
-        else "この PC のローカル（~/.nihongo/profile.md）"
-    )
-    forbidden_line = "、".join(f"「{_strip_outer_quotes(w)}」" for w in clean_forbidden) if clean_forbidden else "（未設定・会話しながら追加）"
-    rules_line = "。".join(clean_rules) if clean_rules else "（未設定・会話しながら追加）"
-
-    fallback = (web_fallback_text or "").strip()
-    if not fallback:
-        fallback = (
-            "1. 事実を作らない。依頼や資料にない数字・理由・約束（調整します等）を足さず、不明な値だけ【日時】等の空欄にする。\n"
-            "2. なりすまし・詐欺・個人情報窃取の文は断る。\n"
-            "3. 敬語は迷ったら1段低くし、読点は読み違える所と長い前置きの後にだけ打つ。\n"
-            "4. 前置き・言い直し・不要なまとめを省き、推敲では元の意味や必須度（必ず等）を弱めない。\n"
-            "5. 友達向けのくだけた語尾や絵文字を目上・社外向けへ持ち込まない。"
-        )
-
-    lines = [
-        "# nihongo-setup.md — nihongo 導入・適用ガイド（AI向け）",
-        "",
-        "このファイルを添付された AI は、自分の動作環境に応じて次の A か B のどちらか 1 つだけを実行してください。",
-        "",
-        "## A. ブラウザ・スマホのチャット（ChatGPT / Claude / Gemini 等）の場合",
-        "※ChatGPT の Code Interpreter や Claude の Artifacts などのサンドボックス環境も含みます。GitHub へのアクセスやコマンド導入は行わないでください。",
-        "- 下の「ユーザーの初期ルール」と「共通ルール」を、**今開いているこの会話から直ちに適用**する。",
-        "- 最初の返答は専門用語（Python / MCP / JSON 等）を出さず、「nihongo の日本語ルールを適用しました。このまま文章作成や手直しをどうぞ（毎回貼りたくない場合は Projects や Google Drive に置いておけます）」と 1〜2 行で返す。",
-        "",
-        "## B. ローカル PC の開発エージェント（Claude Code / Cursor / Codex / Antigravity 等）の場合",
-        "ユーザー自身の PC のファイルシステムとシェルへ直接アクセスできる環境でのみ実行してください。**勝手に実行せず**、必ず次の順序と 2 回の承認を守ってください。",
-        "",
-        "### 1. 安全性チェック（最初に確認して1行報告）",
-        "- 正本リポジトリ: `https://github.com/AnIT012/nihongo`（MIT ライセンス）",
-        "- 外部パッケージ依存ゼロ（Python 3.10+ の標準ライブラリのみで動作）",
-        "- 運営者サーバーへのデータ送信・保存は一切なし（`profile.md` と `inbox.jsonl` はユーザー端末または本人所有の Google Drive のみに保存）",
-        "- 実名・住所・メールアドレス・電話番号・APIキーなどの個人情報は記録しない",
-        "",
-        "### 2. 確認カード 1（導入・更新の承認・必須）",
-        "正本リポジトリの安全性を確認したうえで、既存の `nihongo` や `profile.md` の有無を調べ、ユーザーに以下を提示して OK を待つ:",
-        "- `https://github.com/AnIT012/nihongo` から最新版を取得（未導入なら新規導入、導入済みなら既存設定を保ったまま最新版へ更新）",
-        "- 下の初期ルールを `profile.md` に反映（**既存の `profile.md` がある場合は絶対に上書きせず、未登録の項目だけ追記マージ**）",
-        "- この PC に入っている AI（Claude Desktop / Claude Code / Cursor / Antigravity）へ `nihongo-mcp init` で自動登録（既存設定は `.bak` に退避してから追記）",
-        "",
-        "### 3. 確認カード 2（保存先と同期の選択・必須）",
-        "導入承認のあと、保存先を 1 つ選んでもらう（ユーザーの事前希望: " + sync_label + "）:",
-        "- A: この PC だけで使う（`~/.nihongo/profile.md`）",
-        "- B: 自分の Google Drive / Dropbox / iCloud の同期フォルダに置く（`nihongo-mcp init --home <同期フォルダ>/nihongo` で複数 PC 同期＋スマホから添付可能）",
-        "- C: 今開いている作業フォルダ専用にする（`./.nihongo/profile.md`）",
-        "",
-        "承認後に導入・設定を完了したら、`nihongo-mcp --self-test` で疎通を確認し、「以降は普段どおり話すだけで自動適用されます。今のルールや承認待ちはチャットで「ルール見せて」「承認待ちある？」と聞くだけで確認できます」と 1 行で案内する。",
-        "",
-        "## ユーザーの初期ルール（profile.md 互換）",
-        f"- よく使う場面：{scene_ja}（`[{scene_norm}]`）",
-        f"- 避ける表現（絶対に言わない表現）：{forbidden_line}",
-        f"- 書く時の考え方：{rules_line}",
-        "",
-        "## 共通ルール（ブラウザ・スマホチャット即適用）",
-        fallback,
-        "",
-    ]
-    return "\n".join(lines)
 
 
 def read_profile(
