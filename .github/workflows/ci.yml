@@ -19,14 +19,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Run unit & E2E tests
+      - name: Install package in editable mode
         env:
           PYTHONUTF8: "1"
+        run: python -m pip install --no-deps -e .
+      - name: Run unit & end-to-end setup tests
+        env:
+          PYTHONUTF8: "1"
+          NIHONGO_E2E_USE_INSTALLED: "1"
         run: python -m unittest discover -s tests -v
-      - name: Verify CLI & MCP entrypoints after editable install
+      - name: Verify CLI & MCP entrypoints directly
         env:
           PYTHONUTF8: "1"
         run: |
-          python -m pip install --no-deps -e .
           nihongo-check --version
           nihongo-mcp --self-test
