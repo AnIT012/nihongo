@@ -2,7 +2,7 @@
 
 # nihongo
 
-[![v3.0.0](https://img.shields.io/badge/-v3.0.0-D7261E?style=flat-square)](CHANGELOG.md)
+[![v3.1.0](https://img.shields.io/badge/-v3.1.0-D7261E?style=flat-square)](CHANGELOG.md)
 [![stars](https://img.shields.io/github/stars/AnIT012/nihongo?style=flat-square&labelColor=111111&color=D7261E)](https://github.com/AnIT012/nihongo/stargazers)
 [![license](https://img.shields.io/badge/license-MIT-D7261E?style=flat-square&labelColor=111111&color=D7261E)](LICENSE)
 [![works with](https://img.shields.io/badge/works_with-Claude_%7C_Antigravity_%7C_Codex_%7C_Cursor_%7C_ChatGPT_%7C_Muse-D7261E?style=flat-square&labelColor=111111&color=D7261E)](#インストール)
@@ -170,10 +170,10 @@ echo '@~/.claude/skills/nihongo/ALWAYS.md' >> ~/.claude/CLAUDE.md
 <details>
 <summary><b>Antigravity</b></summary>
 
-[最新のリリース](https://github.com/AnIT012/nihongo/releases/latest)から `nihongo-v3.0.0.zip` を落として展開するか、このリポジトリの `nihongo/` フォルダを `~/.gemini/config/skills/nihongo/` に配置します。
+[最新のリリース](https://github.com/AnIT012/nihongo/releases/latest)から `nihongo-v3.1.0.zip` を落として展開するか、このリポジトリの `nihongo/` フォルダを `~/.gemini/config/skills/nihongo/` に配置します。
 
 ```bash
-git clone --depth 1 --branch v3.0.0 https://github.com/AnIT012/nihongo.git /tmp/nihongo-src
+git clone --depth 1 --branch v3.1.0 https://github.com/AnIT012/nihongo.git /tmp/nihongo-src
 mkdir -p ~/.gemini/config/skills
 cp -r /tmp/nihongo-src/nihongo ~/.gemini/config/skills/nihongo
 ```
@@ -215,10 +215,10 @@ npx skills add AnIT012/nihongo -g
 <summary><b>Claude / ChatGPT アプリ（コマンド不要）</b></summary>
 
 - **いちばん簡単（Web版）**：[nihongo/WEB.md](nihongo/WEB.md) を開いて右上のコピーボタンを押し、ChatGPT の「設定 → パーソナライズ → カスタム指示」または Claude の「設定 → プロフィール → 応答の好み」に貼って保存します（無料プランでも使えます）。
-- **メール・資料・ES まで本格的に使う（Full）**：[最新のリリース](https://github.com/AnIT012/nihongo/releases/latest)から `nihongo-v3.0.0.zip` をダウンロードします。
-  - **Claude（Web / デスクトップアプリ）**：設定のスキル画面から `nihongo-v3.0.0.zip` をそのままアップロード（または解凍してプロジェクトのナレッジに追加）します。
-  - **ChatGPT**：My GPTs のナレッジに解凍したファイルを追加します（Skills 画面が使える環境では `nihongo-v3.0.0.zip` をそのままアップロードできます）。
-- ※GitHub トップの緑色の「Code → Download ZIP」はフォルダ構造が1段深いため、そのままではアップロードできません。必ず上の最新リリースページにある `nihongo-v3.0.0.zip` を使ってください。
+- **メール・資料・ES まで本格的に使う（Full）**：[最新のリリース](https://github.com/AnIT012/nihongo/releases/latest)から `nihongo-v3.1.0.zip` をダウンロードします。
+  - **Claude（Web / デスクトップアプリ）**：設定のスキル画面から `nihongo-v3.1.0.zip` をそのままアップロード（または解凍してプロジェクトのナレッジに追加）します。
+  - **ChatGPT**：My GPTs のナレッジに解凍したファイルを追加します（Skills 画面が使える環境では `nihongo-v3.1.0.zip` をそのままアップロードできます）。
+- ※GitHub トップの緑色の「Code → Download ZIP」はフォルダ構造が1段深いため、そのままではアップロードできません。必ず上の最新リリースページにある `nihongo-v3.1.0.zip` を使ってください。
 - Web / スマホ版で自分の書き方を1行ずつ育てたい時は、言い回しを直したあとに「設定欄にそのまま足せる1行を作って」と頼めば、ファイル保存や MCP なしでもカスタム指示に1行足すだけで育てられます。
 
 </details>
@@ -237,16 +237,17 @@ npx skills add AnIT012/nihongo -g
 Python 3.10+ の標準ライブラリだけで動き、追加の依存パッケージは要りません。
 
 ```bash
-pip install "git+https://github.com/AnIT012/nihongo.git@v3.0.0"
+pip install "git+https://github.com/AnIT012/nihongo.git@v3.1.0"
 ```
 
 pip で入れると `nihongo-check` コマンド（`nihongo_check` 名前空間）が使えるようになります。インストールせずに、スキル内の `python3 nihongo/scripts/cli.py` をそのまま実行することもできます。
 
 | コマンド | できること |
 |---|---|
-| `nihongo-check diff <orig> <draft> [--request <req>] [--profile <path>] [--scene formal] [--json]` | 原文と直した文を比べ、意味のズレやプロフィール違反の候補を出す |
+| `nihongo-check diff <orig> <draft> [--request <req>] [--profile <path>\|--auto-profile] [--scene formal] [--json]` | 原文と直した文を比べ、意味のズレやプロフィール違反の候補を出す |
 | `nihongo-check fix <orig> <draft> <out> [--request <req>] [--no-trim-commas] [--fail-on-remaining]` | 意味が変わった文を原文に戻し、要らない読点を外す |
-| `nihongo-check git [--base HEAD] [--staged] [--ext .md,.txt] [--request <req>] [--profile <path>] [--scene formal] [--hook] [--json]` | git の変更差分（Markdown・テキスト）をまとめて確認する |
+| `nihongo-check git [--base HEAD] [--staged] [--ext .md,.txt] [--request <req>] [--profile <path>\|--auto-profile] [--scene formal] [--hook] [--json]` | git の変更差分（Markdown・テキスト）をまとめて確認する |
+| `nihongo-check doctor [--json]` | 導入状況・`profile.md`（2層）・MCP 接続・クラウド同期フォルダをまとめて診断する |
 
 そのまま使える設定例を `examples/hooks/` に置いています。
 
@@ -269,6 +270,7 @@ pip で入れると `nihongo-check` コマンド（`nihongo_check` 名前空間�
 | `nihongo-check inbox approve <id> [--dry-run]` / `reject <id>` | 指定した候補を承認して `profile.md` へ反映、または却下する |
 | `nihongo-check ui` | ブラウザ画面（`127.0.0.1` のみ・外部通信ゼロ）で承認・`profile.md` 編集・0トークン検査・1ファイル書き出しを行う |
 | `nihongo-check profile show [--scene formal] [--project <dir>]` | 現在の `profile.md`（作業フォルダの `.nihongo/profile.md` 2層マージ対応）と保留件数を表示する |
+| `nihongo-check profile init [--project] [--force]` | グローバルまたは作業フォルダ専用の `profile.md` 雛形を作成する |
 | `nihongo-mcp init --target all [--home <同期フォルダ>]` | PC 内の AI アプリへ自動登録する（`--detect-sync` で Google Drive 等の同期フォルダを検出。詳細は [google-drive-sync.md](examples/mcp/google-drive-sync.md)） |
 | `nihongo-mcp`（または `python3 nihongo/scripts/mcp_server.py`） | stdio 経由のローカル MCP サーバーを起動する |
 

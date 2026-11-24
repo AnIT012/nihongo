@@ -1,5 +1,19 @@
 # 変更履歴
 
+## 3.1.0（2026-11-24）
+
+### Personal を育てる HITL 受信箱・ゼロ依存 MCP・2層プロファイル
+
+- **HITL 受信箱（`~/.nihongo/inbox.jsonl`）とローカル MCP サーバー（`nihongo-mcp`）**：会話で直した言い回しをまず受信箱へ積み、本人が承認した項目だけを `~/.nihongo/profile.md` へ反映する仕組みを追加しました（Python 3.10+ 標準ライブラリのみ・外部パッケージ依存ゼロ）。個人情報（メール・電話番号・APIキー等）の自動ブロック、`[formal]` 場面への崩し表現ガード、`--strict-hitl` モードに対応しています。
+- **2層プロファイル自動マージ**：グローバルの `~/.nihongo/profile.md` に加え、作業フォルダ配下の `.nihongo/profile.md` を自動検出してマージ適用できるようにしました（シンボリックリンク・上位ディレクトリ逸脱・256KB 上限ガード付き）。
+- **複数端末・Google Drive 同期**：PC 内の Google Drive / Dropbox / iCloud Drive / OneDrive 同期フォルダを自動検出する `nihongo-mcp init --detect-sync` と、標準ライブラリ実装の `GoogleDriveStorage`（OAuth2 トークン自動更新・所有者／マイドライブ直下スコープ固定）を追加しました。
+
+### ローカル管理 UI・CLI 強化・公式 LP
+
+- **ローカル管理 UI（`nihongo-check ui`）**：`127.0.0.1` 専用・外部通信ゼロのブラウザ画面を追加しました。4場面別のルール閲覧・NG表現の1クリック追加／削除・生 `profile.md` 編集・承認待ち（受信箱）管理・PC内AIアプリ（Claude Desktop / Claude Code / Cursor / Antigravity）の接続状況確認・`nihongo-setup.md` 書き出し・0トークン動作テストを1画面で行えます（Host/Origin 検証・ランダム CSRF トークン・CSP 保護付き）。
+- **CLI サブコマンド追加**：導入状況・MCP 登録・同期フォルダを1コマンドで診断する `nihongo-check doctor`、雛形生成の `nihongo-check profile init [--project]`、プロファイル自動読込の `diff/git --auto-profile` を追加しました。
+- **公式プロダクト LP（`docs/index.html`）と 1ファイル導入（`nihongo-setup.md`）**：GitHub Pages 向けの公式サイトと、ブラウザ／スマホ AI・ローカル PC エージェントのどちらに添付しても安全に導入できる `nihongo-setup.md` ビルダーを追加しました。
+
 ## 3.0.0（2026-11-23）
 
 ### スキルの軽量化と整理

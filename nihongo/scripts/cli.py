@@ -18,7 +18,7 @@ import subprocess
 import sys
 import unicodedata
 
-__version__ = "3.0.0"
+__version__ = "3.1.0"
 
 if __package__:
     from . import inbox as inbox_mod
