@@ -1035,24 +1035,31 @@ a { color: inherit; text-decoration: none; }
 
 .how-flow {
   margin-top: 26px;
-  padding-top: 20px;
+  padding-top: 22px;
   border-top: 1px solid #DFDFDB;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px 28px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px 24px;
 }
 .how-item b {
   display: block;
   font-size: 14px;
   font-weight: 800;
   color: var(--ink);
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
 .how-item p {
   font-size: 13.5px;
   line-height: 1.75;
   color: var(--muted);
 }
+.how-item a {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.how-item a:hover { color: var(--red-hover); }
 
 /* Section 6: 関連記事 (Horizontal Slide Carousel) */
 .rail-wrap {
@@ -1606,14 +1613,18 @@ footer code b { color: var(--ink); }
         </details>
       </div>
 
-      <div class="how-flow" aria-label="ダウンロード後の使い方">
+      <div class="how-flow" aria-label="使い方の3パターン">
         <div class="how-item">
-          <b>スマホ・ブラウザでAIを使う方（ChatGPT / Claude）</b>
-          <p>落としたファイルを「＋」から添付して送るだけでその場から効きます。毎回貼りたくない場合はProjectsやカスタム指示に置けます。</p>
+          <b>今の会話で試したい方</b>
+          <p>ダウンロードしたファイルをチャットに添付（またはコピーして送信）するだけでその場から効きます。</p>
         </div>
         <div class="how-item">
-          <b>PCの開発ツールで使う方（Claude Code / Cursor 等）</b>
-          <p>チャットに添付して送ると、AIが安全性を確認したあと対話で導入と同期まで進めます。</p>
+          <b>スマホ・Webで毎回効かせたい方</b>
+          <p>Claudeは<a href="https://github.com/AnIT012/nihongo/releases/latest/download/nihongo-v3.1.0.zip">スキル用ZIP（v3.1.0）</a>を「設定 → 機能 → スキル」に1回入れるとスマホにも同期されます。ChatGPTはコピー文をカスタム指示へ貼ります。</p>
+        </div>
+        <div class="how-item">
+          <b>PC開発ツールで全部入れたい方</b>
+          <p>Claude Code・Cursor・Antigravity等に添付して送ると、スキル登録・0トークン検査・クラウド同期まで対話で完了します。</p>
         </div>
       </div>
     </div>
@@ -1776,10 +1787,11 @@ function buildSetupMarkdown(useCustom) {
     '',
     'このファイルを添付された AI は、自分の動作環境に応じて次の A か B のどちらか 1 つだけを実行してください。',
     '',
-    '## A. ブラウザ・スマホのチャット（ChatGPT / Claude / Gemini 等）の場合',
-    '※ChatGPT の Code Interpreter や Claude の Artifacts などのサンドボックス環境も含みます。GitHub へのアクセスやコマンド導入は行わないでください。',
+    '## A. ブラウザ・スマホ・デスクトップ通常チャット（ChatGPT / Claude / Gemini 等）の場合',
+    '※ChatGPT の Code Interpreter や Claude Desktop の隔離サンドボックス環境も含みます。ホスト PC へのコマンド導入は実行できません。',
     '- 下の「ユーザーの初期ルール」と「共通ルール」を、**今開いているこの会話から直ちに適用**する。',
-    '- 最初の返答は専門用語（Python / MCP / JSON 等）を出さず、「nihongo の日本語ルールを適用しました。このまま文章作成や手直しをどうぞ（毎回貼りたくない場合は ' + webPlaceHint + ' に置いておけます）」と 1〜2 行で返す。',
+    '- 最初の返答は専門用語（Python / MCP / JSON 等）を出さず、「nihongo の日本語ルールを適用しました。このまま文章作成や手直しをどうぞ（毎回自動で効かせたい場合は、Claude は設定→スキルへ最新版ZIPを登録、ChatGPT はカスタム指示や ' + webPlaceHint + ' に置いておけます）」と 1〜2 行で返す。',
+    '- もしユーザーから「インストールしたい」「毎回自動で効かせたい」と聞かれた場合は、①コマンド不要なら Claude の「設定 → 機能 → スキル」へ `https://github.com/AnIT012/nihongo/releases/latest/download/nihongo-v3.1.0.zip` を1回アップロードする方法（スマホアプリにも自動同期）、②0トークン自動検査やクラウド同期まで全自動で入れたいなら Claude Code / Cursor / Antigravity にこのファイルをそのまま渡す方法を簡潔に案内する。',
     '',
     '## B. ローカル PC の開発エージェント（Claude Code / Cursor / Codex / Antigravity 等）の場合',
     'ユーザー自身の PC のファイルシステムとシェルへ直接アクセスできる環境でのみ実行してください。**勝手に実行せず**、必ず次の順序と 2 回の承認を守ってください。',
@@ -1806,7 +1818,7 @@ function buildSetupMarkdown(useCustom) {
     '- CLI・MCP 導入: `pip install "git+https://github.com/AnIT012/nihongo.git@v3.1.0"`',
     '- スキル導入（対応環境）: `npx skills add AnIT012/nihongo -g`（またはリポジトリの `nihongo/` フォルダをスキル配置先へコピー）',
     '- AI アプリ自動登録: `nihongo-mcp init --target all`（' + homeExample + '）',
-    '- 初期ルール反映: 新規は `nihongo-check profile init`、未登録の表現は `nihongo-check inbox propose --scene <場面> --kind forbidden --value "<表現>"` と `nihongo-check inbox approve --all` で既存設定を壊さず追記マージ',
+    '- 初期ルール反映: 同期フォルダ選択時は `NIHONGO_HOME="<同期フォルダ>/nihongo"` を設定（または `--home` を指定）したうえで、新規は `nihongo-check profile init`、未登録の表現は `nihongo-check inbox propose --scene <場面> --kind forbidden --value "<表現>"` と `nihongo-check inbox approve --all` で既存設定を壊さず追記マージ',
     '- 疎通・診断確認: `nihongo-mcp --self-test` と `nihongo-check doctor` を実行',
     '',
     '完了したら「以降は普段どおり話すだけで自動適用されます。今のルールや承認待ちはチャットで「ルール見せて」「承認待ちある？」と聞くだけで確認できます」と 1 行で案内する。',
