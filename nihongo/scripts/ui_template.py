@@ -1,4 +1,4 @@
-"""nihongo 全AI共通ルール管理 UI テンプレート（3色・4場面カード・最小情報設計・外部通信ゼロ）。"""
+"""nihongo 全AI共通ルール管理 UI テンプレート（静かなドキュメント・ワークスペース設計・外部通信ゼロ）。"""
 from __future__ import annotations
 
 import json
@@ -13,248 +13,411 @@ def render_ui_html(csrf_token: str) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='%23D7261E'/%3E%3C/svg%3E">
-<title>nihongo — ルール管理</title>
+<title>nihongo — 私の書き方</title>
 <style>
 :root {{
-  --bg: #F7F7F8;
+  --rail: #F7F8FA;
+  --desk: #F3F4F6;
   --surface: #FFFFFF;
-  --ink: #111113;
-  --body: #2C2C30;
-  --muted: #6E6E77;
-  --line: #E6E6EA;
-  --line-strong: #D0D0D7;
-  --red: #D7261E;
-  --red-hover: #B61E17;
-  --red-soft: #FEF2F2;
-  --ok: #15803D;
-  --ok-soft: #ECFDF3;
-  --shadow-sm: 0 1px 2px rgba(17, 17, 19, 0.04);
-  --radius: 10px;
+  --active-fill: #F3F4F6;
+  --hover-fill: #F5F6F8;
+  --ink: #111827;
+  --body: #1F2937;
+  --muted: #6B7280;
+  --faint: #9CA3AF;
+  --line: #E5E7EB;
+  --line-strong: #D1D5DB;
+  --rule-dark: #374151;
+  --brand-red: #D7261E;
+  --accent-bg: #EEF6F5;
+  --accent-ink: #276762;
+  --warn-bg: #FEF7DC;
+  --warn-ink: #854D0E;
+  --ok-bg: #ECFDF3;
+  --ok-ink: #166534;
 }}
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 html, body {{ height: 100%; }}
 body {{
-  background: var(--bg);
+  background: var(--desk);
   color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif;
-  font-size: 14px;
+  font-size: 13.5px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }}
 
 .app {{
   display: grid;
-  grid-template-columns: 224px 1fr;
+  grid-template-columns: 54px minmax(0, 1fr);
   min-height: 100vh;
 }}
 
-/* Sidebar */
-.sidebar {{
-  background: var(--surface);
+/* Slim Left Icon Rail (TeaMy style) */
+.rail {{
+  background: var(--rail);
   border-right: 1px solid var(--line);
-  padding: 20px 12px 16px;
+  padding: 12px 0 14px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: space-between;
   position: sticky;
   top: 0;
   height: 100vh;
+  z-index: 30;
 }}
-.brand-block {{
-  padding: 2px 10px 16px;
-  margin-bottom: 10px;
+.rail-top {{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}}
+.rail-mark {{
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+}}
+.rail-dot-brand {{
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--brand-red);
+}}
+.rail-btn {{
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.12s ease, color 0.12s ease;
+}}
+.rail-btn:hover {{ background: #EAECEF; color: var(--ink); }}
+.rail-btn.active {{ background: #E5E7EB; color: var(--ink); }}
+.rail-btn svg {{ width: 18px; height: 18px; }}
+.rail-pip {{
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-ink);
+  display: none;
+}}
+.rail-pip.show {{ display: block; }}
+.rail-avatar {{
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  color: var(--accent-ink);
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}}
+
+/* Workspace Container */
+.workspace {{
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}}
+.panel {{ display: none; flex: 1; min-height: 100vh; }}
+.panel.active {{ display: flex; }}
+
+/* Floating Subtle Toast */
+.toast {{
+  position: fixed;
+  bottom: 18px;
+  right: 22px;
+  z-index: 60;
+  display: none;
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 4px 16px rgba(17, 24, 39, 0.08);
+}}
+.toast.show {{ display: block; }}
+.toast.ok {{ border-color: #BBF7D0; background: var(--ok-bg); color: var(--ok-ink); }}
+.toast.error {{ border-color: #FECACA; background: #FEF2F2; color: #991B1B; }}
+
+/* 1. Split-Pane Layout for Personal Rules (TeaMy Signature) */
+.split-pane {{
+  display: grid;
+  grid-template-columns: 316px minmax(0, 1fr);
+  width: 100%;
+  min-height: 100vh;
+}}
+.left-pane {{
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+}}
+.pane-head {{
+  height: 48px;
+  padding: 0 16px;
   border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
 }}
-.logo {{
+.pane-head-left {{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}}
+.brand-word {{
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-weight: 800;
-  font-size: 22px;
-  letter-spacing: -0.03em;
-  line-height: 1;
+  font-size: 15px;
+  letter-spacing: -0.025em;
+  color: var(--ink);
 }}
-.logo i {{
+.brand-word i {{
   display: inline-block;
   width: 0.44em;
   height: 0.44em;
   border-radius: 50%;
-  background: var(--red);
+  background: var(--brand-red);
   margin: 0 0.04em;
 }}
+.mode-tag {{
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--accent-bg);
+  color: var(--accent-ink);
+}}
+.quiet-meta {{
+  font-size: 11.5px;
+  color: var(--muted);
+}}
 
-.nav-list {{
+.left-scroll {{
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 14px 18px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
 }}
-.nav-sep {{
-  height: 1px;
-  background: var(--line);
-  margin: 10px 8px;
-}}
-.tab-btn {{
-  appearance: none;
-  border: 0;
-  background: transparent;
+.left-note {{
+  font-size: 12.5px;
   color: var(--body);
+  line-height: 1.65;
+  padding: 2px 2px 6px;
+}}
+
+/* TeaMy-style Artifact Selector Cards */
+.doc-card {{
+  appearance: none;
+  width: 100%;
+  text-align: left;
   font: inherit;
-  font-size: 13.5px;
-  font-weight: 600;
-  padding: 9px 10px;
-  border-radius: 8px;
-  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  text-align: left;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}}
+.doc-card:hover {{ background: var(--hover-fill); }}
+.doc-card.active {{
+  background: var(--active-fill);
+  border-color: var(--line);
+}}
+.doc-card-left {{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}}
+.doc-ico {{
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  flex-shrink: 0;
+}}
+.doc-card.active .doc-ico {{ background: var(--surface); color: var(--ink); }}
+.doc-ico svg {{ width: 15px; height: 15px; }}
+.doc-title {{
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.35;
+}}
+.doc-sub {{
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 1px;
+}}
+.doc-state {{
+  font-size: 11px;
+  color: var(--muted);
+  flex-shrink: 0;
+}}
+
+/* Bottom Pinned Composer (TeaMy "+ 直したい所を書く ↑") */
+.composer-wrap {{
+  padding: 10px 14px 14px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  flex-shrink: 0;
+}}
+.composer-opts {{
+  display: flex;
+  gap: 6px;
+  margin-bottom: 7px;
+}}
+.mini-select {{
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--body);
+  background: var(--rail);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 7px;
+  cursor: pointer;
+}}
+.mini-select:focus {{ outline: none; border-color: var(--line-strong); }}
+.composer-box {{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 6px 8px 6px 11px;
+  background: var(--surface);
+}}
+.composer-box:focus-within {{ border-color: var(--line-strong); }}
+.composer-plus {{
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  user-select: none;
+}}
+.composer-input {{
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+}}
+.composer-input::placeholder {{ color: var(--faint); }}
+.composer-send {{
+  appearance: none;
+  border: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--active-fill);
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
   transition: background 0.12s ease, color 0.12s ease;
 }}
-.tab-btn:hover {{ background: var(--bg); color: var(--ink); }}
-.tab-btn.active {{
-  background: #EFEFF3;
-  color: var(--ink);
-  font-weight: 700;
-}}
-.tab-btn.muted-nav {{
-  color: var(--muted);
-  font-weight: 500;
-  font-size: 13px;
-}}
-.tab-btn.muted-nav.active {{ color: var(--ink); font-weight: 600; }}
-.tab-left {{
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-}}
-.tab-ico {{
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  color: var(--muted);
-}}
-.tab-btn.active .tab-ico {{ color: var(--ink); }}
-
-.count-dot {{
-  background: var(--red);
+.composer-send:hover, .composer-send.ready {{
+  background: var(--ink);
   color: #FFFFFF;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 1px 7px;
-  border-radius: 999px;
-  min-width: 20px;
-  text-align: center;
-}}
-.count-dot.zero {{
-  background: var(--line);
-  color: var(--muted);
 }}
 
-.side-foot {{
-  border-top: 1px solid var(--line);
-  padding: 12px 10px 0;
+/* Right Document Pane (TeaMy Artifact Viewer) */
+.right-pane {{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--desk);
+}}
+.doc-toolbar {{
+  height: 48px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  padding: 0 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }}
-.local-status {{
-  display: inline-flex;
+.tb-left {{
+  display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--muted);
-  font-weight: 500;
+  gap: 10px;
+  min-width: 0;
 }}
-.local-status::before {{
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #16A34A;
-}}
-.layer-badge {{
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 10.5px;
-  font-weight: 700;
-  background: var(--bg);
-  border: 1px solid var(--line-strong);
-  color: var(--ink);
-}}
-.btn-reload-mini {{
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 3px 6px;
-  border-radius: 6px;
-}}
-.btn-reload-mini:hover {{ background: var(--bg); color: var(--ink); }}
-
-/* Main Workspace */
-.main {{
-  padding: 30px 36px 72px;
-  max-width: 1020px;
-  width: 100%;
-}}
-.panel {{ display: none; }}
-.panel.active {{ display: block; }}
-
-.toast {{
-  display: none;
-  margin-bottom: 16px;
-  padding: 10px 14px;
-  border-radius: 8px;
+.tb-title {{
   font-size: 13px;
   font-weight: 600;
-  border: 1px solid var(--line-strong);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}}
-.toast.show {{ display: block; }}
-.toast.error {{
-  border-color: #FECACA;
-  background: var(--red-soft);
-  color: var(--red-hover);
-}}
-.toast.ok {{
-  border-color: #BBF7D0;
-  background: var(--ok-soft);
-  color: var(--ok);
-}}
-
-.page-head {{
-  display: flex;
-  justify-content: space-between;
+  color: var(--ink);
+  display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 7px;
+  white-space: nowrap;
 }}
-.page-head h1 {{
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.015em;
-  line-height: 1.3;
+.tb-title svg {{ width: 15px; height: 15px; color: var(--muted); }}
+.tb-pill {{
+  font-size: 11.5px;
+  color: var(--muted);
+  background: var(--rail);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 8px;
+  white-space: nowrap;
 }}
-.head-actions {{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}}
-
-/* Segmented Mode Switch */
 .seg {{
   display: inline-flex;
-  background: #ECECF0;
-  padding: 3px;
-  border-radius: 8px;
+  background: var(--rail);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 2px;
   gap: 2px;
 }}
 .seg-btn {{
@@ -263,344 +426,268 @@ body {{
   background: transparent;
   color: var(--muted);
   font: inherit;
-  font-size: 12.5px;
-  font-weight: 700;
-  padding: 5px 12px;
-  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 5px;
   cursor: pointer;
 }}
 .seg-btn.active {{
   background: var(--surface);
   color: var(--ink);
-  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }}
 
-/* Buttons */
+.tb-right {{
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}}
+.ico-btn {{
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}}
+.ico-btn:hover {{ background: var(--hover-fill); color: var(--ink); }}
+.ico-btn svg {{ width: 15px; height: 15px; }}
+
+/* Quiet Buttons */
 .btn {{
   appearance: none;
   border: 1px solid var(--line-strong);
   background: var(--surface);
   color: var(--ink);
   font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 7px 13px;
-  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 5px 11px;
+  border-radius: 7px;
   cursor: pointer;
+  white-space: nowrap;
   transition: background 0.12s ease, border-color 0.12s ease;
 }}
-.btn:hover {{ background: var(--bg); border-color: #B4B4BE; }}
-.btn.primary {{
-  background: var(--red);
-  border-color: var(--red);
-  color: #FFFFFF;
-}}
-.btn.primary:hover {{ background: var(--red-hover); border-color: var(--red-hover); }}
-.btn.dark {{
+.btn:hover {{ background: var(--hover-fill); }}
+.btn.solid {{
   background: var(--ink);
   border-color: var(--ink);
   color: #FFFFFF;
+  font-weight: 600;
 }}
-.btn.dark:hover {{ background: #2A2A2E; }}
-.btn.subtle {{
+.btn.solid:hover {{ background: #27272A; }}
+.btn.text-only {{
   border-color: transparent;
   background: transparent;
   color: var(--muted);
+  padding: 4px 8px;
 }}
-.btn.subtle:hover {{ color: var(--ink); background: #ECECF0; }}
-.btn.sm {{ padding: 5px 10px; font-size: 12px; }}
+.btn.text-only:hover {{ color: var(--ink); background: var(--hover-fill); }}
+.btn.sm {{ padding: 4px 9px; font-size: 12px; }}
 .btn:disabled {{ opacity: 0.4; cursor: not-allowed; }}
 
-/* Quick Add Strip */
-.quick-add {{
+/* Desk Area + White A4-like Sheet + Optional Right Margin Cards */
+.desk-scroll {{
+  flex: 1;
+  padding: 24px 28px 56px;
+  overflow-y: auto;
+}}
+.sheet-stage {{
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 18px;
+  max-width: 1060px;
+  margin: 0 auto;
+}}
+.paper-sheet {{
+  flex: 1;
+  max-width: 760px;
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 10px 12px;
-  margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
-  display: grid;
-  grid-template-columns: 126px 146px 1fr auto;
-  gap: 8px;
-  align-items: center;
+  border-radius: 3px;
+  padding: 36px 44px 44px;
+  box-shadow: 0 1px 3px rgba(17, 24, 39, 0.04);
 }}
-
-/* 4-Scene Personal Grid */
-.scene-grid {{
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.paper-meta-top {{
+  display: flex;
+  justify-content: flex-end;
   gap: 14px;
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-bottom: 18px;
 }}
-.scene-card {{
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 18px 20px;
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.paper-title {{
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+  margin-bottom: 28px;
 }}
-.scene-card.common-card {{
-  grid-column: 1 / -1;
+.paper-sec {{
+  margin-bottom: 26px;
 }}
-.sc-head {{
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--line);
-}}
-.sc-title-wrap {{
+.paper-sec:last-child {{ margin-bottom: 0; }}
+.paper-sec-h {{
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 10px;
   display: flex;
   align-items: baseline;
   gap: 8px;
-  flex-wrap: wrap;
 }}
-.sc-head h2 {{
-  font-size: 15px;
-  font-weight: 800;
-}}
-.sc-hint {{
-  font-size: 12px;
-  color: var(--muted);
-}}
-.sc-lbl {{
+.paper-sec-sub {{
   font-size: 11.5px;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--muted);
-  margin-bottom: 6px;
 }}
 
-.chip-wrap {{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
+/* TeaMy Horizontal-Rule-Only Table */
+table.doc-table {{
+  width: 100%;
+  border-collapse: collapse;
+  border-top: 1.5px solid var(--rule-dark);
+  border-bottom: 1.5px solid var(--rule-dark);
+  font-size: 13.5px;
 }}
-.ng-chip {{
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--red-soft);
-  border: 1px solid #FECACA;
-  color: var(--red-hover);
-  font-size: 13px;
-  font-weight: 700;
-}}
-.ng-chip.project-chip {{
-  background: #F4F4F6;
-  border-color: var(--line-strong);
+table.doc-table thead th {{
+  background: #F4F5F7;
   color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line-strong);
+  white-space: nowrap;
 }}
-.chip-x {{
+table.doc-table tbody td {{
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--body);
+  vertical-align: middle;
+}}
+table.doc-table tbody tr:last-child td {{ border-bottom: 0; }}
+table.doc-table tbody tr:hover td {{ background: #FAFBFD; }}
+.td-strong {{ font-weight: 500; color: var(--ink); }}
+.td-muted {{ font-size: 12px; color: var(--muted); }}
+.td-act {{ text-align: right; white-space: nowrap; }}
+.link-del {{
   appearance: none;
   border: 0;
   background: transparent;
-  color: var(--red-hover);
-  font-size: 14px;
-  line-height: 1;
+  color: var(--faint);
+  font: inherit;
+  font-size: 12px;
   cursor: pointer;
-  padding: 0 2px;
+  padding: 2px 5px;
   border-radius: 4px;
 }}
-.chip-x:hover {{ background: rgba(215, 38, 30, 0.14); }}
-.mini-tag {{
-  font-size: 10.5px;
-  font-weight: 700;
+.link-del:hover {{ color: #991B1B; background: #FEF2F2; }}
+.proj-mark {{
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--rail);
+  border: 1px solid var(--line);
   padding: 1px 6px;
   border-radius: 4px;
-  background: #ECECF0;
-  color: var(--body);
+  margin-left: 6px;
 }}
 
-.rule-list {{
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}}
-.rule-list li {{
-  font-size: 13.5px;
-  color: var(--body);
-  padding: 7px 11px;
-  background: var(--bg);
-  border-radius: 7px;
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-}}
-.muted-empty {{
-  font-size: 12.5px;
-  color: var(--muted);
-}}
-
-/* Surface Card */
-.surface-card {{
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}}
-.editor-bar {{
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--line);
-  background: #FAFAFB;
-  font-size: 12px;
-  color: var(--muted);
-  gap: 10px;
-  flex-wrap: wrap;
-}}
-
-/* Inbox Cards */
-.card-list {{
+/* Right Margin Review Cards (TeaMy Frame 2 "審査結果" Margin Column!) */
+.margin-col {{
+  width: 248px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }}
-.item-card {{
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 15px 18px;
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-}}
-.item-card.warn {{
-  border-color: #FECACA;
-  border-left: 4px solid var(--red);
-  background: #FFFBFB;
-}}
-.item-main {{ flex: 1; min-width: 0; }}
-.item-meta {{
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-  font-size: 12px;
-  color: var(--muted);
-}}
-.pill {{
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 6px;
+.margin-head {{
   font-size: 11.5px;
   font-weight: 600;
-  background: var(--bg);
-  color: var(--body);
-  border: 1px solid var(--line);
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 2px 4px;
 }}
-.pill.ok {{ background: var(--ok-soft); color: var(--ok); border-color: #BBF7D0; }}
-.pill.rej {{ background: var(--bg); color: var(--muted); border-color: var(--line); }}
-.item-val {{
-  font-size: 15px;
-  font-weight: 700;
+.review-card {{
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}}
+.review-card.warn {{
+  border-color: #FDE68A;
+}}
+.rc-meta {{
+  font-size: 11.5px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}}
+.rc-meta strong {{ color: var(--ink); font-weight: 600; }}
+.rc-val {{
+  font-size: 13px;
+  font-weight: 600;
   color: var(--ink);
   word-break: break-word;
 }}
-.item-note {{ font-size: 13px; color: var(--muted); margin-top: 3px; }}
-.diff-line {{
-  display: inline-block;
-  margin-top: 6px;
-  font-size: 12.5px;
-  color: var(--body);
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 4px 9px;
-}}
-.warn-msg {{ margin-top: 8px; font-size: 12.5px; font-weight: 600; color: var(--red-hover); }}
-.item-side {{ display: flex; flex-shrink: 0; gap: 6px; align-items: center; }}
-.force-check {{
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.rc-reason {{
   font-size: 12px;
-  font-weight: 600;
-  color: var(--red-hover);
-  margin-top: 8px;
-}}
-
-.empty-box {{
-  background: var(--surface);
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--radius);
-  padding: 32px 24px;
-  text-align: center;
   color: var(--muted);
-  font-size: 13.5px;
+  line-height: 1.5;
 }}
-
-/* Collapsible Form */
-.form-box {{
-  display: none;
-  margin-bottom: 14px;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  padding: 16px 18px;
+.rc-warn {{
+  font-size: 11.5px;
+  color: var(--warn-ink);
+  background: var(--warn-bg);
+  padding: 4px 7px;
+  border-radius: 5px;
+  line-height: 1.5;
 }}
-.form-box.open {{ display: block; }}
-
-/* Apps & Sync */
-.block-title {{
-  font-size: 13.5px;
-  font-weight: 800;
-  margin: 22px 0 8px;
-  color: var(--ink);
-}}
-.block-title:first-of-type {{ margin-top: 0; }}
-.app-row {{
+.rc-actions {{
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--line);
-  flex-wrap: wrap;
-}}
-.app-row:first-child {{ border-top: 0; }}
-.app-name {{ font-weight: 700; font-size: 14px; }}
-.app-right {{ display: flex; align-items: center; gap: 8px; }}
-
-.export-row {{
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 10px;
-  align-items: end;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 2px;
 }}
 
-.grid-2 {{
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 12px;
+/* Single-Column Document Panels (Inbox / Connect / Check) */
+.doc-page {{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--desk);
 }}
-label.fld {{
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-  margin-bottom: 5px;
+.paper-sheet.wide {{
+  max-width: 820px;
+  margin: 0 auto;
+  width: 100%;
 }}
+
+/* Inputs & Textareas */
 input[type="text"], select, textarea {{
   width: 100%;
   font: inherit;
-  font-size: 13.5px;
-  padding: 8px 11px;
+  font-size: 13px;
+  padding: 7px 10px;
   border: 1px solid var(--line-strong);
-  border-radius: 8px;
+  border-radius: 7px;
   background: var(--surface);
   color: var(--ink);
 }}
@@ -610,314 +697,463 @@ input[type="text"]:focus, select:focus, textarea:focus {{
 }}
 textarea.mono {{
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 13px;
-  line-height: 1.65;
-  min-height: 300px;
-  border: 0;
-  border-radius: 0;
-  padding: 16px 18px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  min-height: 360px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 14px 16px;
   resize: vertical;
+  background: #FAFAFB;
+}}
+.grid-2 {{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}}
+label.fld {{
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 5px;
+}}
+.form-drawer {{
+  display: none;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--rail);
+}}
+.form-drawer.open {{ display: block; }}
+
+.warn-hl {{
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  display: inline-block;
+  margin-top: 5px;
+}}
+.force-check {{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--body);
+  margin-top: 6px;
 }}
 
 .findings-box {{
-  margin-top: 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  padding: 15px 18px;
-  background: var(--surface);
+  margin-top: 18px;
+  border-top: 1.5px solid var(--rule-dark);
+  border-bottom: 1.5px solid var(--rule-dark);
+  padding: 14px 4px;
 }}
 .findings-box.has-issue {{
-  border-color: #FECACA;
-  border-left: 4px solid var(--red);
-  background: #FFFBFB;
+  background: #FFFDF7;
+  padding: 14px 14px;
 }}
-.findings-box ul {{ margin-top: 8px; padding-left: 20px; }}
-.findings-box li {{ margin: 4px 0; font-size: 13.5px; }}
+.findings-box ul {{ margin-top: 8px; padding-left: 18px; }}
+.findings-box li {{ margin: 4px 0; font-size: 13px; }}
 
 details.skill-box {{
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 11px 16px;
-  margin-top: 8px;
+  border-bottom: 1px solid var(--line);
+  padding: 10px 0;
 }}
 details.skill-box summary {{
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 13px;
+  color: var(--ink);
 }}
 pre.skill-pre {{
   margin-top: 10px;
   padding: 12px 14px;
-  background: var(--bg);
-  border-radius: 8px;
+  background: var(--rail);
+  border-radius: 6px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
   line-height: 1.65;
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 260px;
+  max-height: 240px;
   overflow-y: auto;
 }}
 
-.history-head {{
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--muted);
-  margin: 22px 0 10px;
+@media (max-width: 1180px) {{
+  .sheet-stage {{ flex-direction: column; align-items: stretch; }}
+  .paper-sheet {{ max-width: none; }}
+  .margin-col {{ width: 100%; }}
 }}
-
-@media (max-width: 980px) {{
-  .scene-grid {{ grid-template-columns: 1fr; }}
-  .export-row {{ grid-template-columns: 1fr; }}
-}}
-@media (max-width: 820px) {{
+@media (max-width: 860px) {{
   .app {{ grid-template-columns: 1fr; }}
-  .sidebar {{
+  .rail {{
     position: static;
     height: auto;
+    flex-direction: row;
+    padding: 8px 14px;
     border-right: 0;
     border-bottom: 1px solid var(--line);
-    padding: 14px 16px;
   }}
-  .brand-block {{ padding: 0 0 10px; margin-bottom: 10px; }}
-  .nav-list {{ flex-direction: row; flex-wrap: wrap; gap: 4px; }}
-  .nav-sep {{ display: none; }}
-  .tab-btn {{ padding: 7px 10px; font-size: 12.5px; }}
-  .side-foot {{ margin-top: 10px; padding: 10px 0 0; }}
-  .main {{ padding: 20px 16px 56px; }}
-  .quick-add, .grid-2 {{ grid-template-columns: 1fr; }}
-  .item-card {{ flex-direction: column; gap: 12px; }}
+  .rail-top {{ flex-direction: row; width: auto; gap: 6px; }}
+  .rail-mark {{ margin-bottom: 0; }}
+  .split-pane {{ grid-template-columns: 1fr; }}
+  .left-pane {{ position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }}
+  .desk-scroll {{ padding: 16px 14px 48px; }}
+  .paper-sheet {{ padding: 22px 18px 28px; }}
+  .grid-2 {{ grid-template-columns: 1fr; }}
+  .doc-toolbar {{ padding: 0 12px; }}
 }}
 </style>
 </head>
 <body>
 <div class="app">
-  <aside class="sidebar">
-    <div>
-      <div class="brand-block">
-        <div class="logo">nih<i></i>ngo</div>
-      </div>
-      <nav class="nav-list" aria-label="メニュー">
-        <button class="tab-btn active" data-tab="profile" type="button">
-          <span class="tab-left"><svg class="tab-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="2.5" y1="4" x2="13.5" y2="4"/><circle cx="6" cy="4" r="1.4" fill="currentColor"/><line x1="2.5" y1="8" x2="13.5" y2="8"/><circle cx="10.5" cy="8" r="1.4" fill="currentColor"/><line x1="2.5" y1="12" x2="13.5" y2="12"/><circle cx="5.5" cy="12" r="1.4" fill="currentColor"/></svg>自分のルール</span>
-        </button>
-        <button class="tab-btn" data-tab="inbox" type="button">
-          <span class="tab-left"><svg class="tab-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 9.5V12.5A1 1 0 0 0 3.5 13.5H12.5A1 1 0 0 0 13.5 12.5V9.5"/><path d="M2.5 9.5L4.3 3.5H11.7L13.5 9.5H10.3L9.3 11H6.7L5.7 9.5H2.5Z"/></svg>承認待ち</span>
-          <span class="count-dot zero" id="pending-count">0</span>
-        </button>
-        <button class="tab-btn" data-tab="connect" type="button">
-          <span class="tab-left"><svg class="tab-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 9.5L9.5 6.5"/><path d="M9 11L7.3 12.7A2.6 2.6 0 1 1 3.6 9L5.3 7.3"/><path d="M7 5L8.7 3.3A2.6 2.6 0 1 1 12.4 7L10.7 8.7"/></svg>AI接続・同期</span>
-        </button>
-        <div class="nav-sep"></div>
-        <button class="tab-btn muted-nav" data-tab="check" type="button">
-          <span class="tab-left"><svg class="tab-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2L13 4V7.8C13 10.9 10.9 13.1 8 14C5.1 13.1 3 10.9 3 7.8V4L8 2Z"/><path d="M5.8 8.2L7.3 9.7L10.4 6.6"/></svg>動作テスト</span>
-        </button>
-      </nav>
+  <!-- Slim Left Icon Rail -->
+  <aside class="rail" aria-label="ナビゲーション">
+    <div class="rail-top">
+      <div class="rail-mark" title="nihongo"><span class="rail-dot-brand"></span></div>
+      <button class="rail-btn active" data-tab="profile" type="button" title="自分のルール（profile.md）">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5H11L14 5.5V15.5H4.5V2.5Z"/><path d="M11 2.5V5.5H14"/><line x1="7" y1="9" x2="11.5" y2="9"/><line x1="7" y1="12" x2="10" y2="12"/></svg>
+      </button>
+      <button class="rail-btn" data-tab="inbox" type="button" title="承認待ち（受信箱）">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6.5"/><path d="M9 5.5V9.2L11.5 10.7"/></svg>
+        <span class="rail-pip" id="rail-pip"></span>
+      </button>
+      <button class="rail-btn" data-tab="connect" type="button" title="AI接続・同期">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7.3 10.7L10.7 7.3"/><path d="M10.1 12.2L8.3 14A3 3 0 1 1 4 9.7L5.8 7.9"/><path d="M7.9 5.8L9.7 4A3 3 0 1 1 14 8.3L12.2 10.1"/></svg>
+      </button>
+      <button class="rail-btn" data-tab="check" type="button" title="動作テスト（0トークン検査）">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2.3L14.5 4.5V8.7C14.5 12.2 12.2 14.7 9 15.7C5.8 14.7 3.5 12.2 3.5 8.7V4.5L9 2.3Z"/><path d="M6.5 9.2L8.2 10.9L11.7 7.4"/></svg>
+      </button>
     </div>
-
-    <div class="side-foot">
-      <div style="display:flex;align-items:center;gap:6px;" id="meta-bar">
-        <span class="local-status">ローカル</span>
-      </div>
-      <button class="btn-reload-mini" id="btn-reload" type="button">更新</button>
-    </div>
+    <div class="rail-avatar" id="rail-status" title="ローカル稼働中（127.0.0.1・外部送信なし）">地</div>
   </aside>
 
-  <main class="main">
+  <div class="workspace">
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <!-- 1. Personal Rules Panel -->
+    <!-- 1. Personal Rules Split-Pane Workspace (DEFAULT) -->
     <section class="panel active" id="panel-profile">
-      <div class="page-head">
-        <h1>自分のルール</h1>
-        <div class="head-actions">
-          <div class="seg" role="tablist" aria-label="表示切替">
-            <button class="seg-btn active" id="mode-cards" type="button">カード</button>
-            <button class="seg-btn" id="mode-raw" type="button">Markdown</button>
+      <div class="split-pane">
+        <!-- Left Pane: Scene Selector Cards + Bottom Composer -->
+        <div class="left-pane">
+          <div class="pane-head">
+            <div class="pane-head-left">
+              <span class="brand-word">nih<i></i>ngo</span>
+              <span class="mode-tag">個人ルール</span>
+            </div>
+            <span class="quiet-meta" id="left-layer-badge">ローカル</span>
+          </div>
+
+          <div class="left-scroll">
+            <div class="left-note">全AIが共通で参照する書き方です。場面を選ぶと右のページで中身を確認できます。</div>
+            <div id="scene-nav-cards" style="display:flex;flex-direction:column;gap:8px;"></div>
+          </div>
+
+          <!-- TeaMy-style Pinned Bottom Composer -->
+          <div class="composer-wrap">
+            <div class="composer-opts">
+              <select class="mini-select" id="qa-scene" aria-label="場面">
+                <option value="common">共通</option>
+                <option value="work">社内・同僚</option>
+                <option value="formal">社外・目上</option>
+                <option value="casual">普段・雑談</option>
+              </select>
+              <select class="mini-select" id="qa-kind" aria-label="種類">
+                <option value="forbidden">避ける表現</option>
+                <option value="rule">書く時の考え方</option>
+                <option value="tone">口調・記号</option>
+                <option value="first_person">一人称</option>
+              </select>
+            </div>
+            <div class="composer-box">
+              <span class="composer-plus">+</span>
+              <input class="composer-input" type="text" id="qa-value" placeholder="避ける表現やルールを追加">
+              <button class="composer-send" id="btn-qa-add" type="button" title="追加">
+                <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12.5V3.5"/><path d="M4.2 7.2L8 3.5L11.8 7.2"/></svg>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div id="view-cards">
-        <div class="quick-add">
-          <select id="qa-scene" aria-label="場面">
-            <option value="common">共通</option>
-            <option value="work">社内・同僚</option>
-            <option value="formal">社外・目上</option>
-            <option value="casual">普段・雑談</option>
-          </select>
-          <select id="qa-kind" aria-label="種類">
-            <option value="forbidden">避ける表現</option>
-            <option value="rule">書く時の考え方</option>
-            <option value="tone">口調・記号</option>
-            <option value="first_person">一人称</option>
-          </select>
-          <input type="text" id="qa-value" placeholder="追加する表現やルールを入力">
-          <button class="btn dark" id="btn-qa-add" type="button">追加</button>
-        </div>
-
-        <div class="scene-grid" id="scene-grid"></div>
-      </div>
-
-      <div id="view-raw" style="display:none;">
-        <div class="surface-card">
-          <div class="editor-bar">
-            <span id="editor-path">profile.md</span>
-            <button class="btn primary sm" id="btn-save-profile" type="button">保存</button>
+        <!-- Right Pane: Crisp Document Sheet + Optional Right Margin Approval Cards -->
+        <div class="right-pane">
+          <div class="doc-toolbar">
+            <div class="tb-left">
+              <span class="tb-title">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2H10L13 5V14H4V2Z"/><path d="M10 2V5H13"/></svg>
+                <span id="doc-tb-title">私の書き方</span>
+              </span>
+              <span class="tb-pill" id="doc-tb-count">0件</span>
+              <div class="seg" role="tablist" aria-label="表示切替">
+                <button class="seg-btn active" id="mode-cards" type="button">ページ</button>
+                <button class="seg-btn" id="mode-raw" type="button">Markdown</button>
+              </div>
+            </div>
+            <div class="tb-right">
+              <button class="btn solid sm" id="btn-save-profile" type="button" style="display:none;">保存</button>
+              <button class="ico-btn" id="btn-tb-export" type="button" title="AI接続・持ち運びを開く">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5V10"/><path d="M5 7L8 10L11 7"/><path d="M3 12.5H13"/></svg>
+              </button>
+              <button class="ico-btn" id="btn-reload" type="button" title="再読み込み">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8A5 5 0 1 1 11.5 4.5"/><path d="M11.5 2V4.8H8.7"/></svg>
+              </button>
+            </div>
           </div>
-          <textarea class="mono" id="profile-editor" spellcheck="false"></textarea>
-        </div>
-        <div class="surface-card" id="project-raw-card" style="display:none;margin-top:14px;">
-          <div class="editor-bar">
-            <span id="project-raw-path">案件別（.nihongo/profile.md）</span>
-            <span>読み取り専用</span>
+
+          <div class="desk-scroll">
+            <div class="sheet-stage">
+              <div class="paper-sheet" id="view-cards">
+                <div class="paper-meta-top">
+                  <span id="sheet-first-person"></span>
+                  <span id="sheet-layer-note">profile.md</span>
+                </div>
+                <h1 class="paper-title" id="sheet-title">私の書き方</h1>
+                <div id="sheet-body"></div>
+              </div>
+
+              <div class="paper-sheet" id="view-raw" style="display:none;">
+                <div class="paper-meta-top">
+                  <span id="editor-path">profile.md</span>
+                </div>
+                <textarea class="mono" id="profile-editor" spellcheck="false"></textarea>
+                <div id="project-raw-card" style="display:none;margin-top:22px;">
+                  <div class="paper-sec-h">案件別ルール<span class="paper-sec-sub" id="project-raw-path">読み取り専用</span></div>
+                  <textarea class="mono" id="project-raw-editor" readonly style="min-height:140px;"></textarea>
+                </div>
+              </div>
+
+              <!-- Right Margin Approval Cards (TeaMy Frame 2 style!) -->
+              <aside class="margin-col" id="margin-inbox-col" style="display:none;">
+                <div class="margin-head">
+                  <span id="margin-inbox-title">承認待ち</span>
+                  <button class="btn text-only sm" id="btn-open-inbox-all" type="button">すべて見る</button>
+                </div>
+                <div id="margin-inbox-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+              </aside>
+            </div>
           </div>
-          <textarea class="mono" id="project-raw-editor" readonly style="min-height:130px;background:#FAFAFB;"></textarea>
         </div>
       </div>
     </section>
 
     <!-- 2. Pending Inbox Panel -->
     <section class="panel" id="panel-inbox">
-      <div class="page-head">
-        <h1>承認待ち</h1>
-        <div class="head-actions">
-          <button class="btn" id="btn-toggle-add" type="button">＋ 追加</button>
-          <button class="btn primary" id="btn-approve-all" type="button">一括承認</button>
-          <button class="btn subtle" id="btn-toggle-history" type="button">履歴</button>
+      <div class="doc-page">
+        <div class="doc-toolbar">
+          <div class="tb-left">
+            <span class="tb-title">承認待ち（受信箱）</span>
+            <span class="tb-pill" id="pending-count">0</span>
+          </div>
+          <div class="tb-right" style="gap:6px;">
+            <button class="btn sm" id="btn-toggle-add" type="button">＋ 追加</button>
+            <button class="btn solid sm" id="btn-approve-all" type="button">警告なしを一括承認</button>
+            <button class="btn text-only sm" id="btn-toggle-history" type="button">履歴</button>
+          </div>
         </div>
-      </div>
 
-      <div class="form-box" id="add-form-box">
-        <div class="grid-2">
-          <div>
-            <label class="fld" for="prop-scene">場面</label>
-            <select id="prop-scene">
-              <option value="common">共通</option>
-              <option value="work">社内・同僚</option>
-              <option value="formal">社外・目上</option>
-              <option value="casual">普段・雑談</option>
-            </select>
-          </div>
-          <div>
-            <label class="fld" for="prop-kind">種類</label>
-            <select id="prop-kind">
-              <option value="forbidden">避ける表現</option>
-              <option value="rule">書く時の考え方</option>
-              <option value="tone">口調・記号</option>
-              <option value="first_person">一人称</option>
-            </select>
-          </div>
-        </div>
-        <div class="grid-2">
-          <div>
-            <label class="fld" for="prop-value">内容</label>
-            <input type="text" id="prop-value" placeholder="例：いただけますと幸いです">
-          </div>
-          <div>
-            <label class="fld" for="prop-reason">理由（任意）</label>
-            <input type="text" id="prop-reason" placeholder="例：結びが硬すぎるため">
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn dark sm" id="btn-propose" type="button">追加</button>
-          <button class="btn subtle sm" id="btn-cancel-add" type="button">閉じる</button>
-        </div>
-      </div>
+        <div class="desk-scroll">
+          <div class="paper-sheet wide">
+            <div class="form-drawer" id="add-form-box">
+              <div class="grid-2">
+                <div>
+                  <label class="fld" for="prop-scene">場面</label>
+                  <select id="prop-scene">
+                    <option value="common">共通</option>
+                    <option value="work">社内・同僚</option>
+                    <option value="formal">社外・目上</option>
+                    <option value="casual">普段・雑談</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="fld" for="prop-kind">種類</label>
+                  <select id="prop-kind">
+                    <option value="forbidden">避ける表現</option>
+                    <option value="rule">書く時の考え方</option>
+                    <option value="tone">口調・記号</option>
+                    <option value="first_person">一人称</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid-2">
+                <div>
+                  <label class="fld" for="prop-value">内容</label>
+                  <input type="text" id="prop-value" placeholder="例：いただけますと幸いです">
+                </div>
+                <div>
+                  <label class="fld" for="prop-reason">理由（任意）</label>
+                  <input type="text" id="prop-reason" placeholder="例：結びが硬すぎるため">
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button class="btn solid sm" id="btn-propose" type="button">受信箱に追加</button>
+                <button class="btn text-only sm" id="btn-cancel-add" type="button">閉じる</button>
+              </div>
+            </div>
 
-      <div class="card-list" id="inbox-list"></div>
+            <div class="paper-sec">
+              <div class="paper-sec-h">承認待ちの候補</div>
+              <table class="doc-table">
+                <thead>
+                  <tr>
+                    <th style="width:104px;">場面</th>
+                    <th style="width:110px;">種別</th>
+                    <th>内容・理由</th>
+                    <th style="width:128px;text-align:right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="inbox-list"></tbody>
+              </table>
+            </div>
 
-      <div id="history-wrap" style="display:none;">
-        <div class="history-head">処理済みの履歴</div>
-        <div class="card-list" id="history-list"></div>
+            <div class="paper-sec" id="history-wrap" style="display:none;">
+              <div class="paper-sec-h">処理済みの履歴</div>
+              <table class="doc-table">
+                <thead>
+                  <tr>
+                    <th style="width:104px;">場面</th>
+                    <th style="width:90px;">結果</th>
+                    <th>内容</th>
+                    <th style="width:110px;">経由</th>
+                  </tr>
+                </thead>
+                <tbody id="history-list"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- 3. Connect & Sync Panel -->
     <section class="panel" id="panel-connect">
-      <div class="page-head">
-        <h1>AI接続・同期</h1>
-      </div>
-
-      <div class="block-title">AIアプリ（MCP）</div>
-      <div class="surface-card" id="mcp-list"></div>
-
-      <div class="block-title">同期フォルダ</div>
-      <div class="surface-card" id="sync-list-card"></div>
-
-      <div class="block-title">他端末へ持ち運ぶ（nihongo-setup.md）</div>
-      <div class="surface-card" style="padding:16px;">
-        <div class="export-row">
-          <div>
-            <label class="fld" for="exp-scene">既定の場面</label>
-            <select id="exp-scene">
-              <option value="work">社内・同僚</option>
-              <option value="formal">社外・目上</option>
-              <option value="casual">普段・雑談</option>
-            </select>
+      <div class="doc-page">
+        <div class="doc-toolbar">
+          <div class="tb-left">
+            <span class="tb-title">AI接続・同期</span>
           </div>
-          <div>
-            <label class="fld" for="exp-sync">保存先</label>
-            <select id="exp-sync">
-              <option value="local">ローカル</option>
-              <option value="gdrive">Google Drive</option>
-            </select>
-          </div>
-          <button class="btn primary" id="btn-export-dl" type="button">ダウンロード ↓</button>
         </div>
-        <details style="margin-top:12px;">
-          <summary style="cursor:pointer;font-size:12.5px;font-weight:600;color:var(--muted);">中身を確認</summary>
-          <textarea class="mono" id="export-preview" readonly style="margin-top:8px;min-height:170px;border:1px solid var(--line);border-radius:8px;background:#FAFAFB;"></textarea>
-        </details>
-      </div>
 
-      <div id="skills-section">
-        <div class="block-title">組み込みルール</div>
-        <div id="skills-wrap"></div>
+        <div class="desk-scroll">
+          <div class="paper-sheet wide">
+            <div class="paper-sec">
+              <div class="paper-sec-h">AIアプリ（MCP）</div>
+              <table class="doc-table">
+                <thead>
+                  <tr>
+                    <th>アプリ</th>
+                    <th style="width:100px;">状態</th>
+                    <th style="width:160px;text-align:right;">設定</th>
+                  </tr>
+                </thead>
+                <tbody id="mcp-list"></tbody>
+              </table>
+            </div>
+
+            <div class="paper-sec">
+              <div class="paper-sec-h">同期フォルダ</div>
+              <table class="doc-table">
+                <thead>
+                  <tr>
+                    <th>サービス</th>
+                    <th style="width:170px;text-align:right;">設定</th>
+                  </tr>
+                </thead>
+                <tbody id="sync-list-card"></tbody>
+              </table>
+            </div>
+
+            <div class="paper-sec">
+              <div class="paper-sec-h">他端末へ持ち運ぶ<span class="paper-sec-sub">nihongo-setup.md</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;">
+                <div>
+                  <label class="fld" for="exp-scene">既定の場面</label>
+                  <select id="exp-scene">
+                    <option value="work">社内・同僚</option>
+                    <option value="formal">社外・目上</option>
+                    <option value="casual">普段・雑談</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="fld" for="exp-sync">保存先</label>
+                  <select id="exp-sync">
+                    <option value="local">ローカル</option>
+                    <option value="gdrive">Google Drive</option>
+                  </select>
+                </div>
+                <button class="btn solid" id="btn-export-dl" type="button">ダウンロード</button>
+              </div>
+              <details style="margin-top:12px;">
+                <summary style="cursor:pointer;font-size:12px;color:var(--muted);">中身を確認</summary>
+                <textarea class="mono" id="export-preview" readonly style="margin-top:8px;min-height:170px;"></textarea>
+              </details>
+            </div>
+
+            <div class="paper-sec" id="skills-section">
+              <div class="paper-sec-h">組み込みルール</div>
+              <div id="skills-wrap"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- 4. Utility: 0-Token Check Panel -->
     <section class="panel" id="panel-check">
-      <div class="page-head">
-        <h1>動作テスト</h1>
-        <div class="head-actions">
-          <select id="check-scene" style="width:auto;">
-            <option value="">場面指定なし</option>
-            <option value="formal">社外・目上</option>
-            <option value="work">社内・同僚</option>
-            <option value="casual">普段・雑談</option>
-          </select>
-          <button class="btn primary" id="btn-run-check" type="button">検査する</button>
+      <div class="doc-page">
+        <div class="doc-toolbar">
+          <div class="tb-left">
+            <span class="tb-title">動作テスト（0トークン検査）</span>
+          </div>
+          <div class="tb-right" style="gap:8px;">
+            <select id="check-scene" style="width:auto;padding:4px 8px;font-size:12px;">
+              <option value="">場面指定なし</option>
+              <option value="formal">社外・目上</option>
+              <option value="work">社内・同僚</option>
+              <option value="casual">普段・雑談</option>
+            </select>
+            <button class="btn solid sm" id="btn-run-check" type="button">検査する</button>
+          </div>
         </div>
-      </div>
 
-      <div class="grid-2">
-        <div class="surface-card" style="padding:14px 16px;">
-          <label class="fld" for="check-orig">元の文章（新規なら空欄）</label>
-          <textarea id="check-orig" rows="7" placeholder="例：資料は明日15時までに必ず送ってください。"></textarea>
-        </div>
-        <div class="surface-card" style="padding:14px 16px;">
-          <label class="fld" for="check-draft">AIの文章</label>
-          <textarea id="check-draft" rows="7" placeholder="例：恐れ入りますが、資料は明日15時頃までにご送付いただけますと幸いです。"></textarea>
+        <div class="desk-scroll">
+          <div class="paper-sheet wide">
+            <div class="grid-2">
+              <div>
+                <label class="fld" for="check-orig">元の文章（新規なら空欄）</label>
+                <textarea id="check-orig" rows="7" placeholder="例：資料は明日15時までに必ず送ってください。"></textarea>
+              </div>
+              <div>
+                <label class="fld" for="check-draft">AIの文章</label>
+                <textarea id="check-draft" rows="7" placeholder="例：恐れ入りますが、資料は明日15時頃までにご送付いただけますと幸いです。"></textarea>
+              </div>
+            </div>
+            <div id="check-result"></div>
+          </div>
         </div>
       </div>
-      <div id="check-result"></div>
     </section>
-  </main>
+  </div>
 </div>
 
 <script>
 const CSRF = {token_json};
 let STATE = null;
+let SELECTED_SCENE = 'all';
 
-const SCENE_META = [
-  {{ key: 'common', title: '共通ルール', hint: '全場面' }},
-  {{ key: 'work', title: '社内・同僚', hint: 'Slack・PR' }},
-  {{ key: 'formal', title: '社外・目上', hint: '社外メール・公式' }},
-  {{ key: 'casual', title: '普段・雑談', hint: '友達・メモ' }},
+const SCENE_DEFS = [
+  {{ key: 'all', title: 'すべてのルール', sub: '4場面まとめ' }},
+  {{ key: 'common', title: '共通ルール', sub: '全場面で適用' }},
+  {{ key: 'work', title: '社内・同僚', sub: 'Slack・PR' }},
+  {{ key: 'formal', title: '社外・目上', sub: '社外メール・公式' }},
+  {{ key: 'casual', title: '普段・雑談', sub: '友達・メモ' }},
 ];
+const SCENE_LABELS = {{ common: '共通', work: '社内・同僚', formal: '社外・目上', casual: '普段・雑談' }};
+const SCENE_KEYS = ['common', 'work', 'formal', 'casual'];
 
 let toastTimer = null;
 function showToast(msg, kind) {{
@@ -926,16 +1162,12 @@ function showToast(msg, kind) {{
   el.className = 'toast show ' + (kind || '');
   if (toastTimer) clearTimeout(toastTimer);
   if (kind !== 'error') {{
-    toastTimer = setTimeout(() => {{ el.className = 'toast'; }}, 4500);
+    toastTimer = setTimeout(() => {{ el.className = 'toast'; }}, 4000);
   }}
 }}
 
 function switchTab(tabKey) {{
-  const toastEl = document.getElementById('toast');
-  if (toastEl && !toastEl.classList.contains('error')) {{
-    toastEl.className = 'toast';
-  }}
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabKey));
+  document.querySelectorAll('.rail-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabKey));
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tabKey));
 }}
 
@@ -964,7 +1196,7 @@ async function apiPost(path, payload) {{
 async function copyCmd(text) {{
   try {{
     await navigator.clipboard.writeText(text);
-    showToast('コピーしました: ' + text, 'ok');
+    showToast('コピーしました', 'ok');
   }} catch (_) {{
     const ta = document.createElement('textarea');
     ta.value = text;
@@ -972,334 +1204,475 @@ async function copyCmd(text) {{
     ta.select();
     document.execCommand('copy');
     ta.remove();
-    showToast('コピーしました: ' + text, 'ok');
+    showToast('コピーしました', 'ok');
   }}
 }}
 
-function renderMeta(state) {{
-  const bar = document.getElementById('meta-bar');
-  bar.textContent = '';
-  const st = document.createElement('span');
-  st.className = 'local-status';
-  st.title = state.profile.profile_path || '';
-  st.textContent = 'ローカル';
-  bar.appendChild(st);
-
-  document.getElementById('editor-path').textContent = state.profile.profile_path || 'profile.md';
-  const projCard = document.getElementById('project-raw-card');
-  if (state.profile.project_profile_path) {{
-    const b = document.createElement('span');
-    b.className = 'layer-badge';
-    b.title = state.profile.project_profile_path;
-    b.textContent = '2層';
-    bar.appendChild(b);
-    projCard.style.display = 'block';
-    document.getElementById('project-raw-path').textContent = state.profile.project_profile_path;
-    document.getElementById('project-raw-editor').value = state.project_raw || '';
-  }} else {{
-    projCard.style.display = 'none';
-  }}
+function collectSceneItems(state, sc) {{
+  const g = (state.structured_global || {{}})[sc] || {{ first_person: '', forbidden: [], rules: [] }};
+  const p = state.structured_project ? (state.structured_project[sc] || {{ forbidden: [], rules: [] }}) : {{ forbidden: [], rules: [] }};
+  const items = [];
+  (g.forbidden || []).forEach(w => items.push({{ scene: sc, kind: 'forbidden', kindLabel: '避ける表現', value: w, source: 'global' }}));
+  (p.forbidden || []).forEach(w => {{
+    if (!(g.forbidden || []).includes(w)) items.push({{ scene: sc, kind: 'forbidden', kindLabel: '避ける表現', value: w, source: 'project' }});
+  }});
+  (g.rules || []).forEach(r => items.push({{ scene: sc, kind: 'rule', kindLabel: sc === 'common' ? '基本方針' : '口調・ルール', value: r, source: 'global' }}));
+  (p.rules || []).forEach(r => items.push({{ scene: sc, kind: 'rule', kindLabel: sc === 'common' ? '基本方針' : '口調・ルール', value: r, source: 'project' }}));
+  return items;
 }}
 
-function renderSceneCards(state) {{
-  const grid = document.getElementById('scene-grid');
-  grid.textContent = '';
-  const gStruct = state.structured_global || {{}};
-  const pStruct = state.structured_project || null;
+function renderLeftNavCards(state) {{
+  const wrap = document.getElementById('scene-nav-cards');
+  wrap.textContent = '';
+  const allItems = SCENE_KEYS.flatMap(k => collectSceneItems(state, k));
 
-  SCENE_META.forEach(meta => {{
-    const card = document.createElement('div');
-    card.className = 'scene-card' + (meta.key === 'common' ? ' common-card' : '');
+  SCENE_DEFS.forEach(def => {{
+    const list = def.key === 'all' ? allItems : collectSceneItems(state, def.key);
+    const ngCnt = list.filter(x => x.kind === 'forbidden').length;
+    const rCnt = list.filter(x => x.kind !== 'forbidden').length;
 
-    const gSec = gStruct[meta.key] || {{ first_person: '', forbidden: [], rules: [] }};
-    const pSec = pStruct ? (pStruct[meta.key] || {{ forbidden: [], rules: [] }}) : {{ forbidden: [], rules: [] }};
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'doc-card' + (SELECTED_SCENE === def.key ? ' active' : '');
 
-    const head = document.createElement('div');
-    head.className = 'sc-head';
-    const titleWrap = document.createElement('div');
-    titleWrap.className = 'sc-title-wrap';
-    const h2 = document.createElement('h2');
-    h2.textContent = meta.title;
-    const hint = document.createElement('span');
-    hint.className = 'sc-hint';
-    hint.textContent = meta.hint;
-    titleWrap.appendChild(h2);
-    titleWrap.appendChild(hint);
-    head.appendChild(titleWrap);
+    const left = document.createElement('div');
+    left.className = 'doc-card-left';
+    const ico = document.createElement('span');
+    ico.className = 'doc-ico';
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 16 16');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.4');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    const p1 = document.createElementNS(ns, 'path');
+    p1.setAttribute('d', 'M4 2.2H9.8L12.5 4.9V13.8H4V2.2Z');
+    const p2 = document.createElementNS(ns, 'path');
+    p2.setAttribute('d', 'M9.8 2.2V4.9H12.5');
+    svg.appendChild(p1);
+    svg.appendChild(p2);
+    ico.appendChild(svg);
+    const txt = document.createElement('div');
+    const title = document.createElement('div');
+    title.className = 'doc-title';
+    title.textContent = def.title;
+    const sub = document.createElement('div');
+    sub.className = 'doc-sub';
+    sub.textContent = def.sub + ' · ' + (ngCnt + rCnt) + '件';
+    txt.appendChild(title);
+    txt.appendChild(sub);
+    left.appendChild(ico);
+    left.appendChild(txt);
+    btn.appendChild(left);
 
-    if (meta.key === 'common' && gSec.first_person) {{
-      const fp = document.createElement('span');
-      fp.className = 'pill';
-      fp.textContent = '一人称：' + gSec.first_person;
-      head.appendChild(fp);
-    }}
-    card.appendChild(head);
-
-    const gForb = gSec.forbidden || [];
-    const pForb = (pSec.forbidden || []).filter(w => !gForb.includes(w));
-    const gRules = gSec.rules || [];
-    const pRules = pSec.rules || [];
-
-    if (gForb.length > 0 || pForb.length > 0) {{
-      const ngSec = document.createElement('div');
-      const ngLbl = document.createElement('div');
-      ngLbl.className = 'sc-lbl';
-      ngLbl.textContent = '避ける表現';
-      ngSec.appendChild(ngLbl);
-
-      const chips = document.createElement('div');
-      chips.className = 'chip-wrap';
-      gForb.forEach(word => {{
-        const chip = document.createElement('span');
-        chip.className = 'ng-chip';
-        chip.appendChild(document.createTextNode(word));
-        const xBtn = document.createElement('button');
-        xBtn.type = 'button';
-        xBtn.className = 'chip-x';
-        xBtn.title = '「' + word + '」を削除';
-        xBtn.textContent = '×';
-        xBtn.addEventListener('click', async () => {{
-          try {{
-            await apiPost('/api/profile/remove-forbidden', {{ scene: meta.key, value: word }});
-            showToast('「' + word + '」を削除しました。', 'ok');
-            await loadState();
-          }} catch (err) {{
-            showToast('削除できませんでした: ' + err.message, 'error');
-          }}
-        }});
-        chip.appendChild(xBtn);
-        chips.appendChild(chip);
-      }});
-      pForb.forEach(word => {{
-        const chip = document.createElement('span');
-        chip.className = 'ng-chip project-chip';
-        chip.appendChild(document.createTextNode(word));
-        const pm = document.createElement('span');
-        pm.className = 'mini-tag';
-        pm.textContent = '案件';
-        chip.appendChild(pm);
-        chips.appendChild(chip);
-      }});
-      ngSec.appendChild(chips);
-      card.appendChild(ngSec);
+    if (SELECTED_SCENE === def.key) {{
+      const st = document.createElement('span');
+      st.className = 'doc-state';
+      st.textContent = '表示中';
+      btn.appendChild(st);
     }}
 
-    if (gRules.length > 0 || pRules.length > 0) {{
-      const rSec = document.createElement('div');
-      if (gForb.length > 0 || pForb.length > 0) {{
-        const rLbl = document.createElement('div');
-        rLbl.className = 'sc-lbl';
-        rLbl.textContent = meta.key === 'common' ? '書く時の考え方' : '口調・ルール';
-        rSec.appendChild(rLbl);
-      }}
-      const ul = document.createElement('ul');
-      ul.className = 'rule-list';
-      gRules.forEach(r => {{
-        const li = document.createElement('li');
-        li.textContent = r;
-        ul.appendChild(li);
-      }});
-      pRules.forEach(r => {{
-        const li = document.createElement('li');
-        const tag = document.createElement('span');
-        tag.className = 'mini-tag';
-        tag.textContent = '案件';
-        li.appendChild(tag);
-        li.appendChild(document.createTextNode(r));
-        ul.appendChild(li);
-      }});
-      rSec.appendChild(ul);
-      card.appendChild(rSec);
-    }}
-
-    if (gForb.length === 0 && pForb.length === 0 && gRules.length === 0 && pRules.length === 0) {{
-      const empty = document.createElement('div');
-      empty.className = 'muted-empty';
-      empty.textContent = '未登録';
-      card.appendChild(empty);
-    }}
-    grid.appendChild(card);
+    btn.addEventListener('click', () => {{
+      SELECTED_SCENE = def.key;
+      if (def.key !== 'all') document.getElementById('qa-scene').value = def.key;
+      renderLeftNavCards(STATE);
+      renderDocumentSheet(STATE);
+    }});
+    wrap.appendChild(btn);
   }});
 }}
 
-function buildItemCard(item, isHistory) {{
-  const card = document.createElement('div');
-  card.className = 'item-card' + (item.warning && !isHistory ? ' warn' : '');
+function renderDocumentSheet(state) {{
+  const allItems = SCENE_KEYS.flatMap(k => collectSceneItems(state, k));
+  const items = SELECTED_SCENE === 'all' ? allItems : collectSceneItems(state, SELECTED_SCENE);
+  const def = SCENE_DEFS.find(d => d.key === SELECTED_SCENE) || SCENE_DEFS[0];
 
-  const main = document.createElement('div');
-  main.className = 'item-main';
+  document.getElementById('doc-tb-title').textContent = SELECTED_SCENE === 'all' ? '私の書き方' : def.title;
+  document.getElementById('doc-tb-count').textContent = items.length + '件';
+  document.getElementById('sheet-title').textContent = SELECTED_SCENE === 'all' ? '私の書き方' : def.title;
 
-  const meta = document.createElement('div');
-  meta.className = 'item-meta';
+  const fp = ((state.structured_global || {{}}).common || {{}}).first_person || '';
+  document.getElementById('sheet-first-person').textContent = fp ? ('一人称：' + fp) : '';
+  document.getElementById('sheet-layer-note').textContent = state.profile.project_profile_path ? 'profile.md ＋ 案件別' : 'profile.md';
+  document.getElementById('left-layer-badge').textContent = state.profile.project_profile_path ? '2層適用中' : 'ローカル';
 
-  const p1 = document.createElement('span');
-  p1.className = 'pill';
-  p1.textContent = item.scene_label || item.scene;
-  meta.appendChild(p1);
+  const body = document.getElementById('sheet-body');
+  body.textContent = '';
 
-  const p2 = document.createElement('span');
-  p2.className = 'pill';
-  p2.textContent = item.kind_label || item.kind;
-  meta.appendChild(p2);
+  const ngItems = items.filter(x => x.kind === 'forbidden');
+  const ruleItems = items.filter(x => x.kind !== 'forbidden');
 
-  if (item.source) {{
-    const src = document.createElement('span');
-    src.textContent = item.source;
-    meta.appendChild(src);
-  }}
-  if (isHistory) {{
-    const st = document.createElement('span');
-    st.className = 'pill ' + (item.status === 'approved' ? 'ok' : 'rej');
-    st.textContent = item.status === 'approved' ? '承認' : '却下';
-    meta.appendChild(st);
-  }}
-  main.appendChild(meta);
+  const buildTableSection = (heading, subText, rows, showDelete) => {{
+    const sec = document.createElement('div');
+    sec.className = 'paper-sec';
+    const h = document.createElement('div');
+    h.className = 'paper-sec-h';
+    h.textContent = heading;
+    if (subText) {{
+      const sp = document.createElement('span');
+      sp.className = 'paper-sec-sub';
+      sp.textContent = subText;
+      h.appendChild(sp);
+    }}
+    sec.appendChild(h);
 
-  const val = document.createElement('div');
-  val.className = 'item-val';
-  val.textContent = item.value || '';
-  main.appendChild(val);
+    const tbl = document.createElement('table');
+    tbl.className = 'doc-table';
+    const thead = document.createElement('thead');
+    const htr = document.createElement('tr');
+    const cols = SELECTED_SCENE === 'all' ? ['場面', '内容', ''] : ['内容', ''];
+    cols.forEach((c, i) => {{
+      const th = document.createElement('th');
+      if (SELECTED_SCENE === 'all' && i === 0) th.style.width = '104px';
+      if (i === cols.length - 1) th.style.width = '68px';
+      th.textContent = c;
+      htr.appendChild(th);
+    }});
+    thead.appendChild(htr);
+    tbl.appendChild(thead);
 
-  if (item.reason) {{
-    const r = document.createElement('div');
-    r.className = 'item-note';
-    r.textContent = item.reason;
-    main.appendChild(r);
-  }}
-  if (item.example_before || item.example_after) {{
-    const ex = document.createElement('div');
-    ex.className = 'diff-line';
-    ex.textContent = (item.example_before || '') + ' → ' + (item.example_after || '');
-    main.appendChild(ex);
-  }}
-
-  let forceBox = null;
-  if (!isHistory && item.warning) {{
-    const w = document.createElement('div');
-    w.className = 'warn-msg';
-    w.textContent = item.warning;
-    main.appendChild(w);
-
-    const lbl = document.createElement('label');
-    lbl.className = 'force-check';
-    forceBox = document.createElement('input');
-    forceBox.type = 'checkbox';
-    lbl.appendChild(forceBox);
-    lbl.appendChild(document.createTextNode('警告を確認した上で反映する'));
-    main.appendChild(lbl);
-  }}
-  card.appendChild(main);
-
-  if (!isHistory) {{
-    const side = document.createElement('div');
-    side.className = 'item-side';
-
-    const btnOk = document.createElement('button');
-    btnOk.type = 'button';
-    btnOk.className = 'btn primary sm';
-    btnOk.textContent = '承認';
-    btnOk.addEventListener('click', async () => {{
-      try {{
-        const force = forceBox ? forceBox.checked : false;
-        const res = await apiPost('/api/inbox/approve', {{ ids: [item.id], force }});
-        if (res.blocked_by_guard && res.blocked_by_guard.length > 0) {{
-          showToast('警告確認のチェックを入れてから承認してください。', 'error');
-          return;
+    const tbody = document.createElement('tbody');
+    if (rows.length === 0) {{
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = cols.length;
+      td.className = 'td-muted';
+      td.textContent = '登録なし';
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    }} else {{
+      rows.forEach(row => {{
+        const tr = document.createElement('tr');
+        tr.className = 'rule-row' + (row.source === 'project' ? ' project-row' : '');
+        if (SELECTED_SCENE === 'all') {{
+          const tdSc = document.createElement('td');
+          tdSc.className = 'td-muted';
+          tdSc.textContent = SCENE_LABELS[row.scene] || row.scene;
+          tr.appendChild(tdSc);
         }}
-        showToast('承認して反映しました。', 'ok');
-        await loadState();
-      }} catch (err) {{
-        showToast('承認できませんでした: ' + err.message, 'error');
-      }}
-    }});
+        const tdVal = document.createElement('td');
+        tdVal.className = 'td-strong';
+        tdVal.textContent = row.kind === 'forbidden' ? ('「' + row.value + '」') : row.value;
+        if (row.source === 'project') {{
+          const pm = document.createElement('span');
+          pm.className = 'proj-mark';
+          pm.textContent = '案件';
+          tdVal.appendChild(pm);
+        }}
+        tr.appendChild(tdVal);
 
-    const btnRej = document.createElement('button');
-    btnRej.type = 'button';
-    btnRej.className = 'btn subtle sm';
-    btnRej.textContent = '却下';
-    btnRej.addEventListener('click', async () => {{
-      try {{
-        await apiPost('/api/inbox/reject', {{ ids: [item.id] }});
-        showToast('却下しました。', 'ok');
-        await loadState();
-      }} catch (err) {{
-        showToast('却下できませんでした: ' + err.message, 'error');
-      }}
-    }});
+        const tdAct = document.createElement('td');
+        tdAct.className = 'td-act';
+        if (showDelete && row.source === 'global') {{
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'link-del btn-del-ng';
+          btn.textContent = '削除';
+          btn.addEventListener('click', async () => {{
+            try {{
+              await apiPost('/api/profile/remove-forbidden', {{ scene: row.scene, value: row.value }});
+              showToast('「' + row.value + '」を削除しました', 'ok');
+              await loadState();
+            }} catch (err) {{
+              showToast('削除できませんでした: ' + err.message, 'error');
+            }}
+          }});
+          tdAct.appendChild(btn);
+        }}
+        tr.appendChild(tdAct);
+        tbody.appendChild(tr);
+      }});
+    }}
+    tbl.appendChild(tbody);
+    sec.appendChild(tbl);
+    return sec;
+  }};
 
-    side.appendChild(btnOk);
-    side.appendChild(btnRej);
-    card.appendChild(side);
-  }}
-  return card;
+  body.appendChild(buildTableSection('1. 避ける表現', '0トークン検査で自動検出', ngItems, true));
+  body.appendChild(buildTableSection('2. 書く時の考え方・口調', '', ruleItems, false));
 }}
 
-function renderConnectPanel(state) {{
+function renderMarginInbox(state) {{
+  const pending = state.pending_inbox || [];
+  const col = document.getElementById('margin-inbox-col');
+  const list = document.getElementById('margin-inbox-list');
+  list.textContent = '';
+
+  if (pending.length === 0) {{
+    col.style.display = 'none';
+    return;
+  }}
+  col.style.display = 'flex';
+  document.getElementById('margin-inbox-title').textContent = '承認待ち · ' + pending.length + '件';
+
+  pending.slice(0, 3).forEach(item => {{
+    const card = document.createElement('div');
+    card.className = 'review-card' + (item.warning ? ' warn' : '');
+
+    const meta = document.createElement('div');
+    meta.className = 'rc-meta';
+    const strong = document.createElement('strong');
+    strong.textContent = item.scene_label || item.scene;
+    meta.appendChild(strong);
+    meta.appendChild(document.createTextNode(item.kind_label || item.kind));
+    card.appendChild(meta);
+
+    const val = document.createElement('div');
+    val.className = 'rc-val';
+    val.textContent = item.value || '';
+    card.appendChild(val);
+
+    if (item.reason) {{
+      const r = document.createElement('div');
+      r.className = 'rc-reason';
+      r.textContent = item.reason;
+      card.appendChild(r);
+    }}
+    if (item.warning) {{
+      const w = document.createElement('div');
+      w.className = 'rc-warn';
+      w.textContent = '場面ガード警告あり（承認待ちタブで確認）';
+      card.appendChild(w);
+    }}
+
+    const acts = document.createElement('div');
+    acts.className = 'rc-actions';
+    if (!item.warning) {{
+      const bOk = document.createElement('button');
+      bOk.type = 'button';
+      bOk.className = 'btn sm';
+      bOk.textContent = '承認';
+      bOk.addEventListener('click', async () => {{
+        try {{
+          await apiPost('/api/inbox/approve', {{ ids: [item.id], force: false }});
+          showToast('承認して反映しました', 'ok');
+          await loadState();
+        }} catch (err) {{
+          showToast(err.message, 'error');
+        }}
+      }});
+      acts.appendChild(bOk);
+    }} else {{
+      const bSee = document.createElement('button');
+      bSee.type = 'button';
+      bSee.className = 'btn sm';
+      bSee.textContent = '確認する';
+      bSee.addEventListener('click', () => switchTab('inbox'));
+      acts.appendChild(bSee);
+    }}
+    const bRej = document.createElement('button');
+    bRej.type = 'button';
+    bRej.className = 'btn text-only sm';
+    bRej.textContent = '却下';
+    bRej.addEventListener('click', async () => {{
+      try {{
+        await apiPost('/api/inbox/reject', {{ ids: [item.id] }});
+        showToast('却下しました', 'ok');
+        await loadState();
+      }} catch (err) {{
+        showToast(err.message, 'error');
+      }}
+    }});
+    acts.appendChild(bRej);
+    card.appendChild(acts);
+    list.appendChild(card);
+  }});
+}}
+
+function renderInboxPage(state) {{
+  const pending = state.pending_inbox || [];
+  document.getElementById('pending-count').textContent = String(pending.length);
+  document.getElementById('rail-pip').classList.toggle('show', pending.length > 0);
+  document.getElementById('btn-approve-all').disabled = pending.length === 0;
+
+  const tbody = document.getElementById('inbox-list');
+  tbody.textContent = '';
+  if (pending.length === 0) {{
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 4;
+    td.className = 'td-muted';
+    td.textContent = '承認待ちの候補はありません。';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  }} else {{
+    pending.forEach(item => {{
+      const tr = document.createElement('tr');
+      tr.className = 'inbox-row';
+
+      const tdSc = document.createElement('td');
+      tdSc.className = 'td-muted';
+      tdSc.textContent = item.scene_label || item.scene;
+      tr.appendChild(tdSc);
+
+      const tdKind = document.createElement('td');
+      tdKind.className = 'td-muted';
+      tdKind.textContent = item.kind_label || item.kind;
+      tr.appendChild(tdKind);
+
+      const tdVal = document.createElement('td');
+      const v = document.createElement('div');
+      v.className = 'td-strong';
+      v.textContent = item.value || '';
+      tdVal.appendChild(v);
+      if (item.reason) {{
+        const r = document.createElement('div');
+        r.className = 'td-muted';
+        r.textContent = item.reason;
+        tdVal.appendChild(r);
+      }}
+      let forceBox = null;
+      if (item.warning) {{
+        const w = document.createElement('div');
+        w.className = 'warn-hl';
+        w.textContent = item.warning;
+        tdVal.appendChild(w);
+        const lbl = document.createElement('label');
+        lbl.className = 'force-check';
+        forceBox = document.createElement('input');
+        forceBox.type = 'checkbox';
+        lbl.appendChild(forceBox);
+        lbl.appendChild(document.createTextNode('確認した上で反映する'));
+        tdVal.appendChild(lbl);
+      }}
+      tr.appendChild(tdVal);
+
+      const tdAct = document.createElement('td');
+      tdAct.className = 'td-act';
+      const bOk = document.createElement('button');
+      bOk.type = 'button';
+      bOk.className = 'btn solid sm btn-approve-item';
+      bOk.textContent = '承認';
+      bOk.addEventListener('click', async () => {{
+        try {{
+          const force = forceBox ? forceBox.checked : false;
+          const res = await apiPost('/api/inbox/approve', {{ ids: [item.id], force }});
+          if (res.blocked_by_guard && res.blocked_by_guard.length > 0) {{
+            showToast('確認チェックを入れてから承認してください', 'error');
+            return;
+          }}
+          showToast('承認して反映しました', 'ok');
+          await loadState();
+        }} catch (err) {{
+          showToast(err.message, 'error');
+        }}
+      }});
+      const bRej = document.createElement('button');
+      bRej.type = 'button';
+      bRej.className = 'btn text-only sm';
+      bRej.textContent = '却下';
+      bRej.style.marginLeft = '4px';
+      bRej.addEventListener('click', async () => {{
+        try {{
+          await apiPost('/api/inbox/reject', {{ ids: [item.id] }});
+          showToast('却下しました', 'ok');
+          await loadState();
+        }} catch (err) {{
+          showToast(err.message, 'error');
+        }}
+      }});
+      tdAct.appendChild(bOk);
+      tdAct.appendChild(bRej);
+      tr.appendChild(tdAct);
+      tbody.appendChild(tr);
+    }});
+  }}
+
+  const histBody = document.getElementById('history-list');
+  histBody.textContent = '';
+  const hist = state.history_inbox || [];
+  if (hist.length === 0) {{
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 4;
+    td.className = 'td-muted';
+    td.textContent = '履歴はまだありません。';
+    tr.appendChild(td);
+    histBody.appendChild(tr);
+  }} else {{
+    hist.forEach(item => {{
+      const tr = document.createElement('tr');
+      const t1 = document.createElement('td');
+      t1.className = 'td-muted';
+      t1.textContent = item.scene_label || item.scene;
+      const t2 = document.createElement('td');
+      t2.className = 'td-muted';
+      t2.textContent = item.status === 'approved' ? '承認' : '却下';
+      const t3 = document.createElement('td');
+      t3.textContent = item.value || '';
+      const t4 = document.createElement('td');
+      t4.className = 'td-muted';
+      t4.textContent = item.source || '-';
+      tr.appendChild(t1); tr.appendChild(t2); tr.appendChild(t3); tr.appendChild(t4);
+      histBody.appendChild(tr);
+    }});
+  }}
+}}
+
+function renderConnectPage(state) {{
   const mcpEl = document.getElementById('mcp-list');
   mcpEl.textContent = '';
   (state.mcp_clients || []).forEach(c => {{
-    const row = document.createElement('div');
-    row.className = 'app-row';
-    const name = document.createElement('div');
-    name.className = 'app-name';
-    name.title = c.config_path;
-    name.textContent = c.label;
-
-    const right = document.createElement('div');
-    right.className = 'app-right';
-    const badge = document.createElement('span');
-    badge.className = 'pill ' + (c.configured ? 'ok' : 'rej');
-    badge.textContent = c.configured ? '接続済み' : (c.error ? 'エラー' : '未接続');
-    right.appendChild(badge);
+    const tr = document.createElement('tr');
+    tr.className = 'app-row';
+    const t1 = document.createElement('td');
+    t1.className = 'td-strong';
+    t1.title = c.config_path;
+    t1.textContent = c.label;
+    const t2 = document.createElement('td');
+    t2.className = 'td-muted';
+    t2.textContent = c.configured ? '接続済み' : (c.error ? 'エラー' : '未接続');
+    const t3 = document.createElement('td');
+    t3.className = 'td-act';
     if (!c.configured) {{
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn sm';
       btn.textContent = '登録コマンドをコピー';
       btn.addEventListener('click', () => copyCmd(c.init_cmd));
-      right.appendChild(btn);
+      t3.appendChild(btn);
     }}
-    row.appendChild(name);
-    row.appendChild(right);
-    mcpEl.appendChild(row);
+    tr.appendChild(t1); tr.appendChild(t2); tr.appendChild(t3);
+    mcpEl.appendChild(tr);
   }});
 
   const syncEl = document.getElementById('sync-list-card');
   syncEl.textContent = '';
   const folders = state.sync_folders || [];
   if (folders.length === 0) {{
-    const r = document.createElement('div');
-    r.className = 'app-row';
-    r.textContent = '未検出（ローカル保存）';
-    r.style.color = '#6E6E77';
-    syncEl.appendChild(r);
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 2;
+    td.className = 'td-muted';
+    td.textContent = '未検出（ローカル保存）';
+    tr.appendChild(td);
+    syncEl.appendChild(tr);
   }} else {{
     folders.forEach(f => {{
-      const row = document.createElement('div');
-      row.className = 'app-row';
-      const name = document.createElement('div');
-      name.className = 'app-name';
-      name.title = f.suggested_home;
-      name.textContent = f.provider;
-
+      const tr = document.createElement('tr');
+      const t1 = document.createElement('td');
+      t1.className = 'td-strong';
+      t1.title = f.suggested_home;
+      t1.textContent = f.provider;
+      const t2 = document.createElement('td');
+      t2.className = 'td-act';
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn sm';
       btn.textContent = '同期コマンドをコピー';
       btn.addEventListener('click', () => copyCmd('nihongo-mcp init --target all --home "' + f.suggested_home + '"'));
-      row.appendChild(name);
-      row.appendChild(btn);
-      syncEl.appendChild(row);
+      t2.appendChild(btn);
+      tr.appendChild(t1); tr.appendChild(t2);
+      syncEl.appendChild(tr);
     }});
   }}
 
   const skillsWrap = document.getElementById('skills-wrap');
   skillsWrap.textContent = '';
   const previews = state.skills_preview || {{}};
-  const defs = [
-    ['lite', 'Lite（nihongo/ALWAYS.md）'],
-    ['web', 'Web・スマホ版（nihongo/WEB.md）'],
-  ];
+  const defs = [['lite', 'Lite（nihongo/ALWAYS.md）'], ['web', 'Web・スマホ版（nihongo/WEB.md）']];
   let shown = 0;
   defs.forEach(([k, label]) => {{
     if (!previews[k]) return;
@@ -1311,8 +1684,7 @@ function renderConnectPanel(state) {{
     const pre = document.createElement('pre');
     pre.className = 'skill-pre';
     pre.textContent = previews[k];
-    det.appendChild(sum);
-    det.appendChild(pre);
+    det.appendChild(sum); det.appendChild(pre);
     skillsWrap.appendChild(det);
   }});
   document.getElementById('skills-section').style.display = shown > 0 ? 'block' : 'none';
@@ -1321,40 +1693,22 @@ function renderConnectPanel(state) {{
 async function loadState() {{
   try {{
     STATE = await apiGet('/api/state');
-    renderMeta(STATE);
-    renderSceneCards(STATE);
-    renderConnectPanel(STATE);
+    renderLeftNavCards(STATE);
+    renderDocumentSheet(STATE);
+    renderMarginInbox(STATE);
+    renderInboxPage(STATE);
+    renderConnectPage(STATE);
 
-    const pending = STATE.pending_inbox || [];
-    const cntEl = document.getElementById('pending-count');
-    cntEl.textContent = String(pending.length);
-    cntEl.className = 'count-dot' + (pending.length === 0 ? ' zero' : '');
-    document.getElementById('btn-approve-all').disabled = pending.length === 0;
-
-    const listEl = document.getElementById('inbox-list');
-    listEl.textContent = '';
-    if (pending.length === 0) {{
-      const empty = document.createElement('div');
-      empty.className = 'empty-box';
-      empty.textContent = '承認待ちの候補はありません。';
-      listEl.appendChild(empty);
-    }} else {{
-      pending.forEach(item => listEl.appendChild(buildItemCard(item, false)));
-    }}
-
-    const histEl = document.getElementById('history-list');
-    histEl.textContent = '';
-    const hist = STATE.history_inbox || [];
-    if (hist.length === 0) {{
-      const empty = document.createElement('div');
-      empty.className = 'empty-box';
-      empty.textContent = '履歴はまだありません。';
-      histEl.appendChild(empty);
-    }} else {{
-      hist.forEach(item => histEl.appendChild(buildItemCard(item, true)));
-    }}
-
+    document.getElementById('editor-path').textContent = STATE.profile.profile_path || 'profile.md';
     document.getElementById('profile-editor').value = STATE.profile.global_raw || STATE.default_template || '';
+    const projCard = document.getElementById('project-raw-card');
+    if (STATE.profile.project_profile_path) {{
+      projCard.style.display = 'block';
+      document.getElementById('project-raw-path').textContent = STATE.profile.project_profile_path;
+      document.getElementById('project-raw-editor').value = STATE.project_raw || '';
+    }} else {{
+      projCard.style.display = 'none';
+    }}
     await refreshExportPreview();
   }} catch (err) {{
     showToast('読み込みに失敗しました: ' + err.message, 'error');
@@ -1372,9 +1726,11 @@ async function refreshExportPreview() {{
   }}
 }}
 
-document.querySelectorAll('.tab-btn').forEach(btn => {{
+document.querySelectorAll('.rail-btn').forEach(btn => {{
   btn.addEventListener('click', () => switchTab(btn.dataset.tab));
 }});
+document.getElementById('btn-open-inbox-all').addEventListener('click', () => switchTab('inbox'));
+document.getElementById('btn-tb-export').addEventListener('click', () => switchTab('connect'));
 document.getElementById('btn-reload').addEventListener('click', loadState);
 
 document.getElementById('mode-cards').addEventListener('click', () => {{
@@ -1382,37 +1738,39 @@ document.getElementById('mode-cards').addEventListener('click', () => {{
   document.getElementById('mode-raw').classList.remove('active');
   document.getElementById('view-cards').style.display = 'block';
   document.getElementById('view-raw').style.display = 'none';
+  document.getElementById('btn-save-profile').style.display = 'none';
+  if (STATE) renderMarginInbox(STATE);
 }});
 document.getElementById('mode-raw').addEventListener('click', () => {{
   document.getElementById('mode-raw').classList.add('active');
   document.getElementById('mode-cards').classList.remove('active');
   document.getElementById('view-raw').style.display = 'block';
   document.getElementById('view-cards').style.display = 'none';
+  document.getElementById('btn-save-profile').style.display = 'inline-block';
+  document.getElementById('margin-inbox-col').style.display = 'none';
 }});
 
+document.getElementById('qa-value').addEventListener('input', (e) => {{
+  document.getElementById('btn-qa-add').classList.toggle('ready', e.target.value.trim().length > 0);
+}});
 document.getElementById('btn-qa-add').addEventListener('click', async () => {{
   const scene = document.getElementById('qa-scene').value;
   const kind = document.getElementById('qa-kind').value;
   const inp = document.getElementById('qa-value');
   const value = inp.value.trim();
-  if (!value) {{
-    showToast('追加する内容を入力してください。', 'error');
-    return;
-  }}
+  if (!value) return;
   try {{
     const res = await apiPost('/api/profile/add-item', {{ scene, kind, value }});
     inp.value = '';
-    showToast(res.message || '追加しました。', 'ok');
+    document.getElementById('btn-qa-add').classList.remove('ready');
+    showToast(res.message || '追加しました', 'ok');
     await loadState();
   }} catch (err) {{
     showToast(err.message, 'error');
   }}
 }});
 document.getElementById('qa-value').addEventListener('keydown', (e) => {{
-  if (e.key === 'Enter') {{
-    e.preventDefault();
-    document.getElementById('btn-qa-add').click();
-  }}
+  if (e.key === 'Enter') {{ e.preventDefault(); document.getElementById('btn-qa-add').click(); }}
 }});
 
 document.getElementById('btn-toggle-add').addEventListener('click', () => {{
@@ -1421,66 +1779,53 @@ document.getElementById('btn-toggle-add').addEventListener('click', () => {{
 document.getElementById('btn-cancel-add').addEventListener('click', () => {{
   document.getElementById('add-form-box').classList.remove('open');
 }});
-
 document.getElementById('btn-toggle-history').addEventListener('click', () => {{
   const wrap = document.getElementById('history-wrap');
   const open = wrap.style.display === 'none';
   wrap.style.display = open ? 'block' : 'none';
   document.getElementById('btn-toggle-history').textContent = open ? '履歴を隠す' : '履歴';
 }});
-
 document.getElementById('btn-approve-all').addEventListener('click', async () => {{
   try {{
     const res = await apiPost('/api/inbox/approve', {{ approve_all: true, force: false }});
     const blocked = (res.blocked_by_guard || []).length;
-    const msg = res.approved_count + '件を承認しました。' + (blocked ? '（警告付き ' + blocked + ' 件は個別確認）' : '');
-    showToast(msg, 'ok');
-    await loadState();
-  }} catch (err) {{
-    showToast('一括承認できませんでした: ' + err.message, 'error');
-  }}
-}});
-
-document.getElementById('btn-propose').addEventListener('click', async () => {{
-  const scene = document.getElementById('prop-scene').value;
-  const kind = document.getElementById('prop-kind').value;
-  const value = document.getElementById('prop-value').value.trim();
-  const reason = document.getElementById('prop-reason').value.trim();
-  if (!value) {{
-    showToast('内容を入力してください。', 'error');
-    return;
-  }}
-  try {{
-    const res = await apiPost('/api/inbox/propose', {{ scene, kind, value, reason }});
-    document.getElementById('prop-value').value = '';
-    document.getElementById('prop-reason').value = '';
-    document.getElementById('add-form-box').classList.remove('open');
-    showToast(res.message || '受信箱に追加しました。', 'ok');
+    showToast(res.approved_count + '件を承認しました' + (blocked ? '（警告付き ' + blocked + ' 件は個別確認）' : ''), 'ok');
     await loadState();
   }} catch (err) {{
     showToast(err.message, 'error');
   }}
 }});
-
-document.getElementById('btn-save-profile').addEventListener('click', async () => {{
-  const content = document.getElementById('profile-editor').value;
+document.getElementById('btn-propose').addEventListener('click', async () => {{
+  const scene = document.getElementById('prop-scene').value;
+  const kind = document.getElementById('prop-kind').value;
+  const value = document.getElementById('prop-value').value.trim();
+  const reason = document.getElementById('prop-reason').value.trim();
+  if (!value) {{ showToast('内容を入力してください', 'error'); return; }}
   try {{
-    await apiPost('/api/profile/save', {{ content }});
-    showToast('保存しました。', 'ok');
+    const res = await apiPost('/api/inbox/propose', {{ scene, kind, value, reason }});
+    document.getElementById('prop-value').value = '';
+    document.getElementById('prop-reason').value = '';
+    document.getElementById('add-form-box').classList.remove('open');
+    showToast(res.message || '受信箱に追加しました', 'ok');
     await loadState();
   }} catch (err) {{
-    showToast('保存できませんでした: ' + err.message, 'error');
+    showToast(err.message, 'error');
   }}
 }});
-
+document.getElementById('btn-save-profile').addEventListener('click', async () => {{
+  try {{
+    await apiPost('/api/profile/save', {{ content: document.getElementById('profile-editor').value }});
+    showToast('保存しました', 'ok');
+    await loadState();
+  }} catch (err) {{
+    showToast(err.message, 'error');
+  }}
+}});
 document.getElementById('btn-run-check').addEventListener('click', async () => {{
   const orig = document.getElementById('check-orig').value;
   const draft = document.getElementById('check-draft').value;
   const scene = document.getElementById('check-scene').value || null;
-  if (!draft.trim()) {{
-    showToast('検査対象の文章を入力してください。', 'error');
-    return;
-  }}
+  if (!draft.trim()) {{ showToast('検査対象の文章を入力してください', 'error'); return; }}
   try {{
     const res = await apiPost('/api/check', {{ orig, draft, scene }});
     const box = document.getElementById('check-result');
@@ -1488,26 +1833,21 @@ document.getElementById('btn-run-check').addEventListener('click', async () => {
     const card = document.createElement('div');
     card.className = 'findings-box' + (res.count > 0 ? ' has-issue' : '');
     const title = document.createElement('div');
-    title.style.fontWeight = '700';
+    title.style.fontWeight = '600';
     title.textContent = res.count === 0
       ? '見直す候補はありません（0トークン / ' + res.elapsed_ms + 'ms）'
       : '見直す候補が ' + res.count + ' 件あります（0トークン / ' + res.elapsed_ms + 'ms）';
     card.appendChild(title);
     if (res.findings && res.findings.length > 0) {{
       const ul = document.createElement('ul');
-      res.findings.forEach(f => {{
-        const li = document.createElement('li');
-        li.textContent = f;
-        ul.appendChild(li);
-      }});
+      res.findings.forEach(f => {{ const li = document.createElement('li'); li.textContent = f; ul.appendChild(li); }});
       card.appendChild(ul);
     }}
     box.appendChild(card);
   }} catch (err) {{
-    showToast('検査に失敗しました: ' + err.message, 'error');
+    showToast(err.message, 'error');
   }}
 }});
-
 document.getElementById('exp-scene').addEventListener('change', refreshExportPreview);
 document.getElementById('exp-sync').addEventListener('change', refreshExportPreview);
 document.getElementById('btn-export-dl').addEventListener('click', () => {{
@@ -1515,13 +1855,10 @@ document.getElementById('btn-export-dl').addEventListener('click', () => {{
   const blob = new Blob([md], {{ type: 'text/markdown;charset=utf-8' }});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = 'nihongo-setup.md';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  a.href = url; a.download = 'nihongo-setup.md';
+  document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
-  showToast('nihongo-setup.md をダウンロードしました。', 'ok');
+  showToast('nihongo-setup.md をダウンロードしました', 'ok');
 }});
 
 loadState();
