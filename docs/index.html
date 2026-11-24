@@ -39,23 +39,27 @@ body {
 a { color: inherit; text-decoration: none; }
 
 .col {
-  max-width: 880px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 0 28px;
+  padding: 0 32px;
 }
 
 /* Header */
+.nav-wrap {
+  border-bottom: 1px solid var(--line);
+  background: #FFFFFF;
+}
 .nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 30px 0 24px;
+  padding: 20px 0;
   gap: 16px;
 }
 .slogo {
   font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   font-weight: 700;
-  font-size: 30px;
+  font-size: 26px;
   line-height: 1;
   letter-spacing: -0.03em;
 }
@@ -70,14 +74,14 @@ a { color: inherit; text-decoration: none; }
 .nav-r {
   display: flex;
   align-items: center;
-  gap: 20px;
-  font-size: 14px;
+  gap: 22px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--muted);
 }
 .nav-r a:hover { color: var(--ink); }
 .nav-gh {
-  border: 2px solid var(--ink);
+  border: 1.5px solid var(--ink);
   border-radius: 999px;
   padding: 6px 15px;
   color: var(--ink);
@@ -86,37 +90,28 @@ a { color: inherit; text-decoration: none; }
 }
 .nav-gh:hover { background: var(--ink); color: #FFFFFF; }
 
-/* Section 1: Quiet Framed Hero */
-.hero-frame {
-  border: 2.5px solid var(--ink);
-  border-radius: 28px;
-  padding: 64px 56px 52px;
-  position: relative;
-  margin-top: 16px;
+/* Section 0: Full-Bleed Overseas-Style Open Hero (No Bounding Box) */
+.hero {
   background: #FFFFFF;
+  padding: 96px 0 92px;
   text-align: center;
 }
-.cut {
-  position: absolute;
-  top: -11px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #FFFFFF;
-  padding: 0 18px;
+.hero-kicker {
+  display: inline-block;
   font-family: "Space Mono", ui-monospace, monospace;
   font-size: 12px;
   letter-spacing: 0.28em;
-  padding-left: calc(18px + 0.28em);
+  padding-left: 0.28em;
   color: var(--muted);
-  white-space: nowrap;
+  margin-bottom: 24px;
 }
 .hero-logo {
   font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   font-weight: 700;
-  font-size: 76px;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  margin-bottom: 24px;
+  font-size: clamp(72px, 11vw, 128px);
+  line-height: 0.96;
+  letter-spacing: -0.04em;
+  margin-bottom: 28px;
 }
 .hero-logo i {
   display: inline-block;
@@ -124,21 +119,21 @@ a { color: inherit; text-decoration: none; }
   height: 0.46em;
   border-radius: 50%;
   background: var(--red);
-  margin: 0 0.04em;
+  margin: 0 0.035em;
 }
 .hero-title {
-  font-size: 28px;
+  font-size: clamp(22px, 3vw, 34px);
   font-weight: 900;
-  line-height: 1.45;
-  margin-bottom: 14px;
-  letter-spacing: -0.01em;
+  line-height: 1.4;
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
 }
 .hero-title span { color: var(--red); }
 .hero-lead {
-  font-size: 15.5px;
+  font-size: 16px;
   color: var(--muted);
   max-width: 560px;
-  margin: 0 auto 34px;
+  margin: 0 auto 38px;
 }
 .hero-actions {
   display: flex;
@@ -153,9 +148,9 @@ a { color: inherit; text-decoration: none; }
   background: var(--red);
   color: #FFFFFF;
   font: inherit;
-  font-size: 15px;
+  font-size: 15.5px;
   font-weight: 800;
-  padding: 13px 26px;
+  padding: 14px 30px;
   border-radius: 999px;
   cursor: pointer;
   transition: background 0.14s ease, border-color 0.14s ease, transform 0.08s ease;
@@ -173,7 +168,7 @@ a { color: inherit; text-decoration: none; }
   font: inherit;
   font-size: 15px;
   font-weight: 700;
-  padding: 13px 24px;
+  padding: 14px 26px;
   border-radius: 999px;
   cursor: pointer;
   transition: border-color 0.14s ease, background 0.14s ease;
@@ -181,8 +176,8 @@ a { color: inherit; text-decoration: none; }
 .hero-jump:hover { border-color: var(--ink); background: var(--soft); }
 .hero-status {
   display: none;
-  margin: 18px auto 0;
-  max-width: 560px;
+  margin: 20px auto 0;
+  max-width: 580px;
   padding: 10px 16px;
   border-radius: 10px;
   border: 1.5px solid var(--ok);
@@ -193,44 +188,66 @@ a { color: inherit; text-decoration: none; }
 }
 .hero-status.show { display: block; }
 .hero-meta {
-  margin-top: 24px;
-  font-size: 13px;
+  margin-top: 26px;
+  font-size: 13.5px;
   font-weight: 500;
   color: var(--muted);
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 6px 18px;
+  gap: 6px 20px;
 }
 
-/* Sections */
-.sec {
-  padding-top: 100px;
+/* Full-Bleed Alternating Section Bands + Crisp Header/Body Separation */
+.band {
+  padding: 84px 0;
+  background: #FFFFFF;
+  border-top: 1px solid var(--line);
+}
+.band.tint {
+  background: #F8F8F7;
+}
+.sec-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 32px;
+  padding-bottom: 22px;
+  margin-bottom: 40px;
+  border-bottom: 1.5px solid var(--ink);
+}
+.sec-title-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+.sec-num {
+  font-family: "Space Mono", ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
 }
 .sec-h {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 900;
-  line-height: 1.4;
-  margin-bottom: 12px;
-  letter-spacing: -0.015em;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--ink);
 }
-.sec-p {
-  font-size: 15px;
+.sec-sub {
+  font-size: 14.5px;
   color: var(--muted);
-  max-width: 640px;
-  margin-bottom: 34px;
 }
 
-/* Section 2: For You (Open 3-Column Editorial — Zero Boxes, Zero Jargon) */
+/* Section 1: nihongoとは (Open 3-Column Editorial) */
 .use-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 36px;
-  margin-top: 32px;
 }
 .use-item {
-  border-top: 1.5px solid var(--line);
-  padding-top: 20px;
+  padding-top: 4px;
 }
 .use-tag {
   display: inline-block;
@@ -270,7 +287,8 @@ a { color: inherit; text-decoration: none; }
   gap: 20px;
 }
 .ba-before {
-  background: var(--soft);
+  background: #FFFFFF;
+  border: 1px solid var(--line);
   padding: 22px 24px;
 }
 .ba-after {
@@ -315,15 +333,13 @@ a { color: inherit; text-decoration: none; }
 .cap-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 34px 44px;
-  margin-top: 32px;
+  gap: 36px 48px;
 }
 .cap-box {
-  border-top: 1px solid var(--line);
-  padding-top: 20px;
+  padding-top: 4px;
 }
 .cap-box h3 {
-  font-size: 17px;
+  font-size: 17.5px;
   font-weight: 900;
   line-height: 1.45;
   margin-bottom: 8px;
@@ -335,18 +351,19 @@ a { color: inherit; text-decoration: none; }
   line-height: 1.8;
 }
 .fit-list {
-  margin-top: 34px;
-  border-top: 1.5px solid var(--ink);
+  margin-top: 0;
 }
 .fit-row {
   display: grid;
-  grid-template-columns: 34px 230px 1fr;
-  gap: 8px 16px;
+  grid-template-columns: 36px 240px 1fr;
+  gap: 8px 18px;
   align-items: baseline;
-  padding: 13px 0;
+  padding: 15px 0;
   border-bottom: 1px solid var(--line);
-  font-size: 14px;
+  font-size: 14.5px;
 }
+.fit-row:first-child { padding-top: 4px; }
+.fit-row:last-child { border-bottom: 0; padding-bottom: 0; }
 .fit-mark {
   font-weight: 900;
   font-size: 16px;
@@ -799,10 +816,12 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* Footer */
+.foot-wrap {
+  background: #FFFFFF;
+  border-top: 1px solid var(--line);
+}
 footer {
-  margin-top: 84px;
-  padding: 28px 0 56px;
-  border-top: 1.5px solid var(--line);
+  padding: 32px 0 48px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -819,17 +838,18 @@ footer code {
 footer code b { color: var(--ink); }
 
 @media (max-width: 720px) {
-  .col { padding: 0 18px; }
+  .col { padding: 0 20px; }
   .nav-r a:not(.nav-gh):not(.nav-keep) { display: none; }
-  .hero-frame { padding: 48px 22px 40px; border-radius: 22px; }
-  .hero-logo { font-size: 56px; }
-  .hero-title { font-size: 19.5px; text-wrap: balance; }
-  .sec { padding-top: 72px; }
-  .sec-h { font-size: 23px; }
+  .hero { padding: 64px 0 60px; }
+  .hero-logo { font-size: 62px; }
+  .hero-title { font-size: 20px; text-wrap: balance; }
+  .band { padding: 60px 0; }
+  .sec-head { padding-bottom: 16px; margin-bottom: 28px; }
+  .sec-h { font-size: 24px; }
   .cap-grid, .opt-pair, .demo-grid, .radio-grid, .radio-grid.two, .use-grid, .ba-pair {
     grid-template-columns: 1fr;
   }
-  .use-grid { gap: 24px; }
+  .use-grid { gap: 26px; }
   .cap-grid { gap: 24px; }
   .cloud-grid { grid-template-columns: 1fr 1fr; }
   .fit-row { grid-template-columns: 28px 1fr; gap: 3px 10px; }
@@ -838,21 +858,26 @@ footer code b { color: var(--ink); }
 </style>
 </head>
 <body>
-<div class="col">
-  <header class="nav">
-    <a class="slogo" href="#">nih<i></i>ngo</a>
-    <nav class="nav-r" aria-label="ページ内メニュー">
-      <a href="#what">仕組み</a>
-      <a href="#capabilities">できること</a>
-      <a class="nav-keep" href="#install">導入する</a>
-      <a class="nav-gh" href="https://github.com/AnIT012/nihongo" target="_blank" rel="noopener">GitHub</a>
-    </nav>
-  </header>
+<div class="nav-wrap">
+  <div class="col">
+    <header class="nav">
+      <a class="slogo" href="#">nih<i></i>ngo</a>
+      <nav class="nav-r" aria-label="ページ内メニュー">
+        <a href="#about">nihongoとは</a>
+        <a href="#fit">得意・不得意</a>
+        <a href="#capabilities">4つの機能</a>
+        <a class="nav-keep" href="#install">使ってみる</a>
+        <a class="nav-gh" href="https://github.com/AnIT012/nihongo" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+  </div>
+</div>
 
-  <main>
-    <!-- 1. タイトル（ファーストビュー） -->
-    <section class="hero-frame" aria-label="nihongo 概要">
-      <div class="cut">JAPANESE AI GUARD</div>
+<main>
+  <!-- 0. Hero（フルワイド・枠なし） -->
+  <section class="hero" aria-label="nihongo 概要">
+    <div class="col">
+      <div class="hero-kicker">JAPANESE AI GUARD</div>
       <div class="hero-logo" aria-hidden="true">nih<i></i>ngo</div>
       <h1 class="hero-title">AIの出力への<span>手直し</span>を減らそう。</h1>
       <p class="hero-lead">
@@ -867,11 +892,20 @@ footer code b { color: var(--ink); }
         <span>無料・登録不要</span>
         <span>運営サーバー保存なし</span>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- 2. 使うと変わること（初心者でも1発でわかる1セクション） -->
-    <section class="sec" id="benefits">
-      <h2 class="sec-h">使うと、こう変わります。</h2>
+  <!-- 1. nihongoとは -->
+  <section class="band tint" id="about">
+    <div class="col">
+      <div class="sec-head">
+        <div class="sec-title-wrap">
+          <span class="sec-num">01</span>
+          <h2 class="sec-h">nihongoとは</h2>
+        </div>
+        <span class="sec-sub">使うと、日々の文章作成がこう変わります</span>
+      </div>
+
       <div class="use-grid">
         <div class="use-item">
           <span class="use-tag">就活生・学生</span>
@@ -889,56 +923,18 @@ footer code b { color: var(--ink); }
           <p>会話で直した口調や苦手な言い回しを保存できます。ChatGPTでもClaudeでも、どのAIでも同じ自分の書き方に揃います。</p>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- 3. Before / After（1目で違いがわかる比較） -->
-    <section class="sec" id="what">
-      <h2 class="sec-h">きれいな文章でも、ズレが混ざります。</h2>
-      <p class="sec-p">
-        素のAIは頼んでいない約束や硬すぎる敬語を足してしまいます。nihongoは分からない所だけ空欄にして止めます。
-      </p>
-
-      <div class="ba-prompt"><span>依頼：</span>明日の打ち合わせを来週にずらしたいメールを書いて</div>
-      <div class="ba-pair">
-        <div class="ba-before">
-          <div class="ba-sub">素のAI</div>
-          <p>
-            <span class="err">大変恐縮ですが</span>、日程を来週へ<span class="err">変更させていただくことは可能でしょうか</span>。上記以外にご都合のよいお時間帯がございましたら、<span class="err">そちらに合わせますので</span>お知らせください。
-          </p>
+  <!-- 2. 得意・不得意 -->
+  <section class="band" id="fit">
+    <div class="col">
+      <div class="sec-head">
+        <div class="sec-title-wrap">
+          <span class="sec-num">02</span>
+          <h2 class="sec-h">得意・不得意</h2>
         </div>
-        <div class="ba-after">
-          <div class="ba-sub">nihongoあり</div>
-          <p>
-            急で申し訳ありません。明日の打ち合わせですが、<span class="slot">【理由】</span>のため来週へ変更いただけますか。<span class="slot">【候補日時】</span>でご都合はいかがでしょうか。
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- 4. できること（専門用語を抑えた4つの柱） -->
-    <section class="sec" id="capabilities">
-      <h2 class="sec-h">普段の返事から、大事な書類まで整えます。</h2>
-
-      <div class="cap-grid">
-        <div class="cap-box">
-          <h3>普段のチャットを軽く整えます</h3>
-          <p>雑談や短い連絡でも重くならず、スマホのChatGPTやClaudeでもそのまま使えます。</p>
-        </div>
-
-        <div class="cap-box">
-          <h3>メール・ES・資料を場面に合わせます</h3>
-          <p>相手や目的に合わせて敬語の段や構成を自動で切り替え、書き直しの手間を減らします。</p>
-        </div>
-
-        <div class="cap-box">
-          <h3>数字や約束のズレを自動でチェックします</h3>
-          <p>日時・数字・「必ず」の弱まりや避けたい言い回しを、追加料金ゼロで機械的に検出します。</p>
-        </div>
-
-        <div class="cap-box">
-          <h3>直した癖を自分のルールに残せます</h3>
-          <p>会話で直した好みは確認してから反映します。DropboxやGoogle Driveで複数端末に共有できます。</p>
-        </div>
+        <span class="sec-sub">用途ごとの対応目安</span>
       </div>
 
       <div class="fit-list" aria-label="分野ごとの対応目安">
@@ -973,6 +969,70 @@ footer code b { color: var(--ink); }
           <span class="fit-desc">安全のため対応しません</span>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- 3. よくあるAIのズレ -->
+  <section class="band tint" id="what">
+    <div class="col">
+      <div class="sec-head">
+        <div class="sec-title-wrap">
+          <span class="sec-num">03</span>
+          <h2 class="sec-h">よくあるAIのズレ</h2>
+        </div>
+        <span class="sec-sub">頼んでいない約束や硬すぎる敬語を止めます</span>
+      </div>
+
+      <div class="ba-prompt"><span>依頼：</span>明日の打ち合わせを来週にずらしたいメールを書いて</div>
+      <div class="ba-pair">
+        <div class="ba-before">
+          <div class="ba-sub">素のAI</div>
+          <p>
+            <span class="err">大変恐縮ですが</span>、日程を来週へ<span class="err">変更させていただくことは可能でしょうか</span>。上記以外にご都合のよいお時間帯がございましたら、<span class="err">そちらに合わせますので</span>お知らせください。
+          </p>
+        </div>
+        <div class="ba-after">
+          <div class="ba-sub">nihongoあり</div>
+          <p>
+            急で申し訳ありません。明日の打ち合わせですが、<span class="slot">【理由】</span>のため来週へ変更いただけますか。<span class="slot">【候補日時】</span>でご都合はいかがでしょうか。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 4つの機能 -->
+  <section class="band" id="capabilities">
+    <div class="col">
+      <div class="sec-head">
+        <div class="sec-title-wrap">
+          <span class="sec-num">04</span>
+          <h2 class="sec-h">4つの機能</h2>
+        </div>
+        <span class="sec-sub">普段の返事から、大事な書類のチェックまで</span>
+      </div>
+
+      <div class="cap-grid">
+        <div class="cap-box">
+          <h3>普段のチャットを軽く整えます</h3>
+          <p>雑談や短い連絡でも重くならず、スマホのChatGPTやClaudeでもそのまま使えます。</p>
+        </div>
+
+        <div class="cap-box">
+          <h3>メール・ES・資料を場面に合わせます</h3>
+          <p>相手や目的に合わせて敬語の段や構成を自動で切り替え、書き直しの手間を減らします。</p>
+        </div>
+
+        <div class="cap-box">
+          <h3>数字や約束のズレを自動でチェックします</h3>
+          <p>日時・数字・「必ず」の弱まりや避けたい言い回しを、追加料金ゼロで機械的に検出します。</p>
+        </div>
+
+        <div class="cap-box">
+          <h3>直した癖を自分のルールに残せます</h3>
+          <p>会話で直した好みは確認してから反映します。DropboxやGoogle Driveで複数端末に共有できます。</p>
+        </div>
+      </div>
 
       <details class="demo-fold">
         <summary>チェック機能をブラウザで試す ▾</summary>
@@ -998,14 +1058,19 @@ footer code b { color: var(--ink); }
         </div>
         <div class="demo-out" id="demo-out" style="display:none;"></div>
       </details>
-    </section>
+    </div>
+  </section>
 
-    <!-- 5. 導入する（2つのダウンロードオプション） -->
-    <section class="sec" id="install">
-      <h2 class="sec-h">今のチャットに、1ファイル貼るだけで始められます。</h2>
-      <p class="sec-p">
-        落としたファイルをAIに添付するだけです。スマホ・ブラウザ版はその場で効き、PCの開発ツールは確認のあと自動で設定されます。
-      </p>
+  <!-- 5. nihongoを使ってみる -->
+  <section class="band tint" id="install">
+    <div class="col">
+      <div class="sec-head">
+        <div class="sec-title-wrap">
+          <span class="sec-num">05</span>
+          <h2 class="sec-h">nihongoを使ってみる</h2>
+        </div>
+        <span class="sec-sub">今のチャットに1ファイル貼るだけ</span>
+      </div>
 
       <div class="opt-pair">
         <div class="opt-card featured">
@@ -1095,13 +1160,17 @@ footer code b { color: var(--ink); }
           <pre class="preview-pre" id="setup-preview"></pre>
         </details>
       </div>
-    </section>
-  </main>
+    </div>
+  </section>
+</main>
 
-  <footer>
-    <span>MIT License — データはすべてあなたの端末・クラウドに保存されます</span>
-    <code>npx skills add <b>AnIT012/nihongo</b></code>
-  </footer>
+<div class="foot-wrap">
+  <div class="col">
+    <footer>
+      <span>MIT License — データはすべてあなたの端末・クラウドに保存されます</span>
+      <code>npx skills add <b>AnIT012/nihongo</b></code>
+    </footer>
+  </div>
 </div>
 
 <script>
