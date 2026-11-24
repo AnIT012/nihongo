@@ -1149,6 +1149,54 @@ a { color: inherit; text-decoration: none; }
 }
 .art-card:hover .art-go { color: var(--red-hover); }
 
+/* Concise Version Changelog inside Section 06 */
+.changelog-box {
+  margin-top: 34px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.changelog-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 14px;
+}
+.changelog-head b {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--ink);
+}
+.changelog-head a {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.changelog-head a:hover { color: var(--ink); }
+.cl-row {
+  display: grid;
+  grid-template-columns: 74px 96px 1fr;
+  gap: 4px 14px;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid #EFEFED;
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+.cl-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.cl-ver {
+  font-family: "Space Mono", ui-monospace, monospace;
+  font-weight: 700;
+  color: var(--ink);
+}
+.cl-date {
+  font-family: "Space Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.cl-txt { color: var(--body); }
+
 /* Footer */
 .foot-wrap {
   background: #FFFFFF;
@@ -1236,6 +1284,8 @@ footer code b { color: var(--ink); }
   .cloud-grid { grid-template-columns: 1fr 1fr; }
   .fit-row { grid-template-columns: 28px 1fr; gap: 3px 10px; }
   .fit-desc { grid-column: 2; }
+  .cl-row { grid-template-columns: 72px 1fr; gap: 2px 10px; }
+  .cl-txt { grid-column: 1 / -1; }
 }
 </style>
 </head>
@@ -1684,6 +1734,28 @@ footer code b { color: var(--ink); }
           </a>
         </div>
       </div>
+
+      <div class="changelog-box" id="changelog" aria-label="主な更新履歴">
+        <div class="changelog-head">
+          <b>主な更新履歴</b>
+          <a href="https://github.com/AnIT012/nihongo/blob/main/CHANGELOG.md" target="_blank" rel="noopener">すべての履歴を見る（GitHub）→</a>
+        </div>
+        <div class="cl-row">
+          <span class="cl-ver">v3.1.0</span>
+          <span class="cl-date">2026-11-24</span>
+          <span class="cl-txt">公式サイト（1ファイル導入・カスタマイズ）を公開。チャット完結のMCP操作とクラウド同期フォルダ対応へ刷新。</span>
+        </div>
+        <div class="cl-row">
+          <span class="cl-ver">v3.0.0</span>
+          <span class="cl-date">2026-11-23</span>
+          <span class="cl-txt">0トークン自動検査（nihongo-check）、確認制の個人ルール受信箱、ローカルMCP（nihongo-mcp）を追加。</span>
+        </div>
+        <div class="cl-row">
+          <span class="cl-ver">v2.0.0</span>
+          <span class="cl-date">2026-11-17</span>
+          <span class="cl-txt">普段のチャット向け軽量版（Lite）と場面別の手引き（Full）の2本立てへ構成を刷新。</span>
+        </div>
+      </div>
     </div>
   </section>
 </main>
@@ -1752,6 +1824,22 @@ function showStatus(msg, isErr) {
   bar.className = 'status-bar show' + (isErr ? ' err-bar' : '');
 }
 
+function stripPairedQuotes(s) {
+  let out = (s || '').trim();
+  const pairs = [['「', '」'], ['『', '』'], ['"', '"'], ["'", "'"], ['“', '”'], ['‘', '’']];
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const [l, r] of pairs) {
+      if (out.length >= 2 && out.startsWith(l) && out.endsWith(r)) {
+        out = out.slice(l.length, out.length - r.length).trim();
+        changed = true;
+      }
+    }
+  }
+  return out;
+}
+
 function getAllSelectedNg(useCustom) {
   if (!useCustom) return [];
   const all = [...DEFAULT_NGS, ...state.customNg];
@@ -1779,7 +1867,7 @@ function buildSetupMarkdown(useCustom) {
     ? '`--home "<' + provider.name + ' の同期フォルダ>/nihongo"` を優先して提案・指定'
     : '同期フォルダ選択時は `--home "<同期フォルダ>/nihongo"` を付与';
   const ngLine = ngList.length > 0
-    ? ngList.map(w => '「' + w.replace(/^[「『"']+|[」』"']+$/g, '') + '」').join('、')
+    ? ngList.map(w => '「' + stripPairedQuotes(w) + '」').join('、')
     : '（未設定・会話しながら追加）';
 
   return [
@@ -1819,7 +1907,7 @@ function buildSetupMarkdown(useCustom) {
     '- CLI・MCP 導入: `pip install "git+https://github.com/AnIT012/nihongo.git@v3.1.0"`',
     '- スキル導入（対応環境）: `npx skills add AnIT012/nihongo -g`（またはリポジトリの `nihongo/` フォルダをスキル配置先へコピー）',
     '- AI アプリ自動登録: `nihongo-mcp init --target all`（' + homeExample + '。解除したい時は `nihongo-mcp init --target all --remove`）',
-    '- 初期ルール反映: 新規は `nihongo-check profile init`、未登録の表現は `nihongo-check inbox propose --scene <場面> --kind forbidden --value "<表現>" --json` で返った **その ID だけ** を `nihongo-check inbox approve <ID>` で反映（前から溜まっていた未確認候補を巻き込む `--all` は使わない）',
+    '- 初期ルール反映: 新規は `nihongo-check profile init`、未登録の表現は `nihongo-check inbox propose --scene ' + sceneKey + ' --kind forbidden --value "<表現>" --json` で返った **その ID だけ** を `nihongo-check inbox approve <ID>` で反映（前から溜まっていた未確認候補を巻き込む `--all` は使わない）',
     '- 疎通・診断・動作確認: `nihongo-mcp --self-test` と `nihongo-check doctor` を実行し、短いサンプル文で 0 トークン検査（`nihongo-check diff`）が動くことも 1 回見せる',
     '',
     '完了したら「以降は普段どおり話すだけで自動適用されます。今のルールや承認待ちはチャットで「ルール見せて」「承認待ちある？」と聞くだけで確認できます」と 1 行で案内する。',
@@ -1953,21 +2041,32 @@ document.getElementById('btn-open-custom').addEventListener('click', () => {
 
 document.getElementById('btn-add-ng').addEventListener('click', () => {
   const inp = document.getElementById('custom-ng-input');
-  const val = inp.value.trim();
-  if (!val) return;
-  const err = checkPii(val);
+  const raw = inp.value.trim();
+  if (!raw) return;
+  const err = checkPii(raw);
   if (err) {
     showStatus(err, true);
     return;
   }
-  if (!DEFAULT_NGS.includes(val) && !state.customNg.includes(val)) {
-    state.customNg.push(val);
+  const parts = raw.split(/[、,，]+/).map(stripPairedQuotes).filter(Boolean);
+  if (parts.length === 0) return;
+  const added = [];
+  for (const val of parts) {
+    const itemErr = checkPii(val);
+    if (itemErr) {
+      showStatus(itemErr, true);
+      return;
+    }
+    if (!DEFAULT_NGS.includes(val) && !state.customNg.includes(val)) {
+      state.customNg.push(val);
+    }
+    state.selectedNg.add(val);
+    added.push(val);
   }
-  state.selectedNg.add(val);
   inp.value = '';
   renderChips();
   refreshPreview();
-  showStatus('「' + val + '」を追加しました。', false);
+  showStatus(added.map(v => '「' + v + '」').join('、') + ' を追加しました。', false);
 });
 
 document.getElementById('custom-ng-input').addEventListener('keydown', (e) => {
