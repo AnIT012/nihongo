@@ -357,10 +357,14 @@ a { color: inherit; text-decoration: none; }
   font-size: 16px;
   line-height: 1.95;
   color: var(--ink);
-  max-width: 840px;
   padding-bottom: 32px;
   margin-bottom: 34px;
   border-bottom: 1px solid #DFDFDB;
+}
+@supports (word-break: auto-phrase) {
+  .use-item h3, .cap-box h3, .sec-h {
+    word-break: auto-phrase;
+  }
 }
 .use-grid {
   display: grid;
@@ -679,12 +683,25 @@ a { color: inherit; text-decoration: none; }
 .quick-links {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px 16px;
   padding-top: 6px;
   font-size: 13.5px;
   color: var(--muted);
 }
+.dev-details {
+  display: inline-block;
+}
+.dev-details > summary {
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--muted);
+  list-style: none;
+  padding: 6px 0;
+  line-height: 1.5;
+}
+.dev-details > summary:hover { color: var(--ink); }
 .link-btn {
   appearance: none;
   border: 1.5px solid #CCCCCC;
@@ -696,6 +713,8 @@ a { color: inherit; text-decoration: none; }
   padding: 6px 13px;
   border-radius: 999px;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .link-btn:hover { border-color: var(--ink); }
 
@@ -798,7 +817,10 @@ a { color: inherit; text-decoration: none; }
   cursor: pointer;
   display: block;
 }
-.r-opt input { margin-right: 6px; }
+.r-opt input {
+  margin-right: 6px;
+  accent-color: var(--ink);
+}
 .r-opt.on { border-color: var(--ink); background: var(--soft); }
 .r-opt b { font-size: 13.5px; }
 .r-opt small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
@@ -1000,15 +1022,32 @@ a { color: inherit; text-decoration: none; }
   border-top: 1px solid var(--line);
 }
 footer {
-  padding: 32px 0 48px;
+  padding: 28px 0 44px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 14px;
   font-size: 13.5px;
   color: var(--muted);
 }
+.foot-top, .foot-biz {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+.foot-biz {
+  padding-top: 14px;
+  border-top: 1px solid #EFEFED;
+  font-size: 13px;
+}
+.foot-biz a {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.foot-biz a:hover { color: var(--red-hover); }
 footer code {
   font-family: "Space Mono", ui-monospace, monospace;
   color: var(--muted);
@@ -1022,14 +1061,17 @@ footer code b { color: var(--ink); }
   .hero { padding: 54px 0 56px; }
   .hero-logo { font-size: 62px; }
   .hero-title { font-size: 20px; text-wrap: balance; }
-  .stage-bar { flex-wrap: wrap; }
-  .stage-body { padding: 14px 16px 16px; }
-  .stage-row { grid-template-columns: 1fr; gap: 3px; font-size: 13.5px; }
   .band { padding: 60px 0; }
   .sec-head { padding-bottom: 16px; margin-bottom: 28px; }
   .sec-h { font-size: 24px; }
   .cap-grid, .opt-pair, .demo-grid, .radio-grid, .radio-grid.two, .use-grid {
     grid-template-columns: 1fr;
+  }
+  .add-row {
+    flex-direction: column;
+  }
+  .add-row button {
+    width: 100%;
   }
   .drift-table thead { display: none; }
   .drift-table, .drift-table tbody, .drift-table tr, .drift-table td {
@@ -1068,7 +1110,7 @@ footer code b { color: var(--ink); }
 <div class="nav-wrap">
   <div class="col">
     <header class="nav">
-      <a class="slogo" href="#">nih<i></i>ngo</a>
+      <a class="slogo" href="#" aria-label="nihongo"><span aria-hidden="true">nih<i></i>ngo</span></a>
       <nav class="nav-r" aria-label="ページ内メニュー">
         <a href="#about">nihongoとは</a>
         <a href="#fit">得意・不得意</a>
@@ -1085,8 +1127,8 @@ footer code b { color: var(--ink); }
   <section class="hero" id="hero" aria-label="nihongo 概要">
     <div class="col">
       <div class="hero-kicker">JAPANESE AI GUARD</div>
-      <div class="hero-logo" aria-hidden="true">
-        <span class="ch" style="--d:0s">n</span><span class="ch" style="--d:0.04s">i</span><span class="ch" style="--d:0.08s">h</span><i class="hero-dot" id="hero-dot" title="nihongo"></i><span class="ch" style="--d:0.16s">n</span><span class="ch" style="--d:0.2s">g</span><span class="ch" style="--d:0.24s">o</span>
+      <div class="hero-logo" role="img" aria-label="nihongo">
+        <span class="ch" aria-hidden="true" style="--d:0s">n</span><span class="ch" aria-hidden="true" style="--d:0.04s">i</span><span class="ch" aria-hidden="true" style="--d:0.08s">h</span><i class="hero-dot" id="hero-dot" aria-hidden="true" title="nihongo"></i><span class="ch" aria-hidden="true" style="--d:0.16s">n</span><span class="ch" aria-hidden="true" style="--d:0.2s">g</span><span class="ch" aria-hidden="true" style="--d:0.24s">o</span>
       </div>
       <h1 class="hero-title">AIの出力への<span>手直し</span>を減らそう。</h1>
       <p class="hero-lead">
@@ -1124,17 +1166,17 @@ footer code b { color: var(--ink); }
       <div class="use-grid">
         <div class="use-item">
           <span class="use-tag">就活生・学生</span>
-          <h3>ESの下書きや連絡メールを自分の言葉のまま整えます</h3>
+          <h3>ESの下書きや連絡メールを<wbr>自分の言葉のまま整えます</h3>
           <p>書いた経験を盛らず、表現の硬さやクセだけを直します。</p>
         </div>
         <div class="use-item">
           <span class="use-tag">仕事・普段の連絡</span>
-          <h3>メールやLINEを書き直さずそのまま送れます</h3>
+          <h3>メールやLINEを書き直さず<wbr>そのまま送れます</h3>
           <p>高すぎる敬語や頼んでいない約束を止め、大事な日時や「必ず」の言い換えも防ぎます。</p>
         </div>
         <div class="use-item">
           <span class="use-tag">AIをよく使う人</span>
-          <h3>毎回「もっと自然に」と頼み直さなくて済みます</h3>
+          <h3>毎回「もっと自然に」と<wbr>頼み直さなくて済みます</h3>
           <p>会話で直した口調や苦手な言い回しを保存でき、ChatGPTでもClaudeでも同じ自分の書き方にそろえられます。</p>
         </div>
       </div>
@@ -1367,8 +1409,8 @@ footer code b { color: var(--ink); }
 
       <div class="quick-links">
         <button type="button" class="link-btn" id="btn-copy-chat">チャット用ルールをコピー</button>
-        <details style="display:inline-block;">
-          <summary style="cursor:pointer;font-size:13.5px;font-weight:700;color:var(--muted);list-style:none;">開発者・既存ユーザー向け ▾</summary>
+        <details class="dev-details">
+          <summary>開発者・既存ユーザー向け ▾</summary>
           <div class="quick-links" style="margin-top:8px;">
             <button type="button" class="link-btn" id="btn-copy-npx">npx skills add AnIT012/nihongo をコピー</button>
             <label class="link-btn" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
@@ -1390,7 +1432,7 @@ footer code b { color: var(--ink); }
           </div>
           <div class="chip-row" id="ng-chips"></div>
           <div class="add-row">
-            <input type="text" id="custom-ng-input" placeholder="気になる言い回しがあれば追加（例：承知いたしました）">
+            <input type="text" id="custom-ng-input" placeholder="例：承知いたしました、いかがでしょうか">
             <button type="button" id="btn-add-ng">追加する</button>
           </div>
         </div>
@@ -1443,8 +1485,18 @@ footer code b { color: var(--ink); }
 <div class="foot-wrap">
   <div class="col">
     <footer>
-      <span>MIT License — データはすべてあなたの端末・クラウドに保存されます</span>
-      <code>npx skills add <b>AnIT012/nihongo</b></code>
+      <div class="foot-top">
+        <span>MIT License — データはすべてあなたの端末・クラウドに保存されます</span>
+        <code>npx skills add <b>AnIT012/nihongo</b></code>
+      </div>
+      <div class="foot-biz">
+        <span>チーム・企業向けの自社専用ルール設計や導入相談</span>
+        <span>
+          <a href="https://docs.google.com/forms/d/e/1FAIpQLSdub3SihSvTguflQWWttOQUnLvWf_QerZ4r2SNfMO4tYD6ACg/viewform" target="_blank" rel="noopener">お問い合わせフォーム</a>
+          ／
+          <a href="https://x.com/sincostansinhk" target="_blank" rel="noopener">X (@sincostansinhk)</a>
+        </span>
+      </div>
     </footer>
   </div>
 </div>
