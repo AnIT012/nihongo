@@ -90,12 +90,12 @@ a { color: inherit; text-decoration: none; }
 }
 .nav-gh:hover { background: var(--ink); color: #FFFFFF; }
 
-/* Section 0: Full-Bleed Overseas-Style Kinetic Hero */
+/* Section 0: Full-Bleed Sculptural Brand Hero */
 .hero {
   position: relative;
   overflow: hidden;
   background: #FFFFFF;
-  padding: 78px 0 84px;
+  padding: 108px 0 104px;
   text-align: center;
 }
 .hero::before {
@@ -103,27 +103,48 @@ a { color: inherit; text-decoration: none; }
   position: absolute;
   inset: 0;
   background-image: radial-gradient(#D5D5D0 1.1px, transparent 1.1px);
-  background-size: 26px 26px;
-  mask-image: radial-gradient(ellipse 75% 70% at 50% 42%, rgba(0, 0, 0, 0.55) 0%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 42%, rgba(0, 0, 0, 0.55) 0%, transparent 100%);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 72% 68% at 50% 45%, rgba(0, 0, 0, 0.52) 0%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 72% 68% at 50% 45%, rgba(0, 0, 0, 0.52) 0%, transparent 100%);
   pointer-events: none;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  top: 26%;
+  left: 50%;
+  width: 440px;
+  height: 440px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(215, 38, 30, 0.085) 0%, rgba(215, 38, 30, 0.025) 42%, transparent 72%);
+  pointer-events: none;
+  animation: auraFloat 7s ease-in-out infinite;
 }
 .hero .col {
   position: relative;
   z-index: 1;
 }
-@keyframes heroRise {
-  from { transform: translateY(10px); }
-  to { transform: translateY(0); }
+@keyframes auraFloat {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+  50% { transform: translate(-50%, -48%) scale(1.12); opacity: 1; }
 }
-@keyframes dotPulse {
-  0% { transform: scale(1); opacity: 0.45; }
-  70% { transform: scale(2.15); opacity: 0; }
-  100% { transform: scale(2.15); opacity: 0; }
+@keyframes letterSettle {
+  0% { transform: translateY(14px); opacity: 0.25; }
+  100% { transform: translateY(0); opacity: 1; }
 }
-@keyframes stageSwap {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes dotStamp {
+  0% { transform: scale(0.72) translateY(-10px); }
+  55% { transform: scale(1.12) translateY(2px); }
+  100% { transform: scale(1) translateY(0); }
+}
+@keyframes dotRipple {
+  0% { transform: scale(1); opacity: 0.42; }
+  72% { transform: scale(2.35); opacity: 0; }
+  100% { transform: scale(2.35); opacity: 0; }
+}
+@keyframes inkDraw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 .hero-kicker {
   display: inline-flex;
@@ -131,187 +152,97 @@ a { color: inherit; text-decoration: none; }
   gap: 8px;
   font-family: "Space Mono", ui-monospace, monospace;
   font-size: 12px;
-  letter-spacing: 0.24em;
-  padding: 5px 14px 5px 16px;
+  letter-spacing: 0.26em;
+  padding: 5px 15px 5px 17px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   color: var(--muted);
-  margin-bottom: 24px;
-  animation: heroRise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  margin-bottom: 30px;
 }
 .hero-logo {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
   font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   font-weight: 700;
-  font-size: clamp(72px, 11.5vw, 132px);
-  line-height: 0.96;
-  letter-spacing: -0.04em;
-  margin-bottom: 24px;
-  animation: heroRise 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.06s both;
+  font-size: clamp(76px, 13vw, 152px);
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  margin-bottom: 32px;
   user-select: none;
 }
-.hero-logo i {
+.hero-logo .ch {
+  display: inline-block;
+  animation: letterSettle 0.58s cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0s) both;
+}
+.hero-dot {
   position: relative;
   display: inline-block;
   width: 0.46em;
   height: 0.46em;
   border-radius: 50%;
   background: var(--red);
-  margin: 0 0.035em;
-  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  margin: 0 0.04em;
+  cursor: pointer;
+  transform: translate(var(--mx, 0px), var(--my, 0px));
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), background 0.16s ease;
+  animation: dotStamp 0.72s cubic-bezier(0.34, 1.56, 0.64, 1) 0.14s both;
 }
-.hero-logo i::after {
+.hero-dot::before,
+.hero-dot::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: var(--red);
-  animation: dotPulse 3.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  border: 2px solid var(--red);
+  pointer-events: none;
 }
-.hero-logo:hover i {
-  transform: scale(1.16);
+.hero-dot::before {
+  animation: dotRipple 3.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+.hero-dot::after {
+  animation: dotRipple 3.6s cubic-bezier(0.16, 1, 0.3, 1) 1.8s infinite;
+}
+.hero-dot.pop {
+  animation: dotStamp 0.48s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 .hero-title {
-  font-size: clamp(22px, 3vw, 34px);
+  font-size: clamp(23px, 3.2vw, 36px);
   font-weight: 900;
   line-height: 1.4;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   letter-spacing: -0.02em;
-  animation: heroRise 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
 }
-.hero-title span { color: var(--red); }
+.hero-title span {
+  position: relative;
+  display: inline-block;
+  color: var(--red);
+}
+.hero-title span::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(215, 38, 30, 0.28);
+  transform-origin: left center;
+  animation: inkDraw 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.32s both;
+}
 .hero-lead {
   font-size: 16px;
   color: var(--muted);
-  max-width: 560px;
-  margin: 0 auto 30px;
-  animation: heroRise 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
+  max-width: 620px;
+  margin: 0 auto 40px;
 }
-
-/* Interactive Live Proof Stage inside Hero */
-.hero-stage {
-  max-width: 680px;
-  margin: 0 auto 32px;
-  background: #FFFFFF;
-  border: 1px solid #DFDFDB;
-  border-radius: 14px;
-  box-shadow: 0 14px 38px rgba(17, 17, 17, 0.06);
-  text-align: left;
-  overflow: hidden;
-  animation: heroRise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both;
-}
-.stage-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--line);
-  background: #FAFAF9;
-}
-.stage-tabs {
-  display: flex;
-  gap: 6px;
-}
-.stage-tab {
-  appearance: none;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 700;
-  padding: 4px 11px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
-}
-.stage-tab:hover { color: var(--ink); }
-.stage-tab.on {
-  background: var(--ink);
-  color: #FFFFFF;
-}
-.stage-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--muted);
-}
-.stage-badge i {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--red);
-}
-.stage-body {
-  padding: 18px 20px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.stage-body.anim {
-  animation: stageSwap 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.stage-row {
-  display: grid;
-  grid-template-columns: 76px 1fr;
-  gap: 8px 12px;
-  align-items: baseline;
-  font-size: 14.5px;
-  line-height: 1.75;
-}
-.stage-lbl {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--muted);
-}
-.stage-row.after .stage-lbl {
-  color: var(--red-hover);
-}
-.stage-before-txt {
-  color: var(--muted);
-}
-.stage-before-txt del {
-  text-decoration: line-through;
-  text-decoration-color: var(--red);
-  text-decoration-thickness: 2px;
-  color: #7A7A7A;
-}
-.stage-after-txt {
-  color: var(--ink);
-  font-weight: 700;
-}
-.stage-progress {
-  height: 2px;
-  background: #EFEFED;
-  overflow: hidden;
-}
-.stage-progress-bar {
-  height: 100%;
-  width: 100%;
-  background: var(--red);
-  transform-origin: left center;
-  animation: stageProg 4.6s linear infinite;
-}
-.hero-stage.paused .stage-progress-bar {
-  animation: none;
-  transform: scaleX(0);
-}
-@keyframes stageProg {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
-
 .hero-actions {
   display: flex;
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  animation: heroRise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.28s both;
 }
 .hero-dl {
   appearance: none;
@@ -321,38 +252,38 @@ a { color: inherit; text-decoration: none; }
   font: inherit;
   font-size: 15.5px;
   font-weight: 800;
-  padding: 14px 30px;
+  padding: 14px 32px;
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.14s ease, border-color 0.14s ease, transform 0.12s ease, box-shadow 0.16s ease;
+  transition: background 0.14s ease, border-color 0.14s ease, transform 0.14s ease, box-shadow 0.18s ease;
 }
 .hero-dl:hover {
   background: var(--red-hover);
   border-color: var(--red-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(215, 38, 30, 0.24);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(215, 38, 30, 0.26);
 }
-.hero-dl:active { transform: translateY(1px); }
+.hero-dl:active { transform: translateY(0); }
 .hero-jump {
   appearance: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #FFFFFF;
+  background: rgba(255, 255, 255, 0.92);
   border: 1.5px solid #CCCCCC;
   color: var(--ink);
   font: inherit;
   font-size: 15px;
   font-weight: 700;
-  padding: 14px 26px;
+  padding: 14px 28px;
   border-radius: 999px;
   cursor: pointer;
-  transition: border-color 0.14s ease, background 0.14s ease, transform 0.12s ease;
+  transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
 }
-.hero-jump:hover { border-color: var(--ink); background: var(--soft); transform: translateY(-1px); }
+.hero-jump:hover { border-color: var(--ink); background: var(--soft); transform: translateY(-2px); }
 .hero-status {
   display: none;
-  margin: 20px auto 0;
+  margin: 22px auto 0;
   max-width: 580px;
   padding: 10px 16px;
   border-radius: 10px;
@@ -364,18 +295,17 @@ a { color: inherit; text-decoration: none; }
 }
 .hero-status.show { display: block; }
 .hero-meta {
-  margin-top: 24px;
+  margin-top: 28px;
   font-size: 13.5px;
   font-weight: 500;
   color: var(--muted);
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 6px 20px;
-  animation: heroRise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.34s both;
+  gap: 6px 22px;
 }
 @media (prefers-reduced-motion: reduce) {
-  .hero-kicker, .hero-logo, .hero-logo i::after, .hero-title, .hero-lead, .hero-stage, .hero-actions, .hero-meta, .stage-body.anim, .stage-progress-bar {
+  .hero::after, .hero-logo .ch, .hero-dot, .hero-dot::before, .hero-dot::after, .hero-title span::after {
     animation: none !important;
   }
 }
@@ -606,11 +536,12 @@ a { color: inherit; text-decoration: none; }
 .fit-row:last-child { border-bottom: 0; padding-bottom: 0; }
 .fit-mark {
   font-weight: 900;
-  font-size: 16px;
+  font-size: 17px;
   color: var(--ink);
   text-align: center;
 }
-.fit-mark.soft { color: var(--muted); }
+.fit-mark.best { color: var(--red); font-size: 19px; }
+.fit-mark.soft { color: #888888; }
 .fit-name {
   font-weight: 800;
   color: var(--ink);
@@ -1117,39 +1048,17 @@ footer code b { color: var(--ink); }
 </div>
 
 <main>
-  <!-- 0. Hero（フルワイド・枠なし） -->
-  <section class="hero" aria-label="nihongo 概要">
+  <!-- 0. Hero（フルワイド・ブランドアニメーション） -->
+  <section class="hero" id="hero" aria-label="nihongo 概要">
     <div class="col">
       <div class="hero-kicker">JAPANESE AI GUARD</div>
-      <div class="hero-logo" aria-hidden="true">nih<i></i>ngo</div>
+      <div class="hero-logo" aria-hidden="true">
+        <span class="ch" style="--d:0s">n</span><span class="ch" style="--d:0.04s">i</span><span class="ch" style="--d:0.08s">h</span><i class="hero-dot" id="hero-dot" title="nihongo"></i><span class="ch" style="--d:0.16s">n</span><span class="ch" style="--d:0.2s">g</span><span class="ch" style="--d:0.24s">o</span>
+      </div>
       <h1 class="hero-title">AIの出力への<span>手直し</span>を減らそう。</h1>
       <p class="hero-lead">
         AIの過剰な敬語や意味のズレを防ぎ、自分の書き方を残せる日本語ガード。
       </p>
-
-      <!-- Live Interactive Red-Pen Proof Stage -->
-      <div class="hero-stage" id="hero-stage" aria-label="nihongo 修正プレビュー">
-        <div class="stage-bar">
-          <div class="stage-tabs" role="tablist" aria-label="場面の切り替え">
-            <button type="button" class="stage-tab on" role="tab" aria-selected="true" data-stage="0">メール</button>
-            <button type="button" class="stage-tab" role="tab" aria-selected="false" data-stage="1">就活ES</button>
-            <button type="button" class="stage-tab" role="tab" aria-selected="false" data-stage="2">チャット</button>
-          </div>
-          <span class="stage-badge"><i aria-hidden="true"></i>実例プレビュー</span>
-        </div>
-        <div class="stage-body" id="stage-body">
-          <div class="stage-row before">
-            <span class="stage-lbl">素のAI</span>
-            <div class="stage-before-txt" id="stage-before"><del>大変恐縮ですが</del>、来週へ<del>変更させていただくことは可能でしょうか</del>。<del>そちらに合わせます。</del></div>
-          </div>
-          <div class="stage-row after">
-            <span class="stage-lbl">nihongo</span>
-            <div class="stage-after-txt" id="stage-after">急で申し訳ありません。来週へ変更いただけますか。【候補日時】でご都合はいかがでしょうか。</div>
-          </div>
-        </div>
-        <div class="stage-progress" aria-hidden="true"><div class="stage-progress-bar" id="stage-prog"></div></div>
-      </div>
-
       <div class="hero-actions">
         <button type="button" class="hero-dl" id="btn-hero-dl">今すぐダウンロード ↓</button>
         <button type="button" class="hero-jump" id="btn-hero-custom">設定してから作る ↓</button>
@@ -1206,12 +1115,12 @@ footer code b { color: var(--ink); }
 
       <div class="fit-list" aria-label="分野ごとの対応目安">
         <div class="fit-row">
-          <span class="fit-mark" aria-label="得意">◎</span>
+          <span class="fit-mark best" aria-label="得意">◎</span>
           <span class="fit-name">メール・チャット・普段のやりとり</span>
           <span class="fit-desc">敬語の段や距離感、LINE・Slackの文体まで整えます</span>
         </div>
         <div class="fit-row">
-          <span class="fit-mark" aria-label="得意">◎</span>
+          <span class="fit-mark best" aria-label="得意">◎</span>
           <span class="fit-name">ES・自己PR・UI文言・お知らせ</span>
           <span class="fit-desc">事実を盛らず、場面ごとの型に合わせて仕上げます</span>
         </div>
@@ -1253,7 +1162,6 @@ footer code b { color: var(--ink); }
       <div class="pain-grid">
         <div class="pain-card">
           <div>
-            <span class="pain-num">ズレ 01</span>
             <h3>大事なニュアンスが勝手に弱まる</h3>
             <p>「15時までに必ず」が「15時頃までにいただけますと幸いです」になり、締切や必須の度合いがぼやけてしまいます。</p>
           </div>
@@ -1262,7 +1170,6 @@ footer code b { color: var(--ink); }
 
         <div class="pain-card">
           <div>
-            <span class="pain-num">ズレ 02</span>
             <h3>頼んでいない約束や前置きが付く</h3>
             <p>「そちらに合わせます」「何でもお気軽にどうぞ」など、引き受けていない約束や長い挨拶を勝手に足してしまいます。</p>
           </div>
@@ -1271,7 +1178,6 @@ footer code b { color: var(--ink); }
 
         <div class="pain-card">
           <div>
-            <span class="pain-num">ズレ 03</span>
             <h3>状況や相手との距離感に合っていない</h3>
             <p>同僚へのチャットが社長宛てのように硬すぎたり、逆に目上への連絡で不自然に砕けたりして手直しが増えます。</p>
           </div>
@@ -1280,7 +1186,6 @@ footer code b { color: var(--ink); }
 
         <div class="pain-card">
           <div>
-            <span class="pain-num">ズレ 04</span>
             <h3>自分の言葉がAI定番のテンプレに消える</h3>
             <p>ESや紹介文を整えると「革新的な〜」「大変有意義な〜」といった、一発でAIと分かる表現に塗り替えられます。</p>
           </div>
@@ -1910,84 +1815,26 @@ document.getElementById('btn-demo-check').addEventListener('click', () => {
   }
 });
 
-// Hero Live Proof Stage (メール / 就活ES / チャット)
-const HERO_STAGES = [
-  {
-    before: [
-      { del: true, text: '大変恐縮ですが' },
-      { del: false, text: '、来週へ' },
-      { del: true, text: '変更させていただくことは可能でしょうか' },
-      { del: false, text: '。' },
-      { del: true, text: 'そちらに合わせます。' },
-    ],
-    after: '急で申し訳ありません。来週へ変更いただけますか。【候補日時】でご都合はいかがでしょうか。',
-  },
-  {
-    before: [
-      { del: true, text: '革新的なアプローチを主体的に推進し、圧倒的な成果を実現' },
-      { del: false, text: 'しました。' },
-    ],
-    after: '週2回の振り返りを提案し、提出遅れを3か月でゼロにしました。',
-  },
-  {
-    before: [
-      { del: true, text: '承知いたしました！ぜひお力添えさせていただけますと幸いです！何かあればいつでもどうぞ！' },
-    ],
-    after: '了解です。明日15時までに送ります。',
-  },
-];
-
-let stageIdx = 0;
-let stageTimer = null;
-
-function renderHeroStage(idx) {
-  stageIdx = idx % HERO_STAGES.length;
-  const item = HERO_STAGES[stageIdx];
-  const body = document.getElementById('stage-body');
-  const beforeEl = document.getElementById('stage-before');
-  const afterEl = document.getElementById('stage-after');
-  const prog = document.getElementById('stage-prog');
-
-  beforeEl.textContent = '';
-  item.before.forEach(part => {
-    if (part.del) {
-      const d = document.createElement('del');
-      d.textContent = part.text;
-      beforeEl.appendChild(d);
-    } else {
-      beforeEl.appendChild(document.createTextNode(part.text));
-    }
+// Sculptural Hero Dot Interaction (magnetic hover + tactile click pop)
+const heroEl = document.getElementById('hero');
+const heroDot = document.getElementById('hero-dot');
+if (heroEl && heroDot && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  heroEl.addEventListener('pointermove', (e) => {
+    const r = heroDot.getBoundingClientRect();
+    const dx = Math.max(-7, Math.min(7, (e.clientX - (r.left + r.width / 2)) * 0.025));
+    const dy = Math.max(-7, Math.min(7, (e.clientY - (r.top + r.height / 2)) * 0.025));
+    heroDot.style.setProperty('--mx', dx.toFixed(2) + 'px');
+    heroDot.style.setProperty('--my', dy.toFixed(2) + 'px');
   });
-  afterEl.textContent = item.after;
-
-  document.querySelectorAll('.stage-tab').forEach((tab, i) => {
-    const on = i === stageIdx;
-    tab.classList.toggle('on', on);
-    tab.setAttribute('aria-selected', String(on));
+  heroEl.addEventListener('pointerleave', () => {
+    heroDot.style.setProperty('--mx', '0px');
+    heroDot.style.setProperty('--my', '0px');
   });
-
-  body.classList.remove('anim');
-  void body.offsetWidth;
-  body.classList.add('anim');
-
-  if (prog) {
-    prog.style.animation = 'none';
-    void prog.offsetWidth;
-    prog.style.animation = '';
-  }
-}
-
-document.querySelectorAll('.stage-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    const idx = Number(tab.dataset.stage || 0);
-    renderHeroStage(idx);
-    if (stageTimer) clearInterval(stageTimer);
-    document.getElementById('hero-stage').classList.add('paused');
+  heroDot.addEventListener('click', () => {
+    heroDot.classList.remove('pop');
+    void heroDot.offsetWidth;
+    heroDot.classList.add('pop');
   });
-});
-
-if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  stageTimer = setInterval(() => renderHeroStage(stageIdx + 1), 4600);
 }
 
 renderChips();
