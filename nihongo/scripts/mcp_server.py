@@ -911,6 +911,23 @@ def serve_stdio(
 INIT_TARGETS = ("claude-desktop", "claude-code", "cursor", "antigravity")
 
 
+def _find_windows_store_claude_dir() -> str | None:
+    """Windows ストア版（MSIX）Claude Desktop の Roaming\\Claude フォルダがあれば返す。"""
+    local_app = os.environ.get("LOCALAPPDATA") or os.path.join(os.path.expanduser("~"), "AppData", "Local")
+    pkgs_dir = os.path.join(local_app, "Packages")
+    if not os.path.isdir(pkgs_dir):
+        return None
+    try:
+        for name in sorted(os.listdir(pkgs_dir)):
+            if name.startswith("Claude_"):
+                cand = os.path.join(pkgs_dir, name, "LocalCache", "Roaming", "Claude")
+                if os.path.isdir(cand):
+                    return cand
+    except OSError:
+        return None
+    return None
+
+
 def resolve_client_config_path(target: str, *, platform: str | None = None) -> str:
     """対象クライアントの標準 MCP 設定ファイルパスを OS ごとに返す。"""
     plat = platform or sys.platform
@@ -919,7 +936,14 @@ def resolve_client_config_path(target: str, *, platform: str | None = None) -> s
     if t == "claude-desktop":
         if plat.startswith("win"):
             appdata = os.environ.get("APPDATA") or os.path.join(home, "AppData", "Roaming")
-            return os.path.join(appdata, "Claude", "claude_desktop_config.json")
+            std_dir = os.path.join(appdata, "Claude")
+            std_cfg = os.path.join(std_dir, "claude_desktop_config.json")
+            if os.path.isfile(std_cfg) or os.path.isdir(std_dir):
+                return std_cfg
+            store_dir = _find_windows_store_claude_dir()
+            if store_dir:
+                return os.path.join(store_dir, "claude_desktop_config.json")
+            return std_cfg
         if plat == "darwin":
             return os.path.join(home, "Library", "Application Support", "Claude", "claude_desktop_config.json")
         return os.path.join(home, ".config", "Claude", "claude_desktop_config.json")
@@ -930,6 +954,25 @@ def resolve_client_config_path(target: str, *, platform: str | None = None) -> s
     if t == "antigravity":
         return os.path.join(home, ".gemini", "antigravity", "mcp_config.json")
     raise ValueError(f"未対応の target です: {target!r}（{', '.join(INIT_TARGETS)} から指定）")
+
+
+def is_client_installed(target: str, *, platform: str | None = None) -> bool:
+    """--target all 実行時に未導入アプリへ空の設定を作らないよう、アプリの痕跡有無を判定する。"""
+    plat = platform or sys.platform
+    home = os.path.expanduser("~")
+    t = target.strip().lower()
+    cfg = resolve_client_config_path(t, platform=plat)
+    if os.path.isfile(cfg):
+        return True
+    if t == "claude-desktop":
+        return os.path.isdir(os.path.dirname(cfg))
+    if t == "claude-code":
+        return os.path.isdir(os.path.join(home, ".claude")) or bool(shutil.which("claude"))
+    if t == "cursor":
+        return os.path.isdir(os.path.join(home, ".cursor")) or bool(shutil.which("cursor"))
+    if t == "antigravity":
+        return os.path.isdir(os.path.dirname(cfg))
+    return False
 
 
 def build_mcp_server_entry(
@@ -1005,10 +1048,11 @@ def init_mcp_config(
         raise ValueError(f"設定ファイル内の mcpServers がオブジェクトではありません: {cfg_path}")
 
     already_configured = "nihongo" in mcp_servers
+    unchanged = already_configured and mcp_servers.get("nihongo") == entry
     mcp_servers["nihongo"] = entry
 
     backup_path: str | None = None
-    if not dry_run:
+    if not dry_run and not unchanged:
         if existed:
             ts = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
             cand_bak = f"{cfg_path}.{ts}.bak"
@@ -1026,10 +1070,58 @@ def init_mcp_config(
         "config_path": cfg_path,
         "existed": existed,
         "updated": already_configured,
+        "unchanged": unchanged,
         "dry_run": dry_run,
         "backup_path": backup_path,
         "entry": entry,
     }
+
+
+def remove_mcp_config(
+    *,
+    target: str,
+    config_path: str | None = None,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """他サーバー設定を残したまま mcpServers['nihongo'] だけを安全に削除する。"""
+    cfg_path = (
+        os.path.abspath(os.path.expanduser(config_path))
+        if config_path
+        else resolve_client_config_path(target)
+    )
+    if not os.path.isfile(cfg_path):
+        return {"target": target, "config_path": cfg_path, "removed": False, "dry_run": dry_run, "backup_path": None}
+
+    with open(cfg_path, encoding="utf-8-sig") as f:
+        raw = f.read()
+    if not raw.strip():
+        return {"target": target, "config_path": cfg_path, "removed": False, "dry_run": dry_run, "backup_path": None}
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"既存の設定ファイルが正しい JSON ではないため削除を中止しました（{cfg_path}）: {exc}") from exc
+    if not isinstance(parsed, dict) or not isinstance(parsed.get("mcpServers"), dict):
+        return {"target": target, "config_path": cfg_path, "removed": False, "dry_run": dry_run, "backup_path": None}
+
+    mcp_servers = parsed["mcpServers"]
+    if "nihongo" not in mcp_servers:
+        return {"target": target, "config_path": cfg_path, "removed": False, "dry_run": dry_run, "backup_path": None}
+
+    del mcp_servers["nihongo"]
+    backup_path: str | None = None
+    if not dry_run:
+        ts = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+        cand_bak = f"{cfg_path}.{ts}.bak"
+        seq = 1
+        while os.path.exists(cand_bak):
+            cand_bak = f"{cfg_path}.{ts}_{seq}.bak"
+            seq += 1
+        backup_path = cand_bak
+        shutil.copy2(cfg_path, backup_path)
+        rendered = json.dumps(parsed, ensure_ascii=False, indent=2) + "\n"
+        inbox_mod._atomic_write_utf8(cfg_path, rendered)
+
+    return {"target": target, "config_path": cfg_path, "removed": True, "dry_run": dry_run, "backup_path": backup_path}
 
 
 def _main_init(argv: list[str]) -> int:
@@ -1058,6 +1150,16 @@ def _main_init(argv: list[str]) -> int:
     )
     parser.add_argument("--dry-run", action="store_true", help="ファイルを書き換えずに登録内容だけ確認する")
     parser.add_argument(
+        "--remove",
+        action="store_true",
+        help="登録済みの nihongo MCP エントリを他設定を残したまま解除する",
+    )
+    parser.add_argument(
+        "--include-uninstalled",
+        action="store_true",
+        help="--target all 時に未導入アプリの設定ファイルも強制的に作成する",
+    )
+    parser.add_argument(
         "--detect-sync",
         action="store_true",
         help="PC 内の Google Drive / Dropbox / iCloud Drive 同期フォルダ候補を検出して終了する",
@@ -1084,6 +1186,45 @@ def _main_init(argv: list[str]) -> int:
         print("エラー: --config は --target all と併用できません。", file=sys.stderr)
         return 2
 
+    if args.remove:
+        rm_results: list[dict[str, Any]] = []
+        rm_errors: list[dict[str, str]] = []
+        for t in targets:
+            try:
+                rm_results.append(remove_mcp_config(target=t, config_path=args.config, dry_run=args.dry_run))
+            except Exception as exc:
+                rm_errors.append({"target": t, "error": str(exc)})
+        if args.json:
+            print(json.dumps({"results": rm_results, "errors": rm_errors}, ensure_ascii=False, indent=2))
+            return 1 if rm_errors else 0
+        for res in rm_results:
+            prefix = "[ドライラン] " if res["dry_run"] else ""
+            if res["removed"]:
+                verb = "解除予定" if res["dry_run"] else "解除しました"
+                print(f"{prefix}{res['target']} から nihongo MCP を{verb}: {res['config_path']}")
+                if res["backup_path"]:
+                    print(f"  バックアップ: {res['backup_path']}")
+        for err in rm_errors:
+            print(f"エラー ({err['target']}): {err['error']}", file=sys.stderr)
+        return 1 if rm_errors else 0
+
+    skipped_targets: list[str] = []
+    if args.target == "all" and not args.include_uninstalled:
+        filtered: list[str] = []
+        for t in targets:
+            if is_client_installed(t):
+                filtered.append(t)
+            else:
+                skipped_targets.append(t)
+        targets = filtered
+
+    migration: dict[str, Any] | None = None
+    saved_config_path: str | None = None
+    if args.home:
+        migration = inbox_mod.migrate_profile_to_home(args.home, dry_run=args.dry_run)
+        if not args.dry_run:
+            saved_config_path = inbox_mod.save_configured_home(args.home)
+
     results: list[dict[str, Any]] = []
     errors: list[dict[str, str]] = []
     for t in targets:
@@ -1101,15 +1242,41 @@ def _main_init(argv: list[str]) -> int:
             errors.append({"target": t, "error": str(exc)})
 
     if args.json:
-        print(json.dumps({"results": results, "errors": errors}, ensure_ascii=False, indent=2))
+        print(
+            json.dumps(
+                {
+                    "results": results,
+                    "skipped": skipped_targets,
+                    "saved_config_path": saved_config_path,
+                    "migration": migration,
+                    "errors": errors,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
         return 1 if errors else 0
+
+    if saved_config_path:
+        print(f"保存先を共通設定に記録しました: {args.home}（{saved_config_path}）")
+    if migration and migration["copied"]:
+        verb = "移行予定" if args.dry_run else "移行しました"
+        print(f"既存のプロフィールを新しい保存先へ{verb}: {', '.join(migration['copied'])}")
 
     for res in results:
         prefix = "[ドライラン] " if res["dry_run"] else ""
-        action = "更新" if res["updated"] else "新規登録"
-        print(f"{prefix}{res['target']} に nihongo MCP を{action}しました: {res['config_path']}")
+        if res["unchanged"]:
+            print(f"{prefix}{res['target']} の nihongo MCP 設定は最新のため変更なし: {res['config_path']}")
+            continue
+        if res["dry_run"]:
+            action = "更新予定" if res["updated"] else "新規登録予定"
+        else:
+            action = "更新しました" if res["updated"] else "新規登録しました"
+        print(f"{prefix}{res['target']} に nihongo MCP を{action}: {res['config_path']}")
         if res["backup_path"]:
             print(f"  バックアップ: {res['backup_path']}")
+    if skipped_targets:
+        print(f"未導入のためスキップ: {', '.join(skipped_targets)}")
     for err in errors:
         print(f"エラー ({err['target']}): {err['error']}", file=sys.stderr)
     if results and not args.dry_run and not errors:

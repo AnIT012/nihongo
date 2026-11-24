@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/.claude/skills/nihongo/scripts/cli.py git --hook"
+            "command": "nihongo-check git --auto-profile --hook"
           }
         ]
       }

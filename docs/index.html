@@ -1477,10 +1477,10 @@ footer code b { color: var(--ink); }
               <span class="cap-role">会話で育つ個人ルール</span>
             </div>
             <h3>直した口調やNG表現を確認後に残せます</h3>
-            <p>普段・仕事・公式など4つの場面で切り替わり、DropboxやGoogle Driveで複数端末に共有できます。</p>
+            <p>普段・仕事・公式など4つの場面で切り替わり、DropboxやGoogle Driveで複数PCに同期でき、スマホからも参照できます。</p>
           </div>
           <div class="cap-specs">
-            <span>承認制で勝手に変わらない</span>
+            <span>確認してから反映</span>
             <span>4場面で自動切替</span>
           </div>
         </div>
@@ -1796,37 +1796,37 @@ function buildSetupMarkdown(useCustom) {
     '## B. ローカル PC の開発エージェント（Claude Code / Cursor / Codex / Antigravity 等）の場合',
     'ユーザー自身の PC のファイルシステムとシェルへ直接アクセスできる環境でのみ実行してください。**勝手に実行せず**、必ず次の順序と 2 回の承認を守ってください。',
     '',
-    '### 1. 安全性チェック（最初に確認して1行報告）',
+    '### 1. 事前チェックと安全性確認（最初に確認して1行報告）',
+    '- まず `python --version`（または `python3 --version`）、`git --version`、`nihongo-check --version` の有無を確認する。Python 3.10+ または git が無い場合はコマンド導入を中止し、上の **A（チャット即適用・公式スキルZIP）** へ切り替える。',
     '- 正本リポジトリ: `https://github.com/AnIT012/nihongo`（MIT ライセンス）',
     '- 外部パッケージ依存ゼロ（Python 3.10+ の標準ライブラリのみで動作）',
     '- 運営者サーバーへのデータ送信・保存は一切なし（`profile.md` と `inbox.jsonl` はユーザー端末または本人所有のクラウド同期フォルダのみに保存）',
-    '- 実名・住所・メールアドレス・電話番号・APIキーなどの個人情報は記録しない',
+    '- メールアドレス・電話番号・APIキー等は自動ブロック。実名・住所・社名などの個人情報も記録しない',
     '',
     '### 2. 確認カード 1（導入・更新の承認・必須）',
-    '正本リポジトリの安全性を確認したうえで、既存の `nihongo` や `profile.md` の有無を調べ、ユーザーに以下を提示して OK を待つ:',
-    '- `https://github.com/AnIT012/nihongo` から最新版を取得（未導入なら新規導入、導入済みなら既存設定を保ったまま最新版へ更新）',
+    '正本リポジトリの安全性を確認したうえで、既存の `nihongo-check` や `profile.md` の有無を調べ、ユーザーに以下を提示して OK を待つ:',
+    '- `https://github.com/AnIT012/nihongo` から v3.1.0（または最新のリリース版）を取得（未導入なら新規導入、導入済みなら既存設定を保ったまま更新）',
     '- 下の初期ルールを `profile.md` に反映（**既存の `profile.md` がある場合は絶対に上書きせず、未登録の項目だけ追記マージ**）',
-    '- この PC に入っている AI（Claude Desktop / Claude Code / Cursor / Antigravity）へ `nihongo-mcp init` で自動登録（既存設定は `.bak` に退避してから追記）',
+    '- この PC に導入済みの AI アプリ（Claude Desktop / Claude Code / Cursor / Antigravity）へ `nihongo-mcp init` で自動登録（既存設定は `.bak` に退避してから追記、未導入アプリはスキップ。より厳格な CLI 限定承認にしたい場合は `--strict-hitl` を選択可）',
     '',
     '### 3. 確認カード 2（保存先と同期の選択・必須）',
     '導入承認のあと、保存先を 1 つ選んでもらう（ユーザーの事前希望: ' + syncLabel + '）:',
     '- A: この PC だけで使う（`~/.nihongo/profile.md`）',
-    '- B: 自分の Dropbox / Google Drive / iCloud Drive / OneDrive の同期フォルダに置く（`nihongo-mcp init --detect-sync` で検出し `--home <同期フォルダ>/nihongo` を指定）',
+    '- B: 自分の Dropbox / Google Drive / iCloud Drive / OneDrive の同期フォルダに置く（`nihongo-mcp init --detect-sync` で検出し `--home <同期フォルダ>/nihongo` を指定。保存先は `~/.nihongo/config.json` へ自動記録され、既存の `profile.md` があれば未作成時に自動移行される）',
     '- C: 今開いている作業フォルダ専用にする（`nihongo-check profile init --project` で `./.nihongo/profile.md` を作成）',
     '',
     '### 4. 承認後の実行コマンド（AI が代行）',
     '- CLI・MCP 導入: `pip install "git+https://github.com/AnIT012/nihongo.git@v3.1.0"`',
     '- スキル導入（対応環境）: `npx skills add AnIT012/nihongo -g`（またはリポジトリの `nihongo/` フォルダをスキル配置先へコピー）',
-    '- AI アプリ自動登録: `nihongo-mcp init --target all`（' + homeExample + '）',
-    '- 初期ルール反映: 同期フォルダ選択時は `NIHONGO_HOME="<同期フォルダ>/nihongo"` を設定（または `--home` を指定）したうえで、新規は `nihongo-check profile init`、未登録の表現は `nihongo-check inbox propose --scene <場面> --kind forbidden --value "<表現>"` と `nihongo-check inbox approve --all` で既存設定を壊さず追記マージ',
-    '- 疎通・診断確認: `nihongo-mcp --self-test` と `nihongo-check doctor` を実行',
+    '- AI アプリ自動登録: `nihongo-mcp init --target all`（' + homeExample + '。解除したい時は `nihongo-mcp init --target all --remove`）',
+    '- 初期ルール反映: 新規は `nihongo-check profile init`、未登録の表現は `nihongo-check inbox propose --scene <場面> --kind forbidden --value "<表現>" --json` で返った **その ID だけ** を `nihongo-check inbox approve <ID>` で反映（前から溜まっていた未確認候補を巻き込む `--all` は使わない）',
+    '- 疎通・診断・動作確認: `nihongo-mcp --self-test` と `nihongo-check doctor` を実行し、短いサンプル文で 0 トークン検査（`nihongo-check diff`）が動くことも 1 回見せる',
     '',
     '完了したら「以降は普段どおり話すだけで自動適用されます。今のルールや承認待ちはチャットで「ルール見せて」「承認待ちある？」と聞くだけで確認できます」と 1 行で案内する。',
     '',
     '## ユーザーの初期ルール（profile.md 互換）',
     '- よく使う場面：' + sceneJa + '（`[' + sceneKey + ']`）',
     '- 避ける表現（絶対に言わない表現）：' + ngLine,
-    '- 書く時の考え方：（この会話の中で調整した内容を反映）',
     '',
     '## 共通ルール（ブラウザ・スマホチャット即適用）',
     '1. 事実を作らない。依頼や資料にない数字・理由・約束（調整します等）を足さず、不明な値だけ【日時】等の空欄にする。',

@@ -13,6 +13,7 @@ import datetime as _dt
 import json
 import os
 import re
+import shutil
 import tempfile
 import time
 import unicodedata
@@ -94,14 +95,97 @@ _CASUAL_LAUGH_RE = re.compile(
 _EMOJI_RE = re.compile(r"[\U0001F300-\U0001FAFF\u2728\u2764\u2763\u2757\u2753\u2600\u2601\u2614\u26A1\u2615]")
 
 
+def default_local_home() -> str:
+    """ローカル既定の保存先（~/.nihongo）を返す。"""
+    return os.path.abspath(os.path.expanduser("~/.nihongo"))
+
+
+def config_file_path() -> str:
+    """保存先ポインタ（~/.nihongo/config.json）のパスを返す。"""
+    env_cfg = os.environ.get("NIHONGO_CONFIG", "").strip()
+    if env_cfg:
+        return os.path.abspath(os.path.expanduser(env_cfg))
+    return os.path.join(default_local_home(), "config.json")
+
+
+def read_configured_home() -> str | None:
+    """~/.nihongo/config.json に記録された保存先（home）を読む。無ければ None。"""
+    cfg = config_file_path()
+    if not os.path.isfile(cfg):
+        return None
+    try:
+        with open(cfg, encoding="utf-8-sig") as f:
+            raw = f.read().strip()
+        if not raw:
+            return None
+        data = json.loads(raw)
+        if isinstance(data, dict):
+            val = data.get("home")
+            if isinstance(val, str) and val.strip():
+                return os.path.abspath(os.path.expanduser(val.strip()))
+    except Exception:
+        return None
+    return None
+
+
+def save_configured_home(home_dir: str) -> str:
+    """選択されたデータ保存先を ~/.nihongo/config.json に記録し、全 CLI / MCP で統一する。"""
+    resolved = os.path.abspath(os.path.expanduser(home_dir))
+    cfg = config_file_path()
+    data: dict[str, Any] = {}
+    if os.path.isfile(cfg):
+        try:
+            with open(cfg, encoding="utf-8-sig") as f:
+                parsed = json.loads(f.read() or "{}")
+            if isinstance(parsed, dict):
+                data = parsed
+        except Exception:
+            data = {}
+    data["home"] = resolved
+    _atomic_write_utf8(cfg, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+    return cfg
+
+
+def migrate_profile_to_home(
+    target_home: str,
+    *,
+    source_home: str | None = None,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """既存の ~/.nihongo/profile.md（と inbox.jsonl）を新しい同期フォルダへ安全に移行（未作成時のみコピー）。"""
+    src_dir = os.path.abspath(os.path.expanduser(source_home)) if source_home else default_local_home()
+    dst_dir = os.path.abspath(os.path.expanduser(target_home))
+    copied: list[str] = []
+    skipped: list[str] = []
+    if os.path.normcase(src_dir) == os.path.normcase(dst_dir):
+        return {"source": src_dir, "target": dst_dir, "copied": copied, "skipped": skipped, "dry_run": dry_run}
+
+    for fname in ("profile.md", "inbox.jsonl"):
+        src = os.path.join(src_dir, fname)
+        dst = os.path.join(dst_dir, fname)
+        if not os.path.isfile(src):
+            continue
+        if os.path.exists(dst):
+            skipped.append(fname)
+            continue
+        if not dry_run:
+            os.makedirs(dst_dir, exist_ok=True)
+            shutil.copy2(src, dst)
+        copied.append(fname)
+    return {"source": src_dir, "target": dst_dir, "copied": copied, "skipped": skipped, "dry_run": dry_run}
+
+
 def get_nihongo_home(home: str | None = None) -> str:
-    """nihongo のデータディレクトリ（既定: ~/.nihongo、環境変数 NIHONGO_HOME で上書き可）。"""
+    """nihongo のデータディレクトリ（優先順: 明示引数 > 環境変数 NIHONGO_HOME > ~/.nihongo/config.json > ~/.nihongo）。"""
     if home:
         return os.path.abspath(os.path.expanduser(home))
     env_home = os.environ.get("NIHONGO_HOME", "").strip()
     if env_home:
         return os.path.abspath(os.path.expanduser(env_home))
-    return os.path.abspath(os.path.expanduser("~/.nihongo"))
+    cfg_home = read_configured_home()
+    if cfg_home:
+        return cfg_home
+    return default_local_home()
 
 
 def default_profile_path(home: str | None = None) -> str:

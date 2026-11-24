@@ -975,11 +975,15 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     forbidden = parse_profile_text(info["raw"]) if info["exists"] else []
     sync_folders = inbox_mod.detect_sync_folders()
 
+    resolved_home = inbox_mod.get_nihongo_home(getattr(args, "home", None))
     mcp_clients: list[dict[str, object]] = []
+    home_mismatches: list[dict[str, str]] = []
     for target in mcp_mod.INIT_TARGETS:
         cfg_path = mcp_mod.resolve_client_config_path(target)
         exists = os.path.isfile(cfg_path)
+        installed = mcp_mod.is_client_installed(target)
         configured = False
+        mcp_home: str | None = None
         parse_error: str | None = None
         if exists:
             try:
@@ -988,20 +992,40 @@ def cmd_doctor(args: argparse.Namespace) -> int:
                 if raw.strip():
                     parsed = json.loads(raw)
                     if isinstance(parsed, dict) and isinstance(parsed.get("mcpServers"), dict):
-                        configured = "nihongo" in parsed["mcpServers"]
+                        entry = parsed["mcpServers"].get("nihongo")
+                        if isinstance(entry, dict):
+                            configured = True
+                            entry_args = entry.get("args")
+                            if isinstance(entry_args, list):
+                                for idx, token in enumerate(entry_args):
+                                    if token == "--home" and idx + 1 < len(entry_args):
+                                        mcp_home = os.path.abspath(os.path.expanduser(str(entry_args[idx + 1])))
+                                        break
             except Exception as exc:
                 parse_error = str(exc)
+        if configured:
+            effective_mcp_home = mcp_home or inbox_mod.get_nihongo_home()
+            if os.path.normcase(effective_mcp_home) != os.path.normcase(resolved_home):
+                home_mismatches.append({
+                    "target": target,
+                    "mcp_home": effective_mcp_home,
+                    "cli_home": resolved_home,
+                })
         mcp_clients.append({
             "target": target,
             "config_path": cfg_path,
+            "installed": installed,
             "config_exists": exists,
             "nihongo_configured": configured,
+            "mcp_home": mcp_home,
             "error": parse_error,
         })
 
     report = {
         "version": __version__,
         "python": sys.version.split()[0],
+        "home": resolved_home,
+        "configured_home": inbox_mod.read_configured_home(),
         "profile_path": info["profile_path"],
         "global_profile_exists": info["global_exists"],
         "project_profile_path": info["project_profile_path"],
@@ -1010,6 +1034,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         "pending_inbox_count": info["pending_inbox_count"],
         "sync_folders": sync_folders,
         "mcp_clients": mcp_clients,
+        "home_mismatches": home_mismatches,
     }
 
     if args.json:
@@ -1029,8 +1054,20 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         print("- 検出した同期フォルダ候補: なし（ローカル既定を使用）")
     print("- AI アプリの MCP 登録状況:")
     for c in mcp_clients:
-        status = "登録済み" if c["nihongo_configured"] else ("JSONエラー" if c["error"] else "未登録")
+        if c["nihongo_configured"]:
+            status = "登録済み"
+        elif c["error"]:
+            status = "JSONエラー"
+        elif not c["installed"]:
+            status = "未導入"
+        else:
+            status = "未登録"
         print(f"  - {c['target']}: {status} ({c['config_path']})")
+    if home_mismatches:
+        print("- [警告] CLI と MCP で保存先が食い違っています:")
+        for mm in home_mismatches:
+            print(f"  - {mm['target']}: MCP={mm['mcp_home']} / CLI={mm['cli_home']}")
+        print("  解消例: nihongo-mcp init --target all --home \"<揃えたい保存先>\"")
     return 0
 
 

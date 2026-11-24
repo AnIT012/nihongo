@@ -52,6 +52,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           git archive --format=zip --prefix="nihongo/" -o "dist/nihongo-v$VERSION.zip" HEAD:nihongo
+          cp "dist/nihongo-v$VERSION.zip" "dist/nihongo.zip"
           git archive --format=tar.gz --prefix="nihongo-v$VERSION/" -o "dist/nihongo-v$VERSION-source.tar.gz" HEAD
           (cd dist && sha256sum ./*.zip ./*.tar.gz | sed 's# \./# #' > SHA256SUMS.txt)
           cat dist/SHA256SUMS.txt
