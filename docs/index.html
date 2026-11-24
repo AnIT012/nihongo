@@ -229,67 +229,74 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 28px;
 }
 
-/* Use-Case Impact Strip (Right under Hero) */
-.use-strip {
-  margin-top: 24px;
+/* Use-Case Impact Section (1 Editorial Section, No Rounded Boxes) */
+.use-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--line);
 }
-.use-card {
-  border: 2px solid var(--line);
-  border-radius: 18px;
-  padding: 20px 20px 18px;
-  background: #FFFFFF;
+.use-item {
+  padding: 26px 24px 28px;
+}
+.use-item:first-child {
+  padding-left: 0;
+}
+.use-item:last-child {
+  padding-right: 0;
+}
+.use-item + .use-item {
+  border-left: 1px solid var(--line);
 }
 .use-tag {
   display: inline-block;
   font-size: 12px;
   font-weight: 800;
+  letter-spacing: 0.04em;
   color: var(--red-hover);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
-.use-card h2 {
-  font-size: 15.5px;
+.use-item h3 {
+  font-size: 16.5px;
   font-weight: 900;
-  line-height: 1.45;
-  margin-bottom: 7px;
+  line-height: 1.48;
+  margin-bottom: 9px;
   color: var(--ink);
 }
-.use-card p {
+.use-item p {
   font-size: 13.5px;
-  line-height: 1.7;
+  line-height: 1.75;
   color: var(--muted);
 }
 
-/* Before / After Measured Card */
+/* Before / After Editorial Comparison (Open on White, No Outer Box) */
 .ba-card {
-  border: 3px solid var(--ink);
-  border-radius: 26px;
-  padding: 30px 34px;
-  background: #FFFFFF;
+  padding-top: 4px;
 }
 .ba-prompt {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 18px;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--line);
   font-size: 14.5px;
   font-weight: 700;
   color: var(--body);
 }
 .ba-lbl {
-  border: 1.5px solid var(--ink);
-  border-radius: 999px;
-  padding: 2px 11px;
-  font-size: 12px;
+  background: var(--ink);
+  color: #FFFFFF;
+  border-radius: 4px;
+  padding: 2px 9px;
+  font-size: 11.5px;
   font-weight: 700;
-  color: var(--ink);
+  letter-spacing: 0.04em;
 }
 .ba-before {
   background: var(--soft);
-  border-radius: 16px;
+  border-left: 3px solid #CCCCCC;
   padding: 18px 22px;
   margin-bottom: 14px;
 }
@@ -310,12 +317,14 @@ a { color: inherit; text-decoration: none; }
   border-bottom: 2px solid var(--red);
   font-weight: 900;
   padding: 1px 4px;
-  border-radius: 4px;
+  border-radius: 3px;
 }
 .ba-after {
-  border: 3px solid var(--red);
-  border-radius: 16px;
-  padding: 18px 22px;
+  border-top: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-left: 4px solid var(--red);
+  padding: 20px 22px;
   background: #FFFFFF;
 }
 .ba-after .ba-sub { color: var(--red-hover); }
@@ -330,30 +339,30 @@ a { color: inherit; text-decoration: none; }
   color: var(--red-hover);
   font-weight: 900;
   padding: 1px 6px;
-  border-radius: 6px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 .ba-note {
-  margin-top: 12px;
+  margin-top: 14px;
   font-size: 13px;
   color: var(--muted);
 }
 
-/* Capability 2x2 Grid (Canonical Check / Lite / Full / Personal — extends v3.0.0 promo card) */
+/* Capability 2x2 Editorial Grid (Hairline Rules + Selective Red Focus) */
 .cap-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  gap: 0 24px;
+  border-top: 2px solid var(--ink);
 }
 .cap-box {
-  border: 2.5px solid var(--ink);
-  border-radius: 22px;
-  padding: 24px 26px;
-  background: #FFFFFF;
+  border-bottom: 1px solid var(--line);
+  padding: 24px 16px 26px;
+  background: transparent;
 }
 .cap-box.accent {
-  background: var(--red);
-  border-color: var(--red);
-  color: #FFFFFF;
+  background: var(--warn-bg);
+  border-bottom: 2px solid var(--red);
 }
 .cap-head {
   display: flex;
@@ -368,39 +377,39 @@ a { color: inherit; text-decoration: none; }
   font-weight: 700;
   letter-spacing: -0.02em;
 }
+.cap-box.accent h3 {
+  color: var(--red-hover);
+}
 .cap-tag {
   font-size: 12px;
   font-weight: 700;
   color: var(--muted);
 }
 .cap-box.accent .cap-tag {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--red-hover);
 }
 .cap-box p {
   font-size: 14.5px;
   color: var(--body);
-  line-height: 1.7;
-}
-.cap-box.accent p {
-  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.75;
 }
 .cap-box code {
   font-family: "Space Mono", ui-monospace, monospace;
   font-size: 12.5px;
   background: var(--soft);
   padding: 1px 6px;
-  border-radius: 5px;
+  border-radius: 4px;
 }
 .cap-box.accent code {
-  background: rgba(0, 0, 0, 0.18);
-  color: #FFFFFF;
+  background: rgba(215, 38, 30, 0.12);
+  color: var(--ink);
 }
 .demo-fold {
-  margin-top: 18px;
-  border: 2px solid var(--line);
-  border-radius: 18px;
-  padding: 16px 20px;
-  background: #FFFFFF;
+  margin-top: 22px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 15px 0;
+  background: transparent;
 }
 .demo-fold summary {
   cursor: pointer;
@@ -412,7 +421,7 @@ a { color: inherit; text-decoration: none; }
   margin-top: 14px;
   background: #141416;
   color: #EAEAEA;
-  border-radius: 14px;
+  border-radius: 10px;
   padding: 16px 18px;
   font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12.5px;
@@ -439,48 +448,44 @@ a { color: inherit; text-decoration: none; }
   font: inherit;
   font-size: 13.5px;
   padding: 10px 12px;
-  border: 2px solid #CCCCCC;
-  border-radius: 10px;
+  border: 1.5px solid #CCCCCC;
+  border-radius: 8px;
   resize: vertical;
 }
 .demo-out {
   margin-top: 12px;
   padding: 12px 14px;
-  border-radius: 12px;
-  border: 2px solid var(--ink);
+  border-left: 3px solid var(--ink);
   font-size: 13.5px;
   background: var(--soft);
 }
 .demo-out.flag {
-  border-color: var(--red);
+  border-left-color: var(--red);
   background: var(--warn-bg);
 }
 
-/* Section 4: Install / Download 2 Options */
+/* Section 4: Install / Download 2 Options (Open Wrapper + 2 Clean Action Cards) */
 .install-box {
-  border: 3.5px solid var(--ink);
-  border-radius: 30px;
-  padding: 32px 32px 28px;
-  background: #FFFFFF;
+  padding-top: 4px;
 }
 .opt-pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 .opt-card {
-  border: 2.5px solid var(--line);
-  border-radius: 20px;
-  padding: 22px 22px 20px;
+  border: 1.5px solid #D4D4D4;
+  border-radius: 14px;
+  padding: 24px 24px 22px;
   background: #FFFFFF;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 18px;
+  gap: 20px;
 }
 .opt-card.featured {
-  border-color: var(--ink);
+  border: 2px solid var(--ink);
 }
 .opt-card h3 {
   font-size: 19px;
@@ -754,12 +759,21 @@ footer code b { color: var(--red); }
   .nav-r a:not(.nav-gh):not(.nav-keep) { display: none; }
   .hero-frame { padding: 48px 22px 40px; border-radius: 24px; }
   .hero-logo { font-size: 56px; }
-  .hero-title { font-size: 22px; }
+  .hero-title { font-size: 19.5px; text-wrap: balance; }
   .sec { padding-top: 64px; }
   .sec-h { font-size: 24px; }
-  .ba-card, .cap-main, .install-box { padding: 22px 18px; border-radius: 22px; }
-  .cap-grid, .opt-pair, .demo-grid, .radio-grid, .radio-grid.two, .use-strip {
+  .cap-grid, .opt-pair, .demo-grid, .radio-grid, .radio-grid.two, .use-grid {
     grid-template-columns: 1fr;
+  }
+  .use-item {
+    padding: 20px 0;
+  }
+  .use-item + .use-item {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .cap-box {
+    padding: 20px 14px 22px;
   }
 }
 </style>
@@ -797,22 +811,29 @@ footer code b { color: var(--red); }
       </div>
     </section>
 
-    <!-- 1.5 入れると何が変わるか（利用シーン別） -->
-    <section class="use-strip" aria-label="使うと変わること">
-      <div class="use-card">
-        <span class="use-tag">就活生・学生</span>
-        <h2>ESやレポートに自分の経験をそのまま残せる</h2>
-        <p>AIが勝手に実績や感想を盛らず、話したエピソードだけを自然な言葉に整えます。</p>
-      </div>
-      <div class="use-card">
-        <span class="use-tag">仕事・普段使い</span>
-        <h2>メールやチャットの書き直しが減る</h2>
-        <p>高すぎる敬語や頼んでいない約束を止め、そのまま送れる文に近づけます。</p>
-      </div>
-      <div class="use-card">
-        <span class="use-tag">開発・AIヘビーユーザー</span>
-        <h2>推敲のズレを防ぎ、文体を全AIで共有できる</h2>
-        <p>数字や「必ず」の抜けを0トークンで検出し、自分のルールを複数AIで使い回せます。</p>
+    <!-- 2. 使うと変わること（1セクション） -->
+    <section class="sec" id="benefits">
+      <div class="sec-cap">FOR YOU</div>
+      <h2 class="sec-h">使うと、こう変わります。</h2>
+      <p class="sec-p">
+        就活・仕事・開発まで、自分の話した内容や文体を崩さずに文章を整えられます。
+      </p>
+      <div class="use-grid">
+        <div class="use-item">
+          <span class="use-tag">就活生・学生</span>
+          <h3>ESやレポートに自分の経験をそのまま残せる</h3>
+          <p>AIが勝手に実績や感想を盛らず、話したエピソードだけを自然な言葉に整えます。</p>
+        </div>
+        <div class="use-item">
+          <span class="use-tag">仕事・普段使い</span>
+          <h3>メールやチャットの書き直しが減る</h3>
+          <p>高すぎる敬語や頼んでいない約束を止め、そのまま送れる文に近づけます。</p>
+        </div>
+        <div class="use-item">
+          <span class="use-tag">開発・AIヘビーユーザー</span>
+          <h3>推敲のズレを防ぎ、文体を全AIで共有できる</h3>
+          <p>数字や「必ず」の抜けを0トークンで検出し、自分のルールを複数AIで使い回せます。</p>
+        </div>
       </div>
     </section>
 
