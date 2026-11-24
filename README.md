@@ -6,7 +6,7 @@
 [![v3.1.1](https://img.shields.io/badge/-v3.1.1-D7261E?style=flat-square)](CHANGELOG.md)
 [![stars](https://img.shields.io/github/stars/AnIT012/nihongo?style=flat-square&labelColor=111111&color=D7261E)](https://github.com/AnIT012/nihongo/stargazers)
 [![license](https://img.shields.io/badge/license-MIT-D7261E?style=flat-square&labelColor=111111&color=D7261E)](LICENSE)
-[![works with](https://img.shields.io/badge/works_with-Claude_%7C_Antigravity_%7C_Codex_%7C_Cursor_%7C_ChatGPT_%7C_Muse-D7261E?style=flat-square&labelColor=111111&color=D7261E)](#インストール)
+[![works with](https://img.shields.io/badge/works_with-Claude_%7C_Antigravity_%7C_Codex_%7C_Cursor_%7C_ChatGPT_%7C_Muse_%7C_Hermes-D7261E?style=flat-square&labelColor=111111&color=D7261E)](#インストール)
 
 ## 禁止用途
 
@@ -218,6 +218,13 @@ npx skills add AnIT012/nihongo -g
 <summary><b>Muse</b></summary>
 
 `nihongo/` フォルダをスキルの置き場に置くと、スキルとして読み込めたと報告をいただきました（Issue #15）。`npx skills add` で入れたスキルも、そのまま見えるはずです。Liteを入れるには、`ALWAYS.md` の中身を `AGENTS.md` に貼ってください。
+
+</details>
+
+<details>
+<summary><b>Hermes Agent</b></summary>
+
+Hermes Agent でも、Lite（`ALWAYS.md`）を毎セッション読み込みつつ Full（`SKILL.md` と `references/`）を必要な時だけ使う二段構えと、`cli.py diff`（または `nihongo-check diff`）による意味ズレ検出が動くとの報告をいただきました。`nihongo/` フォルダをスキル配置先へ置き、毎セッション読み込む指示欄に `ALWAYS.md` を入れて使えます。
 
 </details>
 
