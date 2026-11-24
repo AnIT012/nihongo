@@ -352,7 +352,16 @@ a { color: inherit; text-decoration: none; }
   color: var(--muted);
 }
 
-/* Section 1: nihongoとは (Open 3-Column Editorial) */
+/* Section 1: nihongoとは (Plain Intro + Open 3-Column Editorial) */
+.about-lead {
+  font-size: 16px;
+  line-height: 1.9;
+  color: var(--ink);
+  max-width: 740px;
+  padding-bottom: 32px;
+  margin-bottom: 34px;
+  border-bottom: 1px solid #DFDFDB;
+}
 .use-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1105,6 +1114,10 @@ footer code b { color: var(--ink); }
         </div>
         <span class="sec-sub">使うと日々の文章がこう変わります</span>
       </div>
+
+      <p class="about-lead">
+        nihongoは、ChatGPTやClaudeに読み込ませて使う「日本語のルールブック」です。AIが書きがちな硬すぎる敬語や頼んでいない約束を止め、自分の書き方を残したまま文章を整えられます。特別なアプリは要らず、ファイルを1つチャットに貼るだけで今日から使えます。
+      </p>
 
       <div class="use-grid">
         <div class="use-item">
