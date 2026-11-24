@@ -303,6 +303,15 @@ a { color: inherit; text-decoration: none; }
   font-weight: 700;
 }
 .hero-status.show { display: block; }
+.inapp-hint {
+  display: none;
+  margin: 14px auto 0;
+  max-width: 460px;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.inapp-hint.show { display: block; }
 /* Post-Download Blurred Modal */
 .dl-modal-backdrop {
   position: fixed;
@@ -1565,6 +1574,7 @@ footer code b { color: var(--ink); }
         <button type="button" class="hero-dl" id="btn-hero-dl"><svg class="dl-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span>今すぐダウンロード</span></button>
         <button type="button" class="hero-jump" id="btn-hero-custom">カスタマイズしてダウンロード</button>
       </div>
+      <p class="inapp-hint" id="hero-inapp-hint">※Xなどのアプリ内ブラウザでは、ボタンを押すとそのままAIチャットに貼れる全文が自動コピーされます（ファイル保存はSafari / Chromeで開いてください）。</p>
       <div class="hero-status" id="hero-status" role="status" aria-live="polite"></div>
       <div class="hero-meta">
         <span>v3.1.1</span>
@@ -2187,11 +2197,12 @@ function buildSetupMarkdown(useCustom) {
   return [
     '# nihongo-setup.md — nihongo 導入・適用ガイド（AI向け）',
     '',
-    'このファイルを添付された AI は、自分の動作環境に応じて次の A か B のどちらか 1 つだけを実行してください。',
+    'このファイル（または貼り付けテキスト）を受け取った AI は、自分の動作環境と使える機能に応じて、次の A（A1 / A2）または B のうち該当するルートを実行してください。',
     '',
-    '## A. ブラウザ・スマホ・デスクトップ通常チャット（ChatGPT / Claude / Gemini 等）の場合',
+    '## A. ブラウザ・スマホ通常チャット（ChatGPT / Claude / Gemini 等）の場合',
     '※ChatGPT の Code Interpreter や Claude Desktop の隔離サンドボックス環境も含みます。ホスト PC へのコマンド導入は実行できません。',
-    '- 下の「ユーザーの初期ルール」と「共通ルール」を、**今開いているこの会話から直ちに適用**する。',
+    '- **A1（Web 取得が使えない／失敗した場合）**：下の「ユーザーの初期ルール」と「共通ルール（nihongo Lite / WEB.md 100%）」を、**今開いているこの会話から直ちに適用**する。通信エラーは出さず、そのまま進める。',
+    '- **A2（Web 閲覧・URL 取得が使える場合）**：まず下の「共通ルール（Lite 100%）」を即適用したうえで、メール・就活ES・資料・技術文書・お知らせ・告知文など本格的な文章を書く依頼が来た時は、正本リポジトリの Full 手順（`https://raw.githubusercontent.com/AnIT012/nihongo/main/nihongo/SKILL.md` および該当する `nihongo/references/*.md` 22本）も自動で読み込んで適用する（アクセスできない場合は黙って A1 のまま進める）。',
     '- 最初の返答は専門用語（Python / MCP / JSON 等）を出さず、「nihongo の日本語ルールを適用しました。このまま文章作成や手直しをどうぞ（毎回自動で効かせたい場合は、Claude は設定→スキルへ最新版ZIPを登録、ChatGPT はカスタム指示や ' + webPlaceHint + ' に置いておけます）」と 1〜2 行で返す。',
     '- もしユーザーから「インストールしたい」「毎回自動で効かせたい」と聞かれた場合は、①コマンド不要なら Claude の「設定 → 機能 → スキル」へ `https://github.com/AnIT012/nihongo/releases/latest/download/nihongo.zip` を1回アップロードする方法（スマホアプリにも自動同期）、②0トークン自動検査やクラウド同期まで全自動で入れたいなら Claude Code / Cursor / Antigravity にこのファイルをそのまま渡す方法を簡潔に案内する。',
     '',
@@ -2230,12 +2241,14 @@ function buildSetupMarkdown(useCustom) {
     '- よく使う場面：' + sceneJa + '（`[' + sceneKey + ']`）',
     '- 避ける表現（絶対に言わない表現）：' + ngLine,
     '',
-    '## 共通ルール（ブラウザ・スマホチャット即適用）',
-    '1. 事実を作らない。依頼や資料にない数字・理由・約束（調整します等）を足さず、不明な値だけ【日時】等の空欄にする。',
-    '2. なりすまし・詐欺・個人情報窃取の文は断る。',
-    '3. 敬語は迷ったら1段低くし、読点は読み違える所と長い前置きの後にだけ打つ。',
-    '4. 前置き・言い直し・不要なまとめを省き、推敲では元の意味や必須度（必ず等）を弱めない。',
-    '5. 友達向けのくだけた語尾や絵文字を目上・社外向けへ持ち込まない。',
+    '## 共通ルール（nihongo Web / Lite 100% — ブラウザ・スマホチャット即適用）',
+    '日本語で返事・文章・資料を作る時は次を守る。',
+    '1. **事実を作らない。** 依頼・会話・資料にない事実、理由、経験、気持ち、約束や申し出（〜します、調整します）、数字、宛先部署名は書かない。要るのに分からない値は【理由】【日時】のような空欄にする。推測は断定せず「たぶん」等で書き分ける。中身そのものが1つも無い時だけ作らずに聞き、出来事や言葉が1つでもあれば聞き返さず一般的な考えと合わせて書いて質問は後に1つだけ添える。',
+    '2. **なりすまし・詐欺は断る。** 実在の組織や人を装う文、偽ログインや支払いへ誘う文、パスワード・暗証番号・カード番号を聞き出す文は、作成も推敲も短く断り、注意喚起の文なら手伝えると添える。誰が出すか分からないのに番号の入力・リンクからのログイン・急ぎの支払いを求める時だけ1つ確かめ、普通の依頼で目的は聞かない。元の文や依頼にない発信者名・公式らしさ・権威（部署名、法的脅し等）も足さない。',
+    '3. **場と形に合わせる。** 迷ったら敬語は1段低くし、頼み事や手間をかける連絡にはお詫びかお願いの一言を入れる（正式文書の型と頼まれた丁寧さは崩さない）。報告書・ES・社外向けの書き言葉文書は話し言葉の動詞にせず（出す→表示する、止める→停止する）、動詞は主語に合わせる（システムは停止する、電車は止まる）。読点は読み違える所と長い前置きの後にだけ打つ。雑談・相談・短い質問は見出しと太字を使わず普通の文で返し、箇条書きは3つ以上並ぶ時や手順だけに使う。',
+    '4. **水増ししない。** 前置き、相手の言葉の言い直し、不要なまとめ直し、一般論、頼まれていない別案や「必要なら調整します」を付けない。最初の1文で答えか用件を言い、頼まれた範囲と上限字数を守る。推敲では意味や求める強さ（必ず等）を変えず、読み手が止まる所だけ最小限に直す。',
+    '5. **場面と自分のルールを守る。** 敬語と硬さは相手と場面で先に決め、友達向けのくだけた語尾や絵文字は目上・社外向けの文に持ち込まない。口調や言い回しを直された時だけ、返答の末尾に「設定欄にこのまま1行足せます：〜」と1行だけ提案する（実名や連絡先などの個人情報は書かない）。',
+    '6. **ユーザーの明示指示を優先する。** 具体的な指定やトーン指定がある場合はそちらを優先する（ただし2の詐欺・なりすまし拒否は常に優先）。',
     '',
   ].join('\n');
 }
@@ -2346,12 +2359,12 @@ let lastModalRuleText = '';
 function openDownloadModal(isCustom, inAppMode = false) {
   lastFocusedBeforeModal = document.activeElement;
   if (inAppMode) {
-    lastModalRuleText = buildCompactChatRule(isCustom);
+    lastModalRuleText = buildSetupMarkdown(isCustom);
     dlModalFile.textContent = isCustom
-      ? '設定入りチャット用ルールをコピーしました'
-      : 'チャット用ルールをコピーしました';
-    dlModalStep.textContent = 'Xなどのアプリ内ブラウザではファイル保存ができないため、そのまま貼れるルールをコピーしました。ChatGPTやClaudeのチャット欄に貼り付けて送ってください（ファイルで保存したい場合はSafari / Chromeで開いてください）。';
-    dlModalRecopy.textContent = 'チャット用ルールをもう一度コピー';
+      ? '設定入り nihongo ルール全文をコピーしました'
+      : 'nihongo ルール全文をコピーしました';
+    dlModalStep.textContent = 'Xなどのアプリ内ブラウザではファイル保存ができないため、そのまま貼れる全文をコピーしました。ChatGPTやClaudeのチャット欄に貼り付けて送るだけで使えます（ファイル保存したい場合はSafari / Chromeで開いてください）。';
+    dlModalRecopy.textContent = '全文をもう一度コピーする';
     dlModalRecopy.classList.add('show');
   } else {
     dlModalFile.textContent = isCustom
@@ -2376,9 +2389,9 @@ dlModalRecopy.addEventListener('click', async () => {
 
 function triggerDownloadOrInAppCopy(isCustom, onHero) {
   if (isInAppBrowser()) {
-    const ruleText = buildCompactChatRule(isCustom);
-    copyRawText(ruleText);
-    const msg = 'アプリ内ブラウザのため、そのまま貼れるチャット用ルールをコピーしました。ChatGPTやClaudeに貼り付けて使えます（ファイル保存はSafari / Chromeで開いてください）。';
+    const fullText = buildSetupMarkdown(isCustom);
+    copyRawText(fullText);
+    const msg = 'アプリ内ブラウザのため、そのままチャットに貼れる nihongo 全文をコピーしました。ChatGPTやClaudeに貼り付けて使えます（ファイル保存はSafari / Chromeで開いてください）。';
     if (onHero) {
       const hs = document.getElementById('hero-status');
       hs.textContent = msg;
@@ -2400,6 +2413,11 @@ function triggerDownloadOrInAppCopy(isCustom, onHero) {
       : 'nihongo-setup.md をダウンロードしました。そのまま ChatGPT / Claude / Cursor などのチャット欄に添付して送ってください。', false);
   }
   openDownloadModal(isCustom, false);
+}
+
+if (isInAppBrowser()) {
+  const hint = document.getElementById('hero-inapp-hint');
+  if (hint) hint.classList.add('show');
 }
 
 function closeDownloadModal() {
