@@ -1,0 +1,1324 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>nihongo — AI編集のための日本語ガード</title>
+<meta name="description" content="AIの文章から「上出来だけど、そのままでは出せない」違和感を減らし、会話で直した癖を自分のルールとして残せる日本語ガード基盤。運営側サーバーにデータは保存しません。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="nihongo — AI編集のための日本語ガード">
+<meta property="og:description" content="0トークンの意味ズレ検査、承認UIで育つ個人ルール、1ファイル導入。外部依存ゼロ・運営データ保存ゼロのオープンソース基盤。">
+<meta property="og:image" content="https://anit012.github.io/nihongo/ogp.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://anit012.github.io/nihongo/ogp.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='%23D7261E'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #D7261E;
+  --red-hover: #B31E18;
+  --ink: #111111;
+  --body: #262626;
+  --muted: #555555;
+  --line: #E4E4E4;
+  --soft: #F6F6F5;
+  --ok: #137333;
+  --warn-bg: #FFF4F3;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: #FFFFFF;
+  color: var(--ink);
+  font-family: "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic UI", sans-serif;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+
+.col {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+/* Header */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px 0 24px;
+  gap: 16px;
+}
+.slogo {
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.slogo i {
+  display: inline-block;
+  width: 0.46em;
+  height: 0.46em;
+  border-radius: 50%;
+  background: var(--red);
+  margin: 0 0.04em;
+}
+.nav-r {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.nav-r a:hover { color: var(--ink); }
+.nav-gh {
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 6px 15px;
+  color: var(--ink);
+  font-family: "Space Grotesk", sans-serif;
+  white-space: nowrap;
+}
+.nav-gh:hover { background: var(--ink); color: #FFFFFF; }
+
+/* Section 1: Quiet Framed Hero */
+.hero-frame {
+  border: 3.5px solid var(--ink);
+  border-radius: 32px;
+  padding: 64px 56px 54px;
+  position: relative;
+  margin-top: 16px;
+  background: #FFFFFF;
+  text-align: center;
+}
+.cut {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #FFFFFF;
+  padding: 0 20px;
+  font-family: "Space Mono", ui-monospace, monospace;
+  font-size: 14px;
+  letter-spacing: 0.32em;
+  padding-left: calc(20px + 0.32em);
+  color: var(--ink);
+  white-space: nowrap;
+}
+.hero-logo {
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 80px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  margin-bottom: 26px;
+}
+.hero-logo i {
+  display: inline-block;
+  width: 0.46em;
+  height: 0.46em;
+  border-radius: 50%;
+  background: var(--red);
+  margin: 0 0.04em;
+}
+.hero-title {
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.45;
+  margin-bottom: 18px;
+  letter-spacing: -0.01em;
+}
+.hero-title span { color: var(--red); }
+.hero-lead {
+  font-size: 16px;
+  color: var(--body);
+  max-width: 620px;
+  margin: 0 auto 36px;
+}
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.hero-dl {
+  appearance: none;
+  border: 2.5px solid var(--red);
+  background: var(--red);
+  color: #FFFFFF;
+  font: inherit;
+  font-size: 15.5px;
+  font-weight: 800;
+  padding: 13px 26px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease, transform 0.08s ease;
+}
+.hero-dl:hover { background: var(--red-hover); border-color: var(--red-hover); }
+.hero-dl:active { transform: translateY(1px); }
+.hero-jump {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFFFF;
+  border: 2.5px solid var(--ink);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 13px 24px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.hero-jump:hover { background: var(--ink); color: #FFFFFF; }
+.hero-status {
+  display: none;
+  margin: 16px auto 0;
+  max-width: 560px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 2px solid var(--ok);
+  background: #F2FAF4;
+  color: var(--ok);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.hero-status.show { display: block; }
+.hero-meta {
+  margin-top: 24px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--muted);
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+
+/* Sections */
+.sec {
+  padding-top: 84px;
+}
+.sec-cap {
+  font-family: "Space Mono", ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: 0.28em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.sec-h {
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1.38;
+  margin-bottom: 18px;
+  letter-spacing: -0.01em;
+}
+.sec-p {
+  font-size: 15.5px;
+  color: var(--body);
+  max-width: 740px;
+  margin-bottom: 28px;
+}
+
+/* Before / After Measured Card */
+.ba-card {
+  border: 3px solid var(--ink);
+  border-radius: 26px;
+  padding: 30px 34px;
+  background: #FFFFFF;
+}
+.ba-prompt {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--body);
+}
+.ba-lbl {
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  padding: 2px 11px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.ba-before {
+  background: var(--soft);
+  border-radius: 16px;
+  padding: 18px 22px;
+  margin-bottom: 14px;
+}
+.ba-sub {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.ba-before p {
+  font-size: 15.5px;
+  line-height: 1.9;
+  color: var(--body);
+}
+.err {
+  background: rgba(215, 38, 30, 0.11);
+  color: var(--red-hover);
+  border-bottom: 2px solid var(--red);
+  font-weight: 900;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+.ba-after {
+  border: 3px solid var(--red);
+  border-radius: 16px;
+  padding: 18px 22px;
+  background: #FFFFFF;
+}
+.ba-after .ba-sub { color: var(--red-hover); }
+.ba-after p {
+  font-size: 16.5px;
+  font-weight: 700;
+  line-height: 1.9;
+  color: var(--ink);
+}
+.slot {
+  background: rgba(215, 38, 30, 0.1);
+  color: var(--red-hover);
+  font-weight: 900;
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+.ba-note {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Capability 2x2 Grid (Canonical Check / Lite / Full / Personal — extends v3.0.0 promo card) */
+.cap-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.cap-box {
+  border: 2.5px solid var(--ink);
+  border-radius: 22px;
+  padding: 24px 26px;
+  background: #FFFFFF;
+}
+.cap-box.accent {
+  background: var(--red);
+  border-color: var(--red);
+  color: #FFFFFF;
+}
+.cap-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.cap-box h3 {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.cap-tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.cap-box.accent .cap-tag {
+  color: rgba(255, 255, 255, 0.9);
+}
+.cap-box p {
+  font-size: 14.5px;
+  color: var(--body);
+  line-height: 1.7;
+}
+.cap-box.accent p {
+  color: rgba(255, 255, 255, 0.95);
+}
+.cap-box code {
+  font-family: "Space Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  background: var(--soft);
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+.cap-box.accent code {
+  background: rgba(0, 0, 0, 0.18);
+  color: #FFFFFF;
+}
+.demo-fold {
+  margin-top: 18px;
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  padding: 16px 20px;
+  background: #FFFFFF;
+}
+.demo-fold summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.term {
+  margin-top: 14px;
+  background: #141416;
+  color: #EAEAEA;
+  border-radius: 14px;
+  padding: 16px 18px;
+  font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.75;
+  overflow-x: auto;
+}
+.term .r { color: #FF7870; }
+.term .g { color: #6BE097; }
+.demo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+.demo-grid label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.demo-grid textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 13.5px;
+  padding: 10px 12px;
+  border: 2px solid #CCCCCC;
+  border-radius: 10px;
+  resize: vertical;
+}
+.demo-out {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 2px solid var(--ink);
+  font-size: 13.5px;
+  background: var(--soft);
+}
+.demo-out.flag {
+  border-color: var(--red);
+  background: var(--warn-bg);
+}
+
+/* Section 4: Install / Download 2 Options */
+.install-box {
+  border: 3.5px solid var(--ink);
+  border-radius: 30px;
+  padding: 32px 32px 28px;
+  background: #FFFFFF;
+}
+.opt-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+.opt-card {
+  border: 2.5px solid var(--line);
+  border-radius: 20px;
+  padding: 22px 22px 20px;
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+}
+.opt-card.featured {
+  border-color: var(--ink);
+}
+.opt-card h3 {
+  font-size: 19px;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+.opt-card p {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.action-btn {
+  appearance: none;
+  width: 100%;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 800;
+  padding: 13px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.14s ease, color 0.14s ease, transform 0.08s ease;
+}
+.action-btn:active { transform: translateY(1px); }
+.action-btn.primary {
+  background: var(--red);
+  border: 2.5px solid var(--red);
+  color: #FFFFFF;
+}
+.action-btn.primary:hover { background: var(--red-hover); border-color: var(--red-hover); }
+.action-btn.secondary {
+  background: #FFFFFF;
+  border: 2.5px solid var(--ink);
+  color: var(--ink);
+}
+.action-btn.secondary:hover { background: var(--soft); }
+.action-btn.secondary.open {
+  background: var(--ink);
+  color: #FFFFFF;
+}
+
+.quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding-top: 6px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+.link-btn {
+  appearance: none;
+  border: 1.5px solid #CCCCCC;
+  background: #FFFFFF;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.link-btn:hover { border-color: var(--ink); }
+
+.status-bar {
+  display: none;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  border: 2px solid var(--ok);
+  background: #F2FAF4;
+  color: var(--ok);
+}
+.status-bar.show { display: block; }
+.status-bar.err-bar {
+  border-color: var(--red);
+  background: var(--warn-bg);
+  color: var(--red-hover);
+}
+
+/* Customizer Drawer (hidden by default so initial page stays calm) */
+.customizer {
+  display: none;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 2px solid var(--line);
+}
+.customizer.open { display: block; }
+.cust-group { margin-bottom: 20px; }
+.cust-lbl {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+.cust-lbl span { font-size: 12.5px; font-weight: 500; color: var(--muted); }
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.chip {
+  appearance: none;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 2px solid #CCCCCC;
+  background: #FFFFFF;
+  color: var(--body);
+  cursor: pointer;
+}
+.chip.on {
+  border-color: var(--red);
+  color: var(--red-hover);
+  background: rgba(215, 38, 30, 0.08);
+}
+.add-row {
+  display: flex;
+  gap: 8px;
+}
+.add-row input {
+  flex: 1;
+  font: inherit;
+  font-size: 14px;
+  padding: 9px 12px;
+  border: 2px solid #CCCCCC;
+  border-radius: 10px;
+}
+.add-row input:focus { outline: none; border-color: var(--ink); }
+.add-row button {
+  appearance: none;
+  border: 2px solid var(--ink);
+  background: var(--ink);
+  color: #FFFFFF;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 9px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.radio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.radio-grid.two { grid-template-columns: 1fr 1fr; }
+.r-opt {
+  border: 2px solid #CCCCCC;
+  border-radius: 12px;
+  padding: 11px 13px;
+  cursor: pointer;
+  display: block;
+}
+.r-opt input { margin-right: 6px; }
+.r-opt.on { border-color: var(--ink); background: var(--soft); }
+.r-opt b { font-size: 13.5px; }
+.r-opt small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.cust-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.btn-dl {
+  appearance: none;
+  border: 2.5px solid var(--red);
+  background: var(--red);
+  color: #FFFFFF;
+  font: inherit;
+  font-size: 15.5px;
+  font-weight: 900;
+  padding: 13px 22px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.btn-dl:hover { background: var(--red-hover); border-color: var(--red-hover); }
+.btn-outline {
+  appearance: none;
+  border: 2px solid var(--ink);
+  background: #FFFFFF;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.btn-outline:hover { background: var(--soft); }
+
+.preview-details {
+  margin-top: 16px;
+}
+.preview-details summary {
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.preview-pre {
+  margin-top: 10px;
+  background: #141416;
+  color: #EAEAEA;
+  border-radius: 14px;
+  padding: 16px;
+  font-family: "Space Mono", ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* After-download calm explanation */
+.after-flow {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1.5px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+.after-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+}
+.after-row b {
+  color: var(--ink);
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+
+/* Footer */
+footer {
+  margin-top: 84px;
+  padding: 28px 0 56px;
+  border-top: 1.5px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+footer code {
+  font-family: "Space Mono", ui-monospace, monospace;
+  color: var(--ink);
+  font-size: 13px;
+}
+footer code b { color: var(--red); }
+
+@media (max-width: 720px) {
+  .col { padding: 0 18px; }
+  .nav-r a:not(.nav-gh):not(.nav-keep) { display: none; }
+  .hero-frame { padding: 48px 22px 40px; border-radius: 24px; }
+  .hero-logo { font-size: 56px; }
+  .hero-title { font-size: 22px; }
+  .sec { padding-top: 64px; }
+  .sec-h { font-size: 24px; }
+  .ba-card, .cap-main, .install-box { padding: 22px 18px; border-radius: 22px; }
+  .cap-grid, .opt-pair, .demo-grid, .radio-grid, .radio-grid.two {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+<div class="col">
+  <header class="nav">
+    <a class="slogo" href="#">nih<i></i>ngo</a>
+    <nav class="nav-r" aria-label="ページ内メニュー">
+      <a href="#what">仕組み</a>
+      <a href="#capabilities">できること</a>
+      <a class="nav-keep" href="#install">導入する</a>
+      <a class="nav-gh" href="https://github.com/AnIT012/nihongo" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 1. タイトル（ファーストビュー） -->
+    <section class="hero-frame" aria-label="nihongo 概要">
+      <div class="cut">JAPANESE AI GUARD</div>
+      <div class="hero-logo" aria-hidden="true">nih<i></i>ngo</div>
+      <h1 class="hero-title">「上出来だけど出せない」を<span>1ファイル</span>で減らす。</h1>
+      <p class="hero-lead">
+        AIの過剰な敬語や意味のズレを防ぎ、自分の書き方を残せる日本語ガード。
+      </p>
+      <div class="hero-actions">
+        <button type="button" class="hero-dl" id="btn-hero-dl">今すぐダウンロード ↓</button>
+        <button type="button" class="hero-jump" id="btn-hero-custom">設定してから作る ↓</button>
+      </div>
+      <div class="hero-status" id="hero-status" role="status" aria-live="polite"></div>
+      <div class="hero-meta">
+        <span>無料・登録不要</span>
+        <span>運営サーバー保存ゼロ</span>
+        <span>MIT</span>
+      </div>
+    </section>
+
+    <!-- 2. nihongo とは何か -->
+    <section class="sec" id="what">
+      <div class="sec-cap">WHAT IT FIXES</div>
+      <h2 class="sec-h">きれいな文章ほど、ズレに気づきにくい。</h2>
+      <p class="sec-p">
+        素のAIでも日本語は自然ですが、頼んでいない約束や普段使わない硬い敬語が混ざります。
+      </p>
+
+      <div class="ba-card">
+        <div class="ba-prompt">
+          <span class="ba-lbl">依頼</span>
+          <span>明日の打ち合わせを来週にずらしたいメールを書いて</span>
+        </div>
+        <div class="ba-before">
+          <div class="ba-sub">素のAIの出力（実測・抜粋）</div>
+          <p>
+            <span class="err">大変恐縮ですが</span>、日程を来週へ<span class="err">変更させていただくことは可能でしょうか</span>。上記以外にご都合のよいお時間帯がございましたら、<span class="err">そちらに合わせますので</span>お知らせください。
+          </p>
+        </div>
+        <div class="ba-after">
+          <div class="ba-sub">nihongoを入れた出力</div>
+          <p>
+            急で申し訳ありません。明日の打ち合わせですが、<span class="slot">【理由】</span>のため来週へ変更いただけますか。<span class="slot">【候補日時】</span>でご都合はいかがでしょうか。
+          </p>
+        </div>
+        <p class="ba-note">依頼に無い約束は足さず、分からない値だけ空欄にします。敬語も必要以上に高くしません。</p>
+      </div>
+    </section>
+
+    <!-- 3. できること -->
+    <section class="sec" id="capabilities">
+      <div class="sec-cap">CAPABILITIES</div>
+      <h2 class="sec-h">仕上げと確認を4つの機能で引き受ける。</h2>
+      <p class="sec-p">
+        普段の返事から重要な資料・編集後の検査まで、場面に応じて自動で切り替わります。
+      </p>
+
+      <div class="cap-grid">
+        <div class="cap-box">
+          <div class="cap-head">
+            <h3>Lite</h3>
+            <span class="cap-tag">普段の返事を軽く整える</span>
+          </div>
+          <p>約1,100〜1,260字の軽量ルール。雑談や短い連絡でも重くならず、ブラウザやスマホでもそのまま使えます。</p>
+        </div>
+
+        <div class="cap-box">
+          <div class="cap-head">
+            <h3>Full</h3>
+            <span class="cap-tag">メール・資料・技術文書まで</span>
+          </div>
+          <p>93行の本編と21本の場面別資料。必要な資料だけを読み込み、敬語の段や構成まで場面に合わせます。</p>
+        </div>
+
+        <div class="cap-box accent">
+          <div class="cap-head">
+            <h3>Check</h3>
+            <span class="cap-tag">0トークンで意味ズレ検出</span>
+          </div>
+          <p>編集後の日時・数字・「必ず」の弱まりと避ける表現をPython標準ライブラリだけで検出。Claude Codeフック対応。</p>
+        </div>
+
+        <div class="cap-box">
+          <div class="cap-head">
+            <h3>Personal</h3>
+            <span class="cap-tag">会話で育つ4場面の個人ルール</span>
+          </div>
+          <p>直した癖は受信箱に一時保存し、承認画面（<code>nihongo-check ui</code>）でOKした分だけ反映。Google Drive共有や案件別2層に対応。</p>
+        </div>
+      </div>
+
+      <details class="demo-fold">
+        <summary>Check（0トークン検査）の実行例とブラウザ内お試しを開く</summary>
+        <div class="term" aria-label="nihongo-check 実行例">
+          $ nihongo-check diff orig.md draft.md --scene formal<br>
+          <span class="r">- [確度・必須度] 「必須」表現が減少（1→0）</span><br>
+          <span class="r">- [程度・約束] 「頃」が増加（0→1）</span><br>
+          <span class="r">- [個人ルール] 避ける表現を検出: 「いただけますと幸いです」</span><br>
+          <span class="g">0 tokens / ローカル実行 / 追加パッケージ不要</span>
+        </div>
+        <div class="demo-grid">
+          <div>
+            <label for="demo-orig">元のメモ</label>
+            <textarea id="demo-orig" rows="3">資料は明日15時までに必ず送ってください。</textarea>
+          </div>
+          <div>
+            <label for="demo-draft">AIが直した文</label>
+            <textarea id="demo-draft" rows="3">恐れ入りますが、資料は明日15時頃までにご送付いただけますと幸いです。</textarea>
+          </div>
+        </div>
+        <div style="margin-top:10px;">
+          <button type="button" class="link-btn" id="btn-demo-check">今の文を検査する</button>
+        </div>
+        <div class="demo-out" id="demo-out" style="display:none;"></div>
+      </details>
+    </section>
+
+    <!-- 4. 導入する（2つのダウンロードオプション） -->
+    <section class="sec" id="install">
+      <div class="sec-cap">GET STARTED</div>
+      <h2 class="sec-h">今のチャットに1ファイルを貼るだけ。</h2>
+      <p class="sec-p">
+        落とした <code>nihongo-setup.md</code> をAIに添付するだけ。ブラウザ版ならその場で効き、開発ツールなら承認後に自動設定まで終わります。
+      </p>
+
+      <div class="install-box">
+        <div class="opt-pair">
+          <div class="opt-card featured">
+            <div>
+              <h3>とりあえず入れてみる</h3>
+              <p>標準設定のまま始められます。すでに導入済みの方の更新にも対応。</p>
+            </div>
+            <button type="button" class="action-btn primary" id="btn-quick-dl">ファイルをダウンロード ↓</button>
+          </div>
+          <div class="opt-card">
+            <div>
+              <h3>ちょっと設定してから入れる</h3>
+              <p>避ける表現や場面、保存先を選んでから自分用のファイルを作ります。</p>
+            </div>
+            <button type="button" class="action-btn secondary" id="btn-open-custom" aria-expanded="false" aria-controls="customizer">設定を開いて作る</button>
+          </div>
+        </div>
+
+        <div class="quick-links">
+          <span>貼るだけの方：</span>
+          <button type="button" class="link-btn" id="btn-copy-chat">チャット用ルールをコピー</button>
+          <details style="display:inline-block;">
+            <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);list-style:none;">開発者・既存ユーザー向け ▾</summary>
+            <div class="quick-links" style="margin-top:8px;">
+              <button type="button" class="link-btn" id="btn-copy-npx">npx skills add AnIT012/nihongo をコピー</button>
+              <label class="link-btn" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                <span>既存の profile.md を読み込む</span>
+                <input type="file" id="import-profile" accept=".md,.txt" style="display:none;">
+              </label>
+            </div>
+          </details>
+        </div>
+
+        <div class="status-bar" id="status-bar" role="status" aria-live="polite"></div>
+
+        <!-- Customizer Drawer -->
+        <div class="customizer" id="customizer">
+          <div class="cust-group">
+            <div class="cust-lbl">
+              避ける表現を選ぶ
+              <span>複数選択可・あとから会話でも追加できます</span>
+            </div>
+            <div class="chip-row" id="ng-chips"></div>
+            <div class="add-row">
+              <input type="text" id="custom-ng-input" placeholder="追加したい表現を入力（例：ご査収のほど、承知いたしました）">
+              <button type="button" id="btn-add-ng">追加する</button>
+            </div>
+          </div>
+
+          <div class="cust-group">
+            <div class="cust-lbl">よく使う場面</div>
+            <div class="radio-grid" id="scene-radios">
+              <label class="r-opt on"><input type="radio" name="scene" value="work" checked><b>仕事・社内</b><small>Slack・PR・ドキュメント</small></label>
+              <label class="r-opt"><input type="radio" name="scene" value="formal"><b>社外・目上</b><small>メール・公式お知らせ</small></label>
+              <label class="r-opt"><input type="radio" name="scene" value="casual"><b>普段・雑談</b><small>メモ・チャット</small></label>
+            </div>
+          </div>
+
+          <div class="cust-group">
+            <div class="cust-lbl">
+              PC開発ツール導入時の保存先（初期候補）
+              <span>ブラウザ・スマホの方はそのままでも使えます</span>
+            </div>
+            <div class="radio-grid two" id="sync-radios">
+              <label class="r-opt on"><input type="radio" name="sync" value="local" checked><b>このPCだけで使う</b><small>~/.nihongo/profile.md</small></label>
+              <label class="r-opt"><input type="radio" name="sync" value="gdrive"><b>自分のGoogle Driveで同期</b><small>複数PC共有＋スマホから添付</small></label>
+            </div>
+          </div>
+
+          <div class="cust-actions">
+            <button type="button" class="btn-dl" id="btn-custom-dl">この設定でダウンロード ↓</button>
+            <button type="button" class="btn-outline" id="btn-custom-copy">この設定をチャット用にコピー</button>
+          </div>
+
+          <details class="preview-details">
+            <summary>生成される nihongo-setup.md の中身を確認する</summary>
+            <pre class="preview-pre" id="setup-preview"></pre>
+          </details>
+        </div>
+
+        <div class="after-flow">
+          <div class="after-row"><b>ChatGPT / Claude（Web・スマホ）</b><span>「＋」から添付するかコピー文を送信（ProjectsやGoogle Driveに置くと次回から自動）</span></div>
+          <div class="after-row"><b>Claude Code / Cursor / Antigravity</b><span>AIがGitHub正本の安全性を確認し、2回の承認後に既存設定を守りつつ自動導入</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>MIT License — データはすべてあなたの端末・クラウドに保存されます</span>
+    <code>npx skills add <b>AnIT012/nihongo</b></code>
+  </footer>
+</div>
+
+<script>
+const DEFAULT_NGS = [
+  'いただけますと幸いです',
+  '恐れ入りますが',
+  'させていただきます',
+  'ご査収のほど',
+  '何卒よろしくお願い申し上げます',
+];
+
+const state = {
+  selectedNg: new Set(['いただけますと幸いです', '恐れ入りますが', 'させていただきます']),
+  customNg: [],
+  scene: 'work',
+  sync: 'local',
+};
+
+const PII_EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
+const PII_PHONE = /(?:\+81[-\s]?\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}|0\d{1,4}[-\s(]+\d{1,4}[-\s)]+\d{3,4}|0[789]0\d{8}|0\d{9})/;
+const PII_SECRET = /(?:sk-(?:proj-|ant-)?[A-Za-z0-9_-]{16,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z\-_]{20,}|-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----)/;
+
+function checkPii(text) {
+  const norm = (text || '').normalize('NFKC').replace(/[−‐‑‒–—―ー]/g, '-');
+  if (PII_EMAIL.test(norm)) return 'メールアドレスは個人情報保護のため追加できません。';
+  if (PII_PHONE.test(norm)) return '電話番号と思われる数字列は個人情報保護のため追加できません。';
+  if (PII_SECRET.test(norm)) return 'APIキー・秘密鍵と思われる文字列は追加できません。';
+  return null;
+}
+
+function showStatus(msg, isErr) {
+  const bar = document.getElementById('status-bar');
+  bar.textContent = msg;
+  bar.className = 'status-bar show' + (isErr ? ' err-bar' : '');
+}
+
+function getAllSelectedNg(useCustom) {
+  if (!useCustom) return [];
+  const all = [...DEFAULT_NGS, ...state.customNg];
+  return all.filter(x => state.selectedNg.has(x));
+}
+
+function buildSetupMarkdown(useCustom) {
+  const ngList = getAllSelectedNg(useCustom);
+  const sceneKey = useCustom ? state.scene : 'work';
+  const syncPref = useCustom ? state.sync : 'local';
+  const sceneJa = {
+    work: '仕事・社内チャット・ドキュメント',
+    formal: '社外メール・目上・公式お知らせ',
+    casual: '普段のチャット・雑談',
+  }[sceneKey] || '仕事・社内チャット・ドキュメント';
+  const syncLabel = syncPref === 'gdrive'
+    ? '自分の Google Drive 同期フォルダ（複数PC・スマホ共有）'
+    : 'この PC のローカル（~/.nihongo/profile.md）';
+  const ngLine = ngList.length > 0
+    ? ngList.map(w => '「' + w.replace(/^[「『"']+|[」』"']+$/g, '') + '」').join('、')
+    : '（未設定・会話しながら追加）';
+
+  return [
+    '# nihongo-setup.md — nihongo 導入・適用ガイド（AI向け）',
+    '',
+    'このファイルを添付された AI は、自分の動作環境に応じて次の A か B のどちらか 1 つだけを実行してください。',
+    '',
+    '## A. ブラウザ・スマホのチャット（ChatGPT / Claude / Gemini 等）の場合',
+    '※ChatGPT の Code Interpreter や Claude の Artifacts などのサンドボックス環境も含みます。GitHub へのアクセスやコマンド導入は行わないでください。',
+    '- 下の「ユーザーの初期ルール」と「共通ルール」を、**今開いているこの会話から直ちに適用**する。',
+    '- 最初の返答は専門用語（Python / MCP / JSON 等）を出さず、「nihongo の日本語ルールを適用しました。このまま文章作成や手直しをどうぞ（毎回貼りたくない場合は Projects や Google Drive に置いておけます）」と 1〜2 行で返す。',
+    '',
+    '## B. ローカル PC の開発エージェント（Claude Code / Cursor / Codex / Antigravity 等）の場合',
+    'ユーザー自身の PC のファイルシステムとシェルへ直接アクセスできる環境でのみ実行してください。**勝手に実行せず**、必ず次の順序と 2 回の承認を守ってください。',
+    '',
+    '### 1. 安全性チェック（最初に確認して1行報告）',
+    '- 正本リポジトリ: `https://github.com/AnIT012/nihongo`（MIT ライセンス）',
+    '- 外部パッケージ依存ゼロ（Python 3.10+ の標準ライブラリのみで動作）',
+    '- 運営者サーバーへのデータ送信・保存は一切なし（`profile.md` と `inbox.jsonl` はユーザー端末または本人所有の Google Drive のみに保存）',
+    '- 実名・住所・メールアドレス・電話番号・APIキーなどの個人情報は記録しない',
+    '',
+    '### 2. 確認カード 1（導入・更新の承認・必須）',
+    '正本リポジトリの安全性を確認したうえで、既存の `nihongo` や `profile.md` の有無を調べ、ユーザーに以下を提示して OK を待つ:',
+    '- `https://github.com/AnIT012/nihongo` から最新版を取得（未導入なら新規導入、導入済みなら既存設定を保ったまま最新版へ更新）',
+    '- 下の初期ルールを `profile.md` に反映（**既存の `profile.md` がある場合は絶対に上書きせず、未登録の項目だけ追記マージ**）',
+    '- この PC に入っている AI（Claude Desktop / Claude Code / Cursor / Antigravity）へ `nihongo-mcp init` で自動登録（既存設定は `.bak` に退避してから追記）',
+    '',
+    '### 3. 確認カード 2（保存先と同期の選択・必須）',
+    '導入承認のあと、保存先を 1 つ選んでもらう（ユーザーの事前希望: ' + syncLabel + '）:',
+    '- A: この PC だけで使う（`~/.nihongo/profile.md`）',
+    '- B: 自分の Google Drive / Dropbox / iCloud の同期フォルダに置く（`nihongo-mcp init --home <同期フォルダ>/nihongo` で複数 PC 同期＋スマホから添付可能）',
+    '- C: 今開いている作業フォルダ専用にする（`./.nihongo/profile.md`）',
+    '',
+    '承認後に導入・設定を完了したら、`nihongo-mcp --self-test` で疎通を確認し、「以降は普段どおり話すだけで自動適用されます。承認画面は `nihongo-check ui` で開けます」と 1 行で案内する。',
+    '',
+    '## ユーザーの初期ルール（profile.md 互換）',
+    '- よく使う場面：' + sceneJa + '（`[' + sceneKey + ']`）',
+    '- 避ける表現（絶対に言わない表現）：' + ngLine,
+    '- 書く時の考え方：（この会話の中で調整した内容を反映）',
+    '',
+    '## 共通ルール（ブラウザ・スマホチャット即適用）',
+    '1. 事実を作らない。依頼や資料にない数字・理由・約束（調整します等）を足さず、不明な値だけ【日時】等の空欄にする。',
+    '2. なりすまし・詐欺・個人情報窃取の文は断る。',
+    '3. 敬語は迷ったら1段低くし、読点は読み違える所と長い前置きの後にだけ打つ。',
+    '4. 前置き・言い直し・不要なまとめを省き、推敲では元の意味や必須度（必ず等）を弱めない。',
+    '5. 友達向けのくだけた語尾や絵文字を目上・社外向けへ持ち込まない。',
+    '',
+  ].join('\n');
+}
+
+function buildCompactChatRule(useCustom) {
+  const ngList = getAllSelectedNg(useCustom);
+  const sceneJa = {
+    work: '仕事・社内チャット・ドキュメント',
+    formal: '社外メール・目上・公式お知らせ',
+    casual: '普段のチャット・雑談',
+  }[state.scene] || '仕事・社内チャット・ドキュメント';
+  const sceneLine = useCustom ? '\n- 想定する場面：' + sceneJa : '';
+  const ngLine = ngList.length > 0
+    ? '\n- 避ける表現：' + ngList.map(w => '「' + w + '」').join('、')
+    : '';
+  return [
+    'ここから先は nihongo の日本語ルールを適用してください（今の会話の文脈は維持）。',
+    '- 依頼や資料に無い事実・理由・約束（調整します等）を足さない。不明な値だけ【理由】【日時】のように空欄にする。',
+    '- 迷ったら敬語は1段低くし、前置き・言い直し・余計なまとめを省く。',
+    '- 推敲では元の数字・日時・否定・「必ず」の強さを弱めない。' + sceneLine + ngLine,
+  ].join('\n');
+}
+
+function downloadMarkdown(filename, content) {
+  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function copyText(text, successMsg) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showStatus(successMsg, false);
+  } catch (_) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    showStatus(successMsg, false);
+  }
+}
+
+function renderChips() {
+  const wrap = document.getElementById('ng-chips');
+  wrap.textContent = '';
+  const all = [...DEFAULT_NGS, ...state.customNg];
+  all.forEach(item => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    const on = state.selectedNg.has(item);
+    btn.className = 'chip' + (on ? ' on' : '');
+    btn.textContent = (on ? '✓ ' : '') + item;
+    btn.addEventListener('click', () => {
+      if (state.selectedNg.has(item)) state.selectedNg.delete(item);
+      else state.selectedNg.add(item);
+      renderChips();
+      refreshPreview();
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+function refreshPreview() {
+  document.getElementById('setup-preview').textContent = buildSetupMarkdown(true);
+}
+
+document.getElementById('btn-hero-dl').addEventListener('click', () => {
+  downloadMarkdown('nihongo-setup.md', buildSetupMarkdown(false));
+  const hs = document.getElementById('hero-status');
+  hs.textContent = 'nihongo-setup.md をダウンロードしました。そのまま今お使いのAIチャットに添付してください。';
+  hs.classList.add('show');
+});
+
+document.getElementById('btn-hero-custom').addEventListener('click', () => {
+  const drawer = document.getElementById('customizer');
+  const btn = document.getElementById('btn-open-custom');
+  if (!drawer.classList.contains('open')) {
+    drawer.classList.add('open');
+    btn.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+    btn.textContent = '設定を閉じる';
+    refreshPreview();
+  }
+  document.getElementById('install').scrollIntoView({ behavior: 'smooth' });
+});
+
+document.getElementById('btn-quick-dl').addEventListener('click', () => {
+  downloadMarkdown('nihongo-setup.md', buildSetupMarkdown(false));
+  showStatus('nihongo-setup.md をダウンロードしました。そのまま今お使いのAIチャットに添付してください。', false);
+});
+
+document.getElementById('btn-open-custom').addEventListener('click', () => {
+  const drawer = document.getElementById('customizer');
+  const btn = document.getElementById('btn-open-custom');
+  const isOpen = drawer.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+  btn.setAttribute('aria-expanded', String(isOpen));
+  btn.textContent = isOpen ? '設定を閉じる' : '設定を開いて作る';
+  if (isOpen) refreshPreview();
+});
+
+document.getElementById('btn-add-ng').addEventListener('click', () => {
+  const inp = document.getElementById('custom-ng-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  const err = checkPii(val);
+  if (err) {
+    showStatus(err, true);
+    return;
+  }
+  if (!DEFAULT_NGS.includes(val) && !state.customNg.includes(val)) {
+    state.customNg.push(val);
+  }
+  state.selectedNg.add(val);
+  inp.value = '';
+  renderChips();
+  refreshPreview();
+  showStatus('「' + val + '」を追加しました。', false);
+});
+
+document.getElementById('custom-ng-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('btn-add-ng').click();
+  }
+});
+
+document.querySelectorAll('input[name="scene"]').forEach(r => {
+  r.addEventListener('change', () => {
+    state.scene = r.value;
+    document.querySelectorAll('#scene-radios .r-opt').forEach(l => l.classList.remove('on'));
+    r.closest('.r-opt').classList.add('on');
+    refreshPreview();
+  });
+});
+
+document.querySelectorAll('input[name="sync"]').forEach(r => {
+  r.addEventListener('change', () => {
+    state.sync = r.value;
+    document.querySelectorAll('#sync-radios .r-opt').forEach(l => l.classList.remove('on'));
+    r.closest('.r-opt').classList.add('on');
+    refreshPreview();
+  });
+});
+
+document.getElementById('btn-custom-dl').addEventListener('click', () => {
+  downloadMarkdown('nihongo-setup.md', buildSetupMarkdown(true));
+  showStatus('設定入りの nihongo-setup.md をダウンロードしました。AIチャットに添付すると確認カード付きで反映されます。', false);
+});
+
+document.getElementById('btn-custom-copy').addEventListener('click', () => {
+  copyText(buildCompactChatRule(true), '設定入りのチャット用ルールをコピーしました。今の会話に貼り付けて送れます。');
+});
+
+document.getElementById('btn-copy-chat').addEventListener('click', () => {
+  const isOpen = document.getElementById('customizer').classList.contains('open');
+  copyText(buildCompactChatRule(isOpen), 'チャットに貼るルールをコピーしました。');
+});
+
+document.getElementById('btn-copy-npx').addEventListener('click', () => {
+  copyText('npx skills add AnIT012/nihongo', 'npx skills add AnIT012/nihongo をコピーしました。');
+});
+
+document.getElementById('import-profile').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  const m = text.match(/絶対に言わない表現\s*[：:]\s*(.+)/);
+  let added = 0;
+  if (m && m[1]) {
+    const items = m[1].split(/[、,／/]/).map(s => s.trim().replace(/^[「『"']+|[」』"']+$/g, '')).filter(Boolean);
+    items.forEach(item => {
+      if (checkPii(item)) return;
+      if (!DEFAULT_NGS.includes(item) && !state.customNg.includes(item)) state.customNg.push(item);
+      state.selectedNg.add(item);
+      added++;
+    });
+  }
+  const drawer = document.getElementById('customizer');
+  drawer.classList.add('open');
+  document.getElementById('btn-open-custom').classList.add('open');
+  document.getElementById('btn-open-custom').setAttribute('aria-expanded', 'true');
+  renderChips();
+  refreshPreview();
+  showStatus(
+    added > 0
+      ? '既存の profile.md から ' + added + ' 件の避ける表現を取り込みました。'
+      : 'profile.md を読み込みました。必要に応じて表現を選んで生成できます。',
+    false
+  );
+  e.target.value = '';
+});
+
+// Client-side lightweight 0-token demo checker
+document.getElementById('btn-demo-check').addEventListener('click', () => {
+  const orig = document.getElementById('demo-orig').value || '';
+  const draft = document.getElementById('demo-draft').value || '';
+  const issues = [];
+  const mustWords = ['必ず', '必須', '厳守'];
+  mustWords.forEach(w => {
+    const c1 = (orig.match(new RegExp(w, 'g')) || []).length;
+    const c2 = (draft.match(new RegExp(w, 'g')) || []).length;
+    if (c2 < c1) issues.push('[確度・必須度] 「' + w + '」が減少（' + c1 + '→' + c2 + '）');
+  });
+  const approx = ['頃', '約', '程度'];
+  approx.forEach(w => {
+    const c1 = (orig.match(new RegExp(w, 'g')) || []).length;
+    const c2 = (draft.match(new RegExp(w, 'g')) || []).length;
+    if (c2 > c1 && orig.trim().length > 0) issues.push('[程度・約束] 「' + w + '」が増加（' + c1 + '→' + c2 + '）');
+  });
+  const numsOrig = (orig.normalize('NFKC').match(/\d+(?:\.\d+)?/g) || []).join(',');
+  const numsDraft = (draft.normalize('NFKC').match(/\d+(?:\.\d+)?/g) || []).join(',');
+  if (orig.trim() && numsOrig !== numsDraft) {
+    issues.push('[数値・日時] 数字の並びが変化（原文: ' + (numsOrig || 'なし') + ' / 編集後: ' + (numsDraft || 'なし') + '）');
+  }
+  const activeNgs = [...DEFAULT_NGS, ...state.customNg].filter(x => state.selectedNg.has(x));
+  activeNgs.forEach(w => {
+    const c1 = (orig.match(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+    const c2 = (draft.match(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+    if (c2 > c1) issues.push('[個人ルール] 避ける表現を検出: 「' + w + '」');
+  });
+
+  const out = document.getElementById('demo-out');
+  out.style.display = 'block';
+  out.textContent = '';
+  if (issues.length === 0) {
+    out.className = 'demo-out';
+    out.textContent = '見直す候補はありません（ブラウザ内 0トークン検査）。';
+  } else {
+    out.className = 'demo-out flag';
+    const head = document.createElement('div');
+    head.style.fontWeight = '800';
+    head.textContent = '見直す候補が ' + issues.length + ' 件あります（ブラウザ内 0トークン検査）';
+    out.appendChild(head);
+    const ul = document.createElement('ul');
+    ul.style.marginTop = '6px';
+    ul.style.paddingLeft = '18px';
+    issues.forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      ul.appendChild(li);
+    });
+    out.appendChild(ul);
+  }
+});
+
+renderChips();
+refreshPreview();
+</script>
+</body>
+</html>
