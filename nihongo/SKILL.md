@@ -55,7 +55,8 @@ metadata:
 - スライド・企画書・報告書・議事録・手順書・表 → `references/slides-and-documents.md`
 - README・技術文書・開発者向け説明・コミットやPR → `references/technical-writing.md`
 - ES・志望動機・自己PR → `references/entry-sheet.md`
-- エッセイ・感想・ブログの導入・宣伝文・紹介文 → `references/essays-and-promotion.md`
+- エッセイ・感想・ブログの導入・紹介文 → `references/essays-and-promotion.md`
+- マーケ・広告文・LP・SNS告知・プレスリリース → `references/marketing-copy.md`
 - スピーチ・発表・動画の読み上げ原稿 → `references/speech.md`
 - 英語等からの翻訳 → `references/translation.md`
 - ポートフォリオ・報告書・README・ES・会社やお店から出す文（書き言葉の段） → `references/register.md`

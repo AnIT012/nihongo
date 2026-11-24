@@ -334,8 +334,36 @@ a { color: inherit; text-decoration: none; }
   color: var(--body);
   line-height: 1.8;
 }
+.fit-list {
+  margin-top: 34px;
+  border-top: 1.5px solid var(--ink);
+}
+.fit-row {
+  display: grid;
+  grid-template-columns: 34px 230px 1fr;
+  gap: 8px 16px;
+  align-items: baseline;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+.fit-mark {
+  font-weight: 900;
+  font-size: 16px;
+  color: var(--ink);
+  text-align: center;
+}
+.fit-mark.soft { color: var(--muted); }
+.fit-name {
+  font-weight: 800;
+  color: var(--ink);
+}
+.fit-desc {
+  color: var(--muted);
+  line-height: 1.65;
+}
 .demo-fold {
-  margin-top: 28px;
+  margin-top: 24px;
 }
 .demo-fold summary {
   cursor: pointer;
@@ -804,6 +832,8 @@ footer code b { color: var(--ink); }
   .use-grid { gap: 24px; }
   .cap-grid { gap: 24px; }
   .cloud-grid { grid-template-columns: 1fr 1fr; }
+  .fit-row { grid-template-columns: 28px 1fr; gap: 3px 10px; }
+  .fit-desc { grid-column: 2; }
 }
 </style>
 </head>
@@ -908,6 +938,39 @@ footer code b { color: var(--ink); }
         <div class="cap-box">
           <h3>直した癖を自分のルールに残せます</h3>
           <p>会話で直した好みは確認してから反映します。DropboxやGoogle Driveで複数端末に共有できます。</p>
+        </div>
+      </div>
+
+      <div class="fit-list" aria-label="分野ごとの対応目安">
+        <div class="fit-row">
+          <span class="fit-mark" aria-label="得意">◎</span>
+          <span class="fit-name">メール・チャット・普段のやりとり</span>
+          <span class="fit-desc">敬語の段や距離感、LINE・Slackの文体まで整えます</span>
+        </div>
+        <div class="fit-row">
+          <span class="fit-mark" aria-label="得意">◎</span>
+          <span class="fit-name">ES・自己PR・UI文言・お知らせ</span>
+          <span class="fit-desc">事実を盛らず、場面ごとの型に合わせて仕上げます</span>
+        </div>
+        <div class="fit-row">
+          <span class="fit-mark" aria-label="対応">○</span>
+          <span class="fit-name">記事・技術文書・企画書・議事録</span>
+          <span class="fit-desc">構成整理・推敲と、数字や約束のズレ検出に対応します</span>
+        </div>
+        <div class="fit-row">
+          <span class="fit-mark" aria-label="対応">○</span>
+          <span class="fit-name">告知文・LP・紹介文</span>
+          <span class="fit-desc">AIっぽい抽象表現や根拠のない誇張を止めて整えます</span>
+        </div>
+        <div class="fit-row">
+          <span class="fit-mark soft" aria-label="補助まで">△</span>
+          <span class="fit-name">本格的な広告コピー・スライド作成</span>
+          <span class="fit-desc">日本語や構成の補助まで。売れる企画設計やデザインは対象外です</span>
+        </div>
+        <div class="fit-row">
+          <span class="fit-mark soft" aria-label="対象外">×</span>
+          <span class="fit-name">事実の創作・なりすまし・詐欺</span>
+          <span class="fit-desc">安全のため対応しません</span>
         </div>
       </div>
 
