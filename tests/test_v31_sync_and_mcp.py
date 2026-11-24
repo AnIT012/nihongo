@@ -1,12 +1,10 @@
-"""v3.1 拡張機能（2層プロファイル・同期フォルダ検出・GoogleDriveStorage・ローカル承認 UI）のテスト。"""
+"""v3.1 拡張機能（2層プロファイル・同期フォルダ検出・GoogleDriveStorage・チャット内完結MCP）のテスト。"""
 from __future__ import annotations
 
-import http.client
 import json
 import os
 import sys
 import tempfile
-import threading
 import unittest
 import urllib.parse
 
@@ -20,7 +18,6 @@ import cli as cli_mod  # noqa: E402
 import gdrive_storage as gd_mod  # noqa: E402
 import inbox as inbox_mod  # noqa: E402
 import mcp_server as mcp_mod  # noqa: E402
-import ui_server as ui_mod  # noqa: E402
 
 
 class LayeredProfileAndSyncTests(unittest.TestCase):
@@ -373,251 +370,78 @@ class GoogleDriveStorageTests(unittest.TestCase):
         self.assertEqual(store.read_profile_text(), "# v2\n")
 
 
-class LocalUiServerTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self._tmp = tempfile.TemporaryDirectory()
-        self.home = os.path.join(self._tmp.name, "nihongo_home")
-        self.server = ui_mod.NihongoUiServer(port=0, home=self.home)
-        self.port = self.server.server_address[1]
-        self.csrf = self.server.csrf_token
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
-        self.thread.start()
+class InChatMcpWorkflowTests(unittest.TestCase):
+    def test_in_chat_profile_summary_inbox_approval_and_forbidden_removal(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            srv = mcp_mod.NihongoMcpServer(home=d)
 
-    def tearDown(self) -> None:
-        self.server.shutdown()
-        self.server.server_close()
-        self.thread.join(timeout=3)
-        self._tmp.cleanup()
+            # 1. Empty profile returns friendly Japanese summary
+            empty_prof = srv._tool_get_profile({})
+            self.assertIn("まだ作成されていません", empty_prof["display_markdown"])
 
-    def _request(
-        self,
-        method: str,
-        path: str,
-        *,
-        body: dict | None = None,
-        headers: dict[str, str] | None = None,
-    ) -> tuple[int, dict[str, str], bytes]:
-        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
-        req_headers = {"Host": f"127.0.0.1:{self.port}"}
-        payload: bytes | None = None
-        if body is not None:
-            payload = json.dumps(body, ensure_ascii=False).encode("utf-8")
-            req_headers["Content-Type"] = "application/json"
-        if headers:
-            req_headers.update(headers)
-        conn.request(method, path, body=payload, headers=req_headers)
-        resp = conn.getresponse()
-        raw = resp.read()
-        resp_headers = {k.lower(): v for k, v in resp.getheaders()}
-        conn.close()
-        return (resp.status, resp_headers, raw)
+            # 2. Propose two entries -> list_inbox includes readable display_markdown
+            p1 = srv._tool_propose_profile_entry({
+                "scene": "common",
+                "kind": "forbidden",
+                "value": "いただけますと幸いです",
+                "reason": "結びが硬すぎる",
+            })
+            p2 = srv._tool_propose_profile_entry({
+                "scene": "common",
+                "kind": "forbidden",
+                "value": "恐れ入りますが",
+            })
+            listed = srv._tool_list_inbox({})
+            self.assertEqual(listed["count"], 2)
+            self.assertIn("承認待ちの候補（2件）", listed["display_markdown"])
+            self.assertIn("いただけますと幸いです", listed["display_markdown"])
 
-    def test_refuses_non_loopback_bind(self) -> None:
-        with self.assertRaises(ValueError):
-            ui_mod.NihongoUiServer(host="0.0.0.0", port=0, home=self.home)
+            # 3. Approve both in chat (confirmed_by_user=True)
+            appr = srv._tool_review_inbox_entry({
+                "action": "approve",
+                "ids": [p1["entry"]["id"], p2["entry"]["id"]],
+                "confirmed_by_user": True,
+            })
+            self.assertEqual(appr["approved_count"], 2)
 
-    def test_security_headers_dns_rebinding_and_csrf_guards(self) -> None:
-        status, headers, raw = self._request("GET", "/")
-        self.assertEqual(status, 200)
-        self.assertIn("default-src 'self'", headers.get("content-security-policy", ""))
-        self.assertEqual(headers.get("x-frame-options"), "DENY")
-        self.assertEqual(headers.get("x-content-type-options"), "nosniff")
-        self.assertIn("nihongo", raw.decode("utf-8"))
+            # 4. get_profile returns structured 4-scene dict and display_markdown
+            prof = srv._tool_get_profile({})
+            self.assertIn("今のあなたの日本語ルール", prof["display_markdown"])
+            self.assertIn("「いただけますと幸いです」", prof["display_markdown"])
+            self.assertIn("いただけますと幸いです", prof["structured"]["common"]["forbidden"])
 
-        # DNS rebinding Host block
-        bad_host_status, _, _ = self._request("GET", "/api/state", headers={"Host": "evil.example.com"})
-        self.assertEqual(bad_host_status, 403)
+            # 5. remove_profile_forbidden requires confirmed_by_user=True (HITL guard)
+            dry = srv._tool_remove_profile_forbidden({
+                "scene": "common",
+                "value": "いただけますと幸いです",
+            })
+            self.assertTrue(dry["dry_run"])
+            self.assertTrue(dry["requires_user_confirmation"])
+            self.assertIn("いただけますと幸いです", srv._tool_get_profile({})["forbidden"])
 
-        # Missing CSRF token blocked
-        no_csrf_status, _, _ = self._request("POST", "/api/inbox/propose", body={"scene": "common", "kind": "forbidden", "value": "test"})
-        self.assertEqual(no_csrf_status, 403)
+            # 6. Confirmed removal surgically removes 1 expression and keeps the other
+            rem = srv._tool_remove_profile_forbidden({
+                "scene": "common",
+                "value": "いただけますと幸いです",
+                "confirmed_by_user": True,
+            })
+            self.assertTrue(rem["removed"])
+            after = srv._tool_get_profile({})
+            self.assertNotIn("いただけますと幸いです", after["forbidden"])
+            self.assertIn("恐れ入りますが", after["forbidden"])
 
-        # Evil Origin blocked even with valid CSRF
-        bad_origin_status, _, _ = self._request(
-            "POST",
-            "/api/inbox/propose",
-            body={"scene": "common", "kind": "forbidden", "value": "test"},
-            headers={"X-Nihongo-CSRF": self.csrf, "Origin": "http://evil.example.com"},
-        )
-        self.assertEqual(bad_origin_status, 403)
-
-        # Direct profile save blocks PII and rejects missing content (no accidental wipe)
-        pii_status, _, _ = self._request(
-            "POST",
-            "/api/profile/save",
-            body={"content": "# 私の書き方\n連絡先: user@example.com\n"},
-            headers={"X-Nihongo-CSRF": self.csrf},
-        )
-        self.assertEqual(pii_status, 400)
-
-        missing_content_status, _, _ = self._request(
-            "POST",
-            "/api/profile/save",
-            body={},
-            headers={"X-Nihongo-CSRF": self.csrf},
-        )
-        self.assertEqual(missing_content_status, 400)
-
-        # Non-list ids rejected cleanly with 400
-        bad_ids_status, _, _ = self._request(
-            "POST",
-            "/api/inbox/approve",
-            body={"ids": "not_a_list"},
-            headers={"X-Nihongo-CSRF": self.csrf},
-        )
-        self.assertEqual(bad_ids_status, 400)
-
-        # Port-less Origin rejected on non-80 port
-        portless_origin_status, _, _ = self._request(
-            "POST",
-            "/api/inbox/propose",
-            body={"scene": "common", "kind": "forbidden", "value": "test"},
-            headers={"X-Nihongo-CSRF": self.csrf, "Origin": "http://localhost"},
-        )
-        self.assertEqual(portless_origin_status, 403)
-
-        # Oversized body blocked with 413 before reading payload
-        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
-        conn.putrequest("POST", "/api/profile/save")
-        conn.putheader("Host", f"127.0.0.1:{self.port}")
-        conn.putheader("Content-Type", "application/json")
-        conn.putheader("X-Nihongo-CSRF", self.csrf)
-        conn.putheader("Content-Length", str(ui_mod.MAX_BODY_BYTES + 10))
-        conn.endheaders()
-        resp = conn.getresponse()
-        resp.read()
-        conn.close()
-        self.assertEqual(resp.status, 413)
-
-        # [formal] guard warning requires force=True even via UI API
-        st, _, raw = self._request(
-            "POST",
-            "/api/inbox/propose",
-            body={"scene": "formal", "kind": "tone", "value": "語尾に「っす」を使う"},
-            headers={"X-Nihongo-CSRF": self.csrf},
-        )
-        self.assertEqual(st, 200)
-        warn_id = json.loads(raw)["entry"]["id"]
-        st, _, raw = self._request(
-            "POST",
-            "/api/inbox/approve",
-            body={"ids": [warn_id], "force": False},
-            headers={"X-Nihongo-CSRF": self.csrf},
-        )
-        self.assertEqual(st, 200)
-        self.assertEqual(json.loads(raw)["approved_count"], 0)
-        self.assertEqual(len(json.loads(raw)["blocked_by_guard"]), 1)
-
-    def test_full_ui_api_workflow(self) -> None:
-        h = {"X-Nihongo-CSRF": self.csrf}
-        # 1. Propose
-        st, _, raw = self._request(
-            "POST",
-            "/api/inbox/propose",
-            body={"scene": "common", "kind": "forbidden", "value": "いただけますと幸いです", "reason": "硬すぎる"},
-            headers=h,
-        )
-        self.assertEqual(st, 200)
-        entry_id = json.loads(raw)["entry"]["id"]
-
-        # 2. Check state
-        st, _, raw = self._request("GET", "/api/state")
-        self.assertEqual(st, 200)
-        state = json.loads(raw)
-        self.assertEqual(len(state["pending_inbox"]), 1)
-        self.assertEqual(state["pending_inbox"][0]["kind_label"], "NG表現")
-
-        # 3. Approve
-        st, _, raw = self._request("POST", "/api/inbox/approve", body={"ids": [entry_id]}, headers=h)
-        self.assertEqual(st, 200)
-        self.assertEqual(json.loads(raw)["approved_count"], 1)
-
-        # 4. Run 0-token check via API
-        st, _, raw = self._request(
-            "POST",
-            "/api/check",
-            body={
-                "orig": "資料は明日15時までに必ず送ってください。",
-                "draft": "資料は明日15時頃までにご送付いただけますと幸いです。",
-                "scene": "formal",
-            },
-            headers=h,
-        )
-        self.assertEqual(st, 200)
-        chk = json.loads(raw)
-        self.assertFalse(chk["clean"])
-        joined = "\n".join(chk["findings"])
-        self.assertIn("いただけますと幸いです", joined)
-        self.assertIn("必ず", joined)
-
-        # 5. Export 1-file setup markdown
-        st, _, raw = self._request("POST", "/api/setup/export", body={"scene": "formal", "sync_preference": "gdrive"}, headers=h)
-        self.assertEqual(st, 200)
-        exp = json.loads(raw)
-        self.assertIn("いただけますと幸いです", exp["markdown"])
-        self.assertIn("確認カード 1", exp["markdown"])
-
-    def test_personal_visual_endpoints_and_state_metadata(self) -> None:
-        h = {"X-Nihongo-CSRF": self.csrf}
-        # 1. Direct add via /api/profile/add-item
-        st, _, raw = self._request(
-            "POST",
-            "/api/profile/add-item",
-            body={"scene": "common", "kind": "forbidden", "value": "ご査収のほど"},
-            headers=h,
-        )
-        self.assertEqual(st, 200)
-        self.assertTrue(json.loads(raw)["added"])
-
-        st, _, raw = self._request(
-            "POST",
-            "/api/profile/add-item",
-            body={"scene": "common", "kind": "forbidden", "value": "恐れ入りますが"},
-            headers=h,
-        )
-        self.assertEqual(st, 200)
-
-        # PII & [formal] guard rejected with 400
-        st_pii, _, _ = self._request(
-            "POST",
-            "/api/profile/add-item",
-            body={"scene": "common", "kind": "rule", "value": "mail: test@example.com"},
-            headers=h,
-        )
-        self.assertEqual(st_pii, 400)
-        st_formal, _, _ = self._request(
-            "POST",
-            "/api/profile/add-item",
-            body={"scene": "formal", "kind": "tone", "value": "語尾に「っす」を使う"},
-            headers=h,
-        )
-        self.assertEqual(st_formal, 400)
-
-        # 2. Verify /api/state exposes structured_global, mcp_clients, skills_preview
-        st, _, raw = self._request("GET", "/api/state")
-        self.assertEqual(st, 200)
-        state = json.loads(raw)
-        self.assertIn("ご査収のほど", state["structured_global"]["common"]["forbidden"])
-        self.assertIn("恐れ入りますが", state["structured_global"]["common"]["forbidden"])
-        self.assertEqual(len(state["mcp_clients"]), 4)
-        self.assertIn("lite", state["skills_preview"])
-        self.assertIn("web", state["skills_preview"])
-
-        # 3. Remove 1 forbidden chip via /api/profile/remove-forbidden
-        st, _, raw = self._request(
-            "POST",
-            "/api/profile/remove-forbidden",
-            body={"scene": "common", "value": "ご査収のほど"},
-            headers=h,
-        )
-        self.assertEqual(st, 200)
-        self.assertTrue(json.loads(raw)["removed"])
-
-        st, _, raw = self._request("GET", "/api/state")
-        self.assertEqual(st, 200)
-        state_after = json.loads(raw)
-        self.assertNotIn("ご査収のほど", state_after["structured_global"]["common"]["forbidden"])
-        self.assertIn("恐れ入りますが", state_after["structured_global"]["common"]["forbidden"])
+    def test_strict_hitl_hides_and_blocks_remove_profile_forbidden(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            srv = mcp_mod.NihongoMcpServer(home=d, strict_hitl=True)
+            names = [t["name"] for t in srv._exposed_tools()]
+            self.assertNotIn("review_inbox_entry", names)
+            self.assertNotIn("remove_profile_forbidden", names)
+            with self.assertRaises(PermissionError):
+                srv._tool_remove_profile_forbidden({
+                    "scene": "common",
+                    "value": "ご査収のほど",
+                    "confirmed_by_user": True,
+                })
 
 
 if __name__ == "__main__":

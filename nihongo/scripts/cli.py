@@ -1031,21 +1031,6 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_ui(args: argparse.Namespace) -> int:
-    if __package__:
-        from . import ui_server
-    else:
-        import ui_server  # noqa: E402
-    return ui_server.run_ui_server(
-        port=args.port,
-        home=args.home,
-        profile_path=args.profile,
-        inbox_path=args.inbox,
-        project_dir=args.project,
-        open_browser=not args.no_browser,
-    )
-
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="nihongo-check",
@@ -1196,16 +1181,6 @@ def build_parser() -> argparse.ArgumentParser:
     p_doc.add_argument("--project", default=None, help="作業フォルダ（.nihongo/profile.md 検出用）")
     p_doc.add_argument("--json", action="store_true", help="JSON 形式で出力する")
     p_doc.set_defaults(func=cmd_doctor)
-
-    # Local Approval UI subcommand
-    p_ui = sub.add_parser("ui", help="ローカル承認・ルール管理画面をブラウザで開く（127.0.0.1 のみ・外部通信なし）")
-    p_ui.add_argument("--port", type=int, default=8765, help="待受ポート（既定: 8765）")
-    p_ui.add_argument("--home", default=None, help="データディレクトリ（既定: ~/.nihongo）")
-    p_ui.add_argument("--profile", default=None, help="profile.md のパス")
-    p_ui.add_argument("--inbox", default=None, help="inbox.jsonl のパス")
-    p_ui.add_argument("--project", default=None, help="作業フォルダ（.nihongo/profile.md を2層表示）")
-    p_ui.add_argument("--no-browser", action="store_true", help="ブラウザを自動で開かずに起動する")
-    p_ui.set_defaults(func=cmd_ui)
 
     return parser
 

@@ -12,6 +12,7 @@ Python 3.10+ の標準ライブラリだけで動くローカル MCP サーバ�
 | `propose_profile_entry` | 外向け成果物への修正から追記候補を `~/.nihongo/inbox.jsonl` に積む（**`profile.md` は書き換えない**。雑なチャットや誤字からは拾わない） |
 | `list_inbox` | 本人承認待ち（`pending`）の候補を連番と日本語ラベル付きで一覧表示する |
 | `review_inbox_entry` | 候補を承認（`approve`）・却下（`reject`）・一括混在処理（`batch`）する（いずれも `confirmed_by_user: true` が必須） |
+| `remove_profile_forbidden` | `profile.md` に登録済みのNG表現から指定した1語を削除する（`confirmed_by_user: true` が必須） |
 | `check_meaning_diff` | 原文と編集後の文の意味ズレ・`profile.md` 違反を0トークンでローカル検査する |
 | `nihongo://profile` / `nihongo://inbox/pending` | MCP Resource として現在のプロフィールと保留候補を直接参照する |
 
@@ -49,15 +50,13 @@ python3 nihongo/scripts/mcp_server.py init --target claude-desktop --strict-hitl
 }
 ```
 
-## ローカル承認 UI（`nihongo-check ui`）
+## チャット内で確認・承認・削除する
 
-ターミナルを使わずブラウザ画面で受信箱の承認・却下、`profile.md` の編集、0トークン検査、他端末用 `nihongo-setup.md` の書き出しができます（`127.0.0.1` のみで動作、外部通信ゼロ）。
+別画面を開く必要はありません。接続済みの AI チャットで次のように声をかけるだけで完結します。
 
-```bash
-nihongo-check ui
-# または
-python3 nihongo/scripts/cli.py ui
-```
+- 「今の日本語ルール見せて」→ 4場面のルールと保留件数をチャットに出力
+- 「承認待ちある？」→ 番号付きリストを表示し、「1と2だけ承認、3は却下」でまとめて反映
+- 「『ご査収のほど』をNGから消して」→ 確認後に該当の1語だけ削除
 
 ## 複数 PC 同期と分野別ルール（2層プロファイル）
 

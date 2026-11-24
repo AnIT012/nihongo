@@ -8,9 +8,9 @@
 - **2層プロファイル自動マージ**：グローバルの `~/.nihongo/profile.md` に加え、作業フォルダ配下の `.nihongo/profile.md` を自動検出してマージ適用できるようにしました（シンボリックリンク・上位ディレクトリ逸脱・256KB 上限ガード付き）。
 - **複数端末・Google Drive 同期**：PC 内の Google Drive / Dropbox / iCloud Drive / OneDrive 同期フォルダを自動検出する `nihongo-mcp init --detect-sync` と、標準ライブラリ実装の `GoogleDriveStorage`（OAuth2 トークン自動更新・所有者／マイドライブ直下スコープ固定）を追加しました。
 
-### ローカル管理 UI・CLI 強化・公式 LP
+### チャット完結のルール管理・CLI 強化・公式 LP
 
-- **ローカル管理 UI（`nihongo-check ui`）**：`127.0.0.1` 専用・外部通信ゼロのブラウザ画面を追加しました。4場面別のルール閲覧・NG表現の1クリック追加／削除・生 `profile.md` 編集・承認待ち（受信箱）管理・PC内AIアプリ（Claude Desktop / Claude Code / Cursor / Antigravity）の接続状況確認・`nihongo-setup.md` 書き出し・0トークン動作テストを1画面で行えます（Host/Origin 検証・ランダム CSRF トークン・CSP 保護付き）。
+- **チャット内でのルール確認・承認・NG削除（MCP 強化）**：別アプリや管理画面を開かなくても、普段のチャットで「今のルール見せて」「承認待ちある？」「『〇〇』をNGから消して」と話しかけるだけで、整形済みの要約表示（`display_markdown`）・一括承認（`review_inbox_entry`）・NG削除（`remove_profile_forbidden`）まで完結できるようにしました（いずれも `confirmed_by_user: true` 必須・`--strict-hitl` 対応）。
 - **CLI サブコマンド追加**：導入状況・MCP 登録・同期フォルダを1コマンドで診断する `nihongo-check doctor`、雛形生成の `nihongo-check profile init [--project]`、プロファイル自動読込の `diff/git --auto-profile` を追加しました。
 - **公式プロダクト LP（`docs/index.html`）と 1ファイル導入（`nihongo-setup.md`）**：GitHub Pages 向けの公式サイトと、ブラウザ／スマホ AI・ローカル PC エージェントのどちらに添付しても安全に導入できる `nihongo-setup.md` ビルダーを追加しました。
 

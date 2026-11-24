@@ -1060,6 +1060,63 @@ def parse_profile_structured(raw_text: str | None) -> dict[str, dict[str, Any]]:
     return result
 
 
+def format_profile_summary(profile_info: dict[str, Any]) -> str:
+    """チャット内でAIがそのまま読みやすく出力できる個人ルールの要約Markdownを返す。"""
+    if not profile_info.get("exists"):
+        pending = int(profile_info.get("pending_inbox_count") or 0)
+        lines = ["個人ルール（`profile.md`）はまだ作成されていません。"]
+        if pending > 0:
+            lines.append(f"承認待ちの候補が {pending} 件あります。「承認待ち見せて」と声をかけると確認・反映できます。")
+        else:
+            lines.append("普段どおり文章を直しつつ、「〇〇は使わない」と伝えると少しずつ育ちます。")
+        return "\n".join(lines)
+
+    scene_labels = {
+        "common": "共通（全場面）",
+        "work": "社内・同僚",
+        "formal": "社外・目上",
+        "casual": "普段・雑談",
+    }
+    raw = str(profile_info.get("markdown") or profile_info.get("raw") or "")
+    structured = parse_profile_structured(raw)
+    filter_scene = profile_info.get("scene")
+    target_scenes = (
+        ["common", filter_scene]
+        if filter_scene in ("work", "formal", "casual")
+        else (["common"] if filter_scene == "common" else ["common", "work", "formal", "casual"])
+    )
+
+    lines: list[str] = ["### 今のあなたの日本語ルール"]
+    if profile_info.get("project_profile_path"):
+        lines.append("（共通ルール＋この作業フォルダの案件別ルールを2層で適用中）")
+
+    any_content = False
+    for sc in target_scenes:
+        sec = structured.get(sc) or {}
+        fp = str(sec.get("first_person") or "").strip()
+        forb = list(sec.get("forbidden") or [])
+        rules = list(sec.get("rules") or [])
+        if not fp and not forb and not rules:
+            continue
+        any_content = True
+        lines.append(f"\n**{scene_labels.get(sc, sc)}**")
+        if sc == "common" and fp:
+            lines.append(f"- 一人称：{fp}")
+        if forb:
+            joined = "、".join(f"「{w}」" for w in forb)
+            lines.append(f"- 避ける表現：{joined}")
+        for r in rules:
+            lines.append(f"- {r}")
+
+    if not any_content:
+        lines.append("登録済みのルールはまだありません。")
+
+    pending = int(profile_info.get("pending_inbox_count") or 0)
+    if pending > 0:
+        lines.append(f"\n承認待ちの候補が {pending} 件あります。「承認待ち見せて」で確認・承認できます。")
+    return "\n".join(lines)
+
+
 def add_profile_rule_direct(
     *,
     scene: str,
@@ -1284,7 +1341,7 @@ def build_setup_markdown(
         "- B: 自分の Google Drive / Dropbox / iCloud の同期フォルダに置く（`nihongo-mcp init --home <同期フォルダ>/nihongo` で複数 PC 同期＋スマホから添付可能）",
         "- C: 今開いている作業フォルダ専用にする（`./.nihongo/profile.md`）",
         "",
-        "承認後に導入・設定を完了したら、`nihongo-mcp --self-test` で疎通を確認し、「以降は普段どおり話すだけで自動適用されます。承認画面は `nihongo-check ui` で開けます」と 1 行で案内する。",
+        "承認後に導入・設定を完了したら、`nihongo-mcp --self-test` で疎通を確認し、「以降は普段どおり話すだけで自動適用されます。今のルールや承認待ちはチャットで「ルール見せて」「承認待ちある？」と聞くだけで確認できます」と 1 行で案内する。",
         "",
         "## ユーザーの初期ルール（profile.md 互換）",
         f"- よく使う場面：{scene_ja}（`[{scene_norm}]`）",

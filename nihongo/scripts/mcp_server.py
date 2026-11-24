@@ -64,17 +64,19 @@ SERVER_INSTRUCTIONS_BASE = (
     "(a) 明示的な NG 表現宣言（例：「ご査収のほどは使わない」→ 1回で静かに inbox へ積む。value には短い語句そのものだけを渡す）、"
     "(b) 同一会話内で同じトーン修正が2回出た時または「覚えておいて」と明示された時、の2条件だけ。\n"
     "3. inbox に積んだ時は会話の流れを止めず、返答の末尾に1行だけ静かに知らせる（その場で承認を迫らない）。\n"
-    "4. ユーザーに内部用語（common/work/formal や forbidden/tone やファイルパス）を覚えさせず、"
-    "list_inbox の番号と日本語ラベルを使って簡潔に見せ、「1と2だけOK、3は却下」のような返答でまとめて捌く。\n"
+    "4. ユーザーから「今のルール見せて」「私の書き方どうなってる？」と聞かれたら get_profile を呼び、"
+    "返ってきた display_markdown をそのまま分かりやすく出力する。「承認待ちある？」「受信箱見せて」と聞かれたら "
+    "list_inbox を呼び、display_markdown の番号と日本語ラベルを使って簡潔に見せ、「1と2だけOK、3は却下」のような返答でまとめて捌く。\n"
 )
 
 SERVER_INSTRUCTIONS_CHAT_APPROVE = (
     "5. profile.md は絶対に直接書き換えず、本人の明示承認後に "
     "review_inbox_entry(confirmed_by_user=true) でのみ反映する（承認と却下が混ざる時は action='batch' で1回にまとめる）。"
+    "登録済みのNG表現を消してほしいと頼まれた時は、対象を確認したうえで remove_profile_forbidden(confirmed_by_user=true) を使う。"
 )
 
 SERVER_INSTRUCTIONS_STRICT = (
-    "5. --strict-hitl モードのため MCP 経由の承認・却下は無効です。"
+    "5. --strict-hitl モードのため MCP 経由の承認・却下・削除は無効です。"
     "反映する時はターミナルで `nihongo-check inbox review` を実行するよう案内してください。"
 )
 
@@ -254,6 +256,41 @@ TOOLS_SPEC: list[dict[str, Any]] = [
         },
     },
     {
+        "name": "remove_profile_forbidden",
+        "description": (
+            "~/.nihongo/profile.md に登録済みの「絶対に言わない表現（NG表現）」から指定した1語を削除します。"
+            "本人の明示確認を得た上で confirmed_by_user: true を指定する必要があります"
+            "（false または省略時はドライラン確認のみ行い profile.md は変更しません）。"
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "scene": {
+                    "type": "string",
+                    "enum": list(inbox_mod.VALID_SCENES),
+                    "description": "削除対象の場面（common / casual / work / formal）",
+                },
+                "value": {
+                    "type": "string",
+                    "description": "削除するNG表現（かぎ括弧なしでも可）",
+                },
+                "confirmed_by_user": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "本人から明示的な削除確認を得た場合のみ true（HITL 安全弁）",
+                },
+            },
+            "required": ["scene", "value"],
+            "additionalProperties": False,
+        },
+        "annotations": {
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
+    },
+    {
         "name": "check_meaning_diff",
         "description": (
             "原文（orig）とAI編集後の文（draft）を比較し、数値・日時・否定・約束の強さ（必ず等）のズレと、"
@@ -344,7 +381,7 @@ class NihongoMcpServer:
 
     def _exposed_tools(self) -> list[dict[str, Any]]:
         if self.strict_hitl:
-            return [t for t in TOOLS_SPEC if t["name"] != "review_inbox_entry"]
+            return [t for t in TOOLS_SPEC if t["name"] not in ("review_inbox_entry", "remove_profile_forbidden")]
         return list(TOOLS_SPEC)
 
     def _instructions(self) -> str:
@@ -368,6 +405,8 @@ class NihongoMcpServer:
         if info["exists"]:
             forbidden = cli_mod.parse_profile_text(info["raw"], scene=scene)
         info["forbidden"] = forbidden
+        info["structured"] = inbox_mod.parse_profile_structured(info["raw"]) if info["exists"] else {}
+        info["display_markdown"] = inbox_mod.format_profile_summary(info)
         info["strict_hitl"] = self.strict_hitl
         if not info["exists"]:
             info["onboarding_hint"] = (
@@ -408,11 +447,31 @@ class NihongoMcpServer:
             copy_item["kind_label"] = kd_label
             copy_item["display_line"] = f"{idx}. [{sc_label} / {kd_label}] {item.get('value', '')}"
             enriched.append(copy_item)
+
+        if not enriched:
+            display_md = "承認待ちの候補はありません。" if status == "pending" else "該当する履歴はありません。"
+        else:
+            md_lines = [f"### 承認待ちの候補（{len(enriched)}件）" if status == "pending" else f"### 受信箱一覧（{len(enriched)}件）"]
+            for it in enriched:
+                line = it["display_line"]
+                if it.get("reason"):
+                    line += f" — {it['reason']}"
+                md_lines.append(line)
+                if it.get("warning"):
+                    md_lines.append(f"   - 注意: {it['warning']}")
+            if status == "pending":
+                if self.strict_hitl:
+                    md_lines.append("\n（--strict-hitl 有効中のため、ターミナルで `nihongo-check inbox review` から反映してください）")
+                else:
+                    md_lines.append("\n「全部承認」「1と2だけ承認、3は却下」のように返信するだけで反映できます。")
+            display_md = "\n".join(md_lines)
+
         return {
             "status_filter": status,
             "scene_filter": scene,
             "count": len(enriched),
             "items": enriched,
+            "display_markdown": display_md,
             "strict_hitl": self.strict_hitl,
         }
 
@@ -583,12 +642,44 @@ class NihongoMcpServer:
             result["comma_trimmed_text"] = trimmed
         return result
 
+    def _tool_remove_profile_forbidden(self, args: dict[str, Any]) -> dict[str, Any]:
+        if self.strict_hitl:
+            raise PermissionError(
+                "--strict-hitl が有効なため、MCP 経由でのプロフィール削除は無効です。"
+                "ローカルの profile.md を直接編集してください。"
+            )
+        scene = str(args.get("scene") or "").strip().lower()
+        value = str(args.get("value") or "").strip()
+        if scene not in inbox_mod.VALID_SCENES:
+            raise ValueError(f"不正な scene です: {scene!r}")
+        if not value:
+            raise ValueError("削除するNG表現を指定してください。")
+        confirmed = args.get("confirmed_by_user") is True
+        if not confirmed:
+            return {
+                "dry_run": True,
+                "requires_user_confirmation": True,
+                "scene": scene,
+                "scene_label": _SCENE_LABELS.get(scene, scene),
+                "value": value,
+                "message": (
+                    f"HITL 保護のため削除を保留しました。[{_SCENE_LABELS.get(scene, scene)}] の「{value}」を"
+                    "削除してよいかユーザーに確認したうえで confirmed_by_user=true を指定して再実行してください。"
+                ),
+            }
+        return inbox_mod.remove_forbidden_from_profile(
+            scene=scene,
+            value=value,
+            storage=self.storage,
+        )
+
     def _dispatch_tool(self, name: str, args: dict[str, Any]) -> tuple[dict[str, Any], bool]:
         handlers = {
             "get_profile": self._tool_get_profile,
             "propose_profile_entry": self._tool_propose_profile_entry,
             "list_inbox": self._tool_list_inbox,
             "review_inbox_entry": self._tool_review_inbox_entry,
+            "remove_profile_forbidden": self._tool_remove_profile_forbidden,
             "check_meaning_diff": self._tool_check_meaning_diff,
         }
         fn = handlers.get(name)

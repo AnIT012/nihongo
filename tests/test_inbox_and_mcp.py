@@ -372,6 +372,7 @@ class McpServerStdioTests(unittest.TestCase):
                     "propose_profile_entry",
                     "list_inbox",
                     "review_inbox_entry",
+                    "remove_profile_forbidden",
                     "check_meaning_diff",
                 ],
             )

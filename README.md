@@ -260,7 +260,7 @@ pip で入れると `nihongo-check` コマンド（`nihongo_check` 名前空間�
 
 - **受信箱（`~/.nihongo/inbox.jsonl`）**：`propose` は一時置き場に追記候補を溜めるだけで、`~/.nihongo/profile.md` 本体は書き換えません。
 - **本人承認（HITL）**：`nihongo-check inbox review`（または `approve`）で承認した候補だけが `~/.nihongo/profile.md`（唯一の正）へ反映されます。個人情報（メール・電話番号・APIキー等）の自動拒否と、`[formal]` 場面への崩し混入ガード付きです。
-- **MCP サーバー（`nihongo-mcp` / `python3 nihongo/scripts/mcp_server.py`）**：どの MCP 対応ツールからでも `get_profile`・`propose_profile_entry`・`list_inbox`・`review_inbox_entry`（`confirmed_by_user: true` 必須）・`check_meaning_diff`（0トークン意味ズレ検査）を直接呼べます。設定例は [examples/mcp/](examples/mcp/) にあります。
+- **MCP サーバー（`nihongo-mcp` / `python3 nihongo/scripts/mcp_server.py`）**：どの MCP 対応ツールからでも `get_profile`・`propose_profile_entry`・`list_inbox`・`review_inbox_entry`（`confirmed_by_user: true` 必須）・`remove_profile_forbidden`（NG表現の削除・本人確認必須）・`check_meaning_diff`（0トークン意味ズレ検査）を直接呼べます。チャットで「今のルール見せて」「承認待ちある？」と聞くだけで確認・承認・削除まで完結します。設定例は [examples/mcp/](examples/mcp/) にあります。
 
 | コマンド | できること |
 |---|---|
@@ -268,7 +268,6 @@ pip で入れると `nihongo-check` コマンド（`nihongo_check` 名前空間�
 | `nihongo-check inbox list` | 本人承認待ち（`pending`）の候補を一覧表示する |
 | `nihongo-check inbox review` | 保留候補を対話形式で1件ずつ承認・却下する |
 | `nihongo-check inbox approve <id> [--dry-run]` / `reject <id>` | 指定した候補を承認して `profile.md` へ反映、または却下する |
-| `nihongo-check ui` | ブラウザ画面（`127.0.0.1` のみ・外部通信ゼロ）で承認・`profile.md` 編集・0トークン検査・1ファイル書き出しを行う |
 | `nihongo-check profile show [--scene formal] [--project <dir>]` | 現在の `profile.md`（作業フォルダの `.nihongo/profile.md` 2層マージ対応）と保留件数を表示する |
 | `nihongo-check profile init [--project] [--force]` | グローバルまたは作業フォルダ専用の `profile.md` 雛形を作成する |
 | `nihongo-mcp init --target all [--home <同期フォルダ>]` | PC 内の AI アプリへ自動登録する（`--detect-sync` で Google Drive 等の同期フォルダを検出。詳細は [google-drive-sync.md](examples/mcp/google-drive-sync.md)） |
