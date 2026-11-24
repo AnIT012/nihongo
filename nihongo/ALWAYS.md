@@ -1,4 +1,4 @@
-# nihongo Lite 3.0.0（毎回読む最小ルール。詳しくは SKILL.md）
+# nihongo Lite 3.1.0（毎回読む最小ルール。詳しくは SKILL.md）
 
 日本語で返事・文章・資料を作る時は次を守る。
 
