@@ -1,7 +1,8 @@
-![nihongo — あなたのAIをネイティブに。](assets/nihongo-hero.png)
+![nihongo — AIの出力への手直しを減らそう。](docs/ogp.png)
 
 # nihongo
 
+[![公式サイト](https://img.shields.io/badge/site-anit012.github.io-111111?style=flat-square)](https://anit012.github.io/nihongo/)
 [![v3.1.1](https://img.shields.io/badge/-v3.1.1-D7261E?style=flat-square)](CHANGELOG.md)
 [![stars](https://img.shields.io/github/stars/AnIT012/nihongo?style=flat-square&labelColor=111111&color=D7261E)](https://github.com/AnIT012/nihongo/stargazers)
 [![license](https://img.shields.io/badge/license-MIT-D7261E?style=flat-square&labelColor=111111&color=D7261E)](LICENSE)
@@ -15,19 +16,26 @@ nihongoは、読み手を騙さないことを大事にしています。依頼�
 
 ## nihongoとは
 
-### nihongo — AI編集のための日本語ガード
+### nihongo — AIの出力への手直しを減らす日本語ガード
 
-「上出来だけど、そのままでは出せない」をなくす。AI編集の仕上げと確認をまとめて引き受けます。
+過剰な敬語や意味のズレを防ぎ、自分の書き方を残せる日本語のルールブック兼ガードです。
 
-AIが書いた日本語は一見きれいに見えても、敬語が1段高すぎたり、頼んでいない約束が混ざったり、推敲の拍子に日時や「必ず」が落ちたりします。nihongo v3.0 は、**入れた初日はまず誰でも困りやすい一般的なズレを減らし、使い続けるうちに自分の書き方や避けたい表現を1行ずつ覚えて、手直しを減らしていく**仕組みです。次の3つで仕上げと確認を分担します。
+AIが書いた日本語は一見きれいに見えても、敬語が1段高すぎたり、頼んでいない約束が混ざったり、推敲の拍子に日時や「必ず」が落ちたりします。nihongo v3.1 は、**入れた初日はまず誰でも困りやすい一般的なズレを減らし、使い続けるうちに自分の書き方や避けたい表現を確認しながら残して、手直しを減らしていく**仕組みです。次の4つで仕上げと確認を分担します。
 
-- **軽量スキル（Lite / Full）**：普段のやりとりは短いLite（約1,200字）で、メール・資料・技術文書はFull（約93行＋22本の詳細資料）で書き分けます。依頼に無い事実や約束を足さず、相手と場面に合う日本語に整えます。
-- **会話で育つ Personal**：`~/.nihongo/profile.md` に自分の書き方を4つの箱（`[common]` / `[casual]` / `[work]` / `[formal]`）と「絶対に言わない表現」に分けて保存します。会話で直した癖だけを1行確認してから追記し、裏で勝手に書き換えることはありません。
-- **0トークン自動チェッカー（`nihongo-check`）**：Python 3.10+ の標準ライブラリだけで動くCLIです。原文と編集後の文を比べ、日時・数字・否定・条件・求める強さ（「必ず」など）のズレや、避けたい表現の混入など**見直す候補**を0トークンで見つけます。Claude Code の Hook や GitHub Actions にもそのまま組み込めます。
+- **Lite（普段のチャット用）**：約1,200字（`ALWAYS.md` 約1,265字／Web用 `WEB.md` 約1,128字）の軽量版で、短い返事や雑談を整えます。重くならずスマホのChatGPTやClaudeでもそのまま使えます。
+- **Full（メール・ES・資料用）**：本体（約94行・約6,300字）と22本の場面別手引き（`references/`）を必要な時だけ読み込み、メール・就活ES・UI文言・技術文書・企画書・告知文まで相手と媒体の型に合わせます。
+- **Check（0トークン自動検査 `nihongo-check`）**：Python 3.10+ の標準ライブラリだけで動く依存ゼロのCLIです。原文と編集後の文を比べ、日時・数字・否定・条件・求める強さ（「必ず」など）のズレや、避けたい表現の混入など**見直す候補**を0トークンで見つけます。Claude Code の Hook や GitHub Actions にも組み込めます。
+- **Personal（会話で育つ個人ルール）**：`~/.nihongo/profile.md`（または同期フォルダ）に自分の書き方を4つの箱（`[common]` / `[casual]` / `[work]` / `[formal]`）と「絶対に言わない表現」に分けて保存します。会話で直した癖は確認してから反映し、ローカルMCP（`nihongo-mcp`）とDropbox / Google Drive等の同期フォルダで複数PC間の共有にも対応しています。
 
 ## まず試す
 
-**普段の ChatGPT / Claude（Web・アプリ／コマンド不要）**
+**いちばん簡単（公式サイトから 1 ファイル導入・カスタマイズ対応）**
+
+1. [公式サイト（https://anit012.github.io/nihongo/）](https://anit012.github.io/nihongo/) を開く
+2. 「今すぐダウンロード」または「カスタマイズしてダウンロード」で `nihongo-setup.md` を落とす
+3. 普段使っている ChatGPT / Claude / Claude Code / Cursor / Antigravity のチャットにそのまま添付して送る
+
+**設定欄にそのまま貼る場合（Web・スマホアプリ／コマンド不要）**
 
 1. [nihongo/WEB.md](nihongo/WEB.md) を開き、右上のコピーボタンを押す
 2. 設定画面の「カスタム指示（ChatGPT）」または「応答の好み（Claude）」にそのまま貼って保存する
@@ -133,10 +141,10 @@ AIのトークンを使わずに、時刻の書き換わりや「必ず」の脱
 今後 `[work]` に「了解の返事は『了解です』にする」を追記しておきますか？
 ```
 
-- 裏で勝手に書き込むことはせず、本人がOKした内容だけを追記します
+- 裏で勝手に書き込むことはせず、本人が確認・OKした内容だけを追記します
 - ファイルは普通のMarkdownなので、いつでも中身を見たり消したりできます
 - `[casual]` の癖は `[formal]` には持ち込みません
-- 個人情報や固有名詞（人名・社名・連絡先など）は書きません
+- メールアドレス・電話番号・APIキー等は機械的に自動ブロックします。実名・住所・社名などの個人情報も記録しない方針です
 - これまでどおり、自分が送った文を3〜5通貼って「私の書き方を覚えて」と頼み、まとめて作ることもできます
 - `nihongo-check` に `--profile ~/.nihongo/profile.md`（フォーマル文書なら `--scene formal` も追加）を渡せば、「絶対に言わない表現」の混入も0トークンで検出できます
 
@@ -146,10 +154,10 @@ nihongoには、毎回読み込む短いLiteと、詳しい手順が入ったFul
 
 | | Lite | Full |
 |---|---|---|
-| ファイル | `nihongo/ALWAYS.md` | `nihongo/SKILL.md` と `references/`（22本） |
+| ファイル | `nihongo/ALWAYS.md`（Web用は `nihongo/WEB.md`） | `nihongo/SKILL.md` と `references/`（22本） |
 | 使う場面 | 普段の返事、雑談、短い質問 | メール、お知らせ、ES、資料、README、UIの文言 |
 | 読み込まれ方 | 設定に入れておけば毎回 | 人に出す文章を書く時に自動で。名前を出して呼ぶこともできる |
-| サイズ（目安） | 約1,200字（v2.3.2 の 2,704字から約55%軽量化） | 約93行・約5,675字（v2.3.2 の 275行・12,819字から約56%軽量化。該当する `references/` のみ追加読み込み） |
+| サイズ（目安） | 約1,200字（`ALWAYS.md` 約1,265字／`WEB.md` 約1,128字。v2.3.2 の 2,704字から約55%軽量化） | 約94行・約6,300字（v2.3.2 の 275行・12,819字から約半分に軽量化。該当する `references/` のみ追加読み込み） |
 
 ## インストール
 
@@ -215,10 +223,10 @@ npx skills add AnIT012/nihongo -g
 <summary><b>Claude / ChatGPT アプリ（コマンド不要）</b></summary>
 
 - **いちばん簡単（Web版）**：[nihongo/WEB.md](nihongo/WEB.md) を開いて右上のコピーボタンを押し、ChatGPT の「設定 → パーソナライズ → カスタム指示」または Claude の「設定 → プロフィール → 応答の好み」に貼って保存します（無料プランでも使えます）。
-- **メール・資料・ES まで本格的に使う（Full）**：[最新のリリース](https://github.com/AnIT012/nihongo/releases/latest)から `nihongo-v3.1.1.zip` をダウンロードします。
-  - **Claude（Web / デスクトップアプリ）**：設定のスキル画面から `nihongo-v3.1.1.zip` をそのままアップロード（または解凍してプロジェクトのナレッジに追加）します。
-  - **ChatGPT**：My GPTs のナレッジに解凍したファイルを追加します（Skills 画面が使える環境では `nihongo-v3.1.1.zip` をそのままアップロードできます）。
-- ※GitHub トップの緑色の「Code → Download ZIP」はフォルダ構造が1段深いため、そのままではアップロードできません。必ず上の最新リリースページにある `nihongo-v3.1.1.zip` を使ってください。
+- **メール・資料・ES まで本格的に使う（Full）**：[最新のスキル用ZIP（nihongo.zip）](https://github.com/AnIT012/nihongo/releases/latest/download/nihongo.zip)（または[最新リリースページ](https://github.com/AnIT012/nihongo/releases/latest)の `nihongo-v3.1.1.zip`）をダウンロードします。
+  - **Claude（Web / デスクトップアプリ）**：設定のスキル画面から `nihongo.zip` をそのままアップロード（または解凍してプロジェクトのナレッジに追加）するとスマホアプリにも自動同期されます。
+  - **ChatGPT**：My GPTs のナレッジに解凍したファイルを追加します（Skills 画面が使える環境では `nihongo.zip` をそのままアップロードできます）。
+- ※GitHub トップの緑色の「Code → Download ZIP」はフォルダ構造が1段深いため、そのままではアップロードできません。必ず上の最新リリースにある `nihongo.zip`（または `nihongo-v3.1.1.zip`）を使ってください。
 - Web / スマホ版で自分の書き方を1行ずつ育てたい時は、言い回しを直したあとに「設定欄にそのまま足せる1行を作って」と頼めば、ファイル保存や MCP なしでもカスタム指示に1行足すだけで育てられます。
 
 </details>
@@ -240,7 +248,7 @@ Python 3.10+ の標準ライブラリだけで動き、追加の依存パッケ�
 pip install "git+https://github.com/AnIT012/nihongo.git@v3.1.1"
 ```
 
-pip で入れると `nihongo-check` コマンド（`nihongo_check` 名前空間）が使えるようになります。インストールせずに、スキル内の `python3 nihongo/scripts/cli.py` をそのまま実行することもできます。
+pip で入れると `nihongo-check` コマンド（`nihongo_check` 名前空間）が使えるようになります。インストールせずに直接実行したい場合は、スキル内の `nihongo/scripts/cli.py` を Python（Windows は `python`、macOS/Linux は `python3`）でそのまま動かせます。
 
 | コマンド | できること |
 |---|---|
@@ -260,16 +268,17 @@ pip で入れると `nihongo-check` コマンド（`nihongo_check` 名前空間�
 
 - **受信箱（`~/.nihongo/inbox.jsonl`）**：`propose` は一時置き場に追記候補を溜めるだけで、`~/.nihongo/profile.md` 本体は書き換えません。
 - **本人承認（HITL）**：`nihongo-check inbox review`（または `approve`）で承認した候補だけが `~/.nihongo/profile.md`（唯一の正）へ反映されます。個人情報（メール・電話番号・APIキー等）の自動拒否と、`[formal]` 場面への崩し混入ガード付きです。
-- **MCP サーバー（`nihongo-mcp` / `python3 nihongo/scripts/mcp_server.py`）**：どの MCP 対応ツールからでも `get_profile`・`propose_profile_entry`・`list_inbox`・`review_inbox_entry`（`confirmed_by_user: true` 必須）・`remove_profile_forbidden`（NG表現の削除・本人確認必須）・`check_meaning_diff`（0トークン意味ズレ検査）を直接呼べます。チャットで「今のルール見せて」「承認待ちある？」と聞くだけで確認・承認・削除まで完結します。設定例は [examples/mcp/](examples/mcp/) にあります。
+- **MCP サーバー（`nihongo-mcp`）**：どの MCP 対応ツールからでも `get_profile`・`propose_profile_entry`・`list_inbox`・`review_inbox_entry`（`confirmed_by_user: true` 必須、`--strict-hitl` で CLI 限定承認も可）・`remove_profile_forbidden`（NG表現の削除・本人確認必須）・`check_meaning_diff`（0トークン意味ズレ検査）を直接呼べます。チャットで「今のルール見せて」「承認待ちある？」と聞くだけで確認・承認・削除まで完結します。設定例は [examples/mcp/](examples/mcp/) にあります。
 
 | コマンド（手動操作したい時だけ） | できること |
 |---|---|
-| `nihongo-mcp init --target all [--home <同期フォルダ>]` | PC 内の AI アプリへ自動登録する（`--detect-sync` で Google Drive / Dropbox / iCloud / OneDrive フォルダを検出） |
+| `nihongo-mcp init --target all [--home <同期フォルダ>]` | 導入済みの AI アプリへ自動登録する（`--detect-sync` で Google Drive / Dropbox / iCloud / OneDrive フォルダを検出、`--home` の保存先は `~/.nihongo/config.json` へ自動統一） |
+| `nihongo-mcp init --target all --remove` | 他の MCP サーバー設定を残したまま `nihongo` の登録だけを解除する |
 | `nihongo-check inbox list` / `review` | 承認待ち候補の一覧表示、またはターミナルからの対話承認・却下（`--strict-hitl` 運用時） |
 | `nihongo-check inbox propose` / `approve` / `reject` | 候補の手動追加・ID指定での承認（`--dry-run` 対応）・却下 |
 | `nihongo-check profile show [--scene formal] [--project <dir>]` | 現在の `profile.md`（作業フォルダの `.nihongo/profile.md` 2層マージ対応）と保留件数を表示する |
 | `nihongo-check profile init [--project] [--force]` | グローバルまたは作業フォルダ専用の `profile.md` 雛形を作成する |
-| `nihongo-mcp`（または `python3 nihongo/scripts/mcp_server.py`） | stdio 経由のローカル MCP サーバーを起動する |
+| `nihongo-mcp` | stdio 経由のローカル MCP サーバーを起動する |
 
 ## 評価
 
