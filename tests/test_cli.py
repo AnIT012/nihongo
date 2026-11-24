@@ -165,6 +165,27 @@ class CliFixTests(unittest.TestCase):
 
 
 class CliGitTests(unittest.TestCase):
+    def test_git_compares_renamed_document_with_its_old_path(self) -> None:
+        with tempfile.TemporaryDirectory() as repo:
+            old, new = "old.md", "docs/受付 案内.md"
+            original = "受付は15時です。\n" + "".join(f"案内の第{i}項です。\n" for i in range(12))
+            self._init_repo(repo, {old: original})
+            os.makedirs(os.path.join(repo, "docs"))
+            run_git(["mv", old, new], cwd=repo)
+            write_utf8(os.path.join(repo, new), original.replace("15時", "16時"))
+            staged = run_cli(["git", "--staged", "--json"], cwd=repo)
+            self.assertEqual(staged.returncode, 0)
+            self.assertEqual(json.loads(staged.stdout)["checked"], 1)
+            for paths in ([], [new], ["docs"]):
+                with self.subTest(paths=paths):
+                    result = run_cli(["git", "--json", *paths], cwd=repo)
+                    self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                    self.assertEqual(json.loads(result.stdout)["files"][0]["path"], new)
+            run_git(["add", new], cwd=repo)
+            self.assertEqual(run_cli(["git", "--staged"], cwd=repo).returncode, 1)
+            payload = json.dumps({"tool_input": {"file_path": os.path.join(repo, new)}})
+            self.assertEqual(run_cli(["git", "--hook"], cwd=repo, stdin_text=payload).returncode, 2)
+
     def _init_repo(self, root: str, files: dict[str, str]) -> None:
         run_git(["init"], cwd=root)
         run_git(["config", "user.name", "Test User"], cwd=root)
@@ -296,6 +317,24 @@ class CliGitTests(unittest.TestCase):
 
 
 class CliProfileAndSceneTests(unittest.TestCase):
+    def test_adjacent_quoted_expressions_in_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            profile = os.path.join(d, "profile.md")
+            orig = os.path.join(d, "orig.md")
+            draft = os.path.join(d, "draft.md")
+            write_utf8(profile, "## [common]\n- 絶対に言わない表現：「〜させていただきます」「恐れ入りますが」「アサイン」「コミット」、絵文字の連打\n")
+            write_utf8(orig, "担当を決めます。")
+            write_utf8(draft, "担当をアサインします。")
+            result = run_cli(["diff", orig, draft, "--profile", profile, "--json"])
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            self.assertIn("「アサイン」", json.loads(result.stdout)["findings"][0])
+
+    def test_quoted_expressions_keep_internal_separators(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            profile = os.path.join(d, "profile.md")
+            write_utf8(profile, "## [common]\n- 絶対に言わない表現：『企画／制作』 「さて、次は」 / ご査収のほど\n")
+            self.assertEqual(cli_mod.parse_profile(profile), ["企画／制作", "さて、次は", "ご査収のほど"])
+
     SAMPLE_PROFILE = (
         "# 私の書き方\n\n"
         "## [common]\n"

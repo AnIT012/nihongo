@@ -72,7 +72,9 @@ _PLACEHOLDER_PAREN_RE = re.compile(
     r"[（(]\s*(?:例|記入例|未記入)\s*(?:[：:][^）)]*)?[）)]"
 )
 _PLACEHOLDER_PREFIX_RE = re.compile(r"^(?:例|記入例|未記入)\s*[：:]")
-_FORBIDDEN_SPLIT_RE = re.compile(r"[、,／/・]+")
+# 公式例の「A」「B」にも区切りを補う。括弧で囲んだ語の中の読点やスラッシュは語の一部。
+_ADJACENT_QUOTES_RE = re.compile(r"(?<=[」』])\s*(?=[「『])")
+_FORBIDDEN_ITEM_RE = re.compile(r"(?:「[^」]*」|『[^』]*』|[^、,／/・])+")
 _SKIP_FORBIDDEN_TOKENS = frozenset({"", "...", "…", "-", "—", "なし", "特になし"})
 
 _CASUAL_SSU_RE = re.compile(r"っす(?![ぐうる])")
@@ -156,7 +158,7 @@ def parse_profile_text(raw_text: str, scene: str | None = None) -> list[str]:
             continue
 
         parsed: list[str] = []
-        for raw_token in _split_forbidden_rhs(rhs):
+        for raw_token in _split_forbidden_rhs(_ADJACENT_QUOTES_RE.sub("、", rhs)):
             cleaned = _clean_forbidden_token(raw_token)
             if cleaned:
                 parsed.append(cleaned)
@@ -339,27 +341,25 @@ def _git_changed_files(
     repo_root: str,
     base: str,
     staged: bool,
-    pathspecs: list[str] | None = None,
-) -> list[str]:
-    cmd = ["-c", "core.quotepath=false", "diff", "-z", "--name-only", "--diff-filter=M"]
+) -> dict[str, str]:
+    """変更先のパスから、比較元コミットでのパスを引けるようにする。"""
+    cmd = ["diff", "-z", "--name-status", "--find-renames", "--diff-filter=MR"]
     if staged:
         cmd.append("--cached")
     cmd.append(base)
-    if pathspecs:
-        cmd.append("--")
-        cmd.extend(pathspecs)
+    cmd.append("--")
     proc = _run_git(cmd, cwd=repo_root)
     if proc.returncode != 0:
-        return []
-    out: list[str] = []
-    for chunk in proc.stdout.split(b"\x00"):
-        if not chunk:
-            continue
+        return {}
+    out: dict[str, str] = {}
+    fields = iter(proc.stdout.split(b"\x00")[:-1])
+    for status in fields:
+        old = next(fields)
+        new = next(fields) if status.startswith(b"R") else old
         try:
-            rel = chunk.decode("utf-8")
+            out[new.decode("utf-8")] = old.decode("utf-8")
         except UnicodeDecodeError:
             continue
-        out.append(rel.replace("\\", "/"))
     return out
 
 
@@ -555,6 +555,8 @@ def cmd_git(args: argparse.Namespace) -> int:
         print(f"比較元のコミットが見つかりません: {args.base}", file=sys.stderr)
         return 2
 
+    # パスで絞ってから diff を取ると、別ディレクトリからの移動を追加と誤認する。
+    sources = _git_changed_files(repo_root, args.base, args.staged)
     targets: list[str] = []
     seen: set[str] = set()
 
@@ -575,22 +577,23 @@ def cmd_git(args: argparse.Namespace) -> int:
                 if rel != ".":
                     dir_specs.append(rel)
                 else:
-                    for changed in _git_changed_files(repo_root, args.base, args.staged):
+                    for changed in sources:
                         _add_target(changed)
             else:
                 _add_target(rel)
         if dir_specs:
-            for changed in _git_changed_files(repo_root, args.base, args.staged, dir_specs):
-                _add_target(changed)
+            for changed in sources:
+                if any(changed.startswith(directory + "/") for directory in dir_specs):
+                    _add_target(changed)
     else:
-        for changed in _git_changed_files(repo_root, args.base, args.staged):
+        for changed in sources:
             _add_target(changed)
 
     checked = 0
     flagged_files: list[dict[str, object]] = []
 
     for rel in targets:
-        orig_raw = _git_show_utf8(repo_root, f"{args.base}:{rel}")
+        orig_raw = _git_show_utf8(repo_root, f"{args.base}:{sources.get(rel, rel)}")
         if orig_raw is None:
             continue
         if args.staged:
