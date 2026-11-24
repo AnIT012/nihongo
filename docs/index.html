@@ -1054,6 +1054,94 @@ a { color: inherit; text-decoration: none; }
   color: var(--muted);
 }
 
+/* Section 6: 関連記事 (Horizontal Slide Carousel) */
+.rail-wrap {
+  position: relative;
+}
+.rail-head-ctrl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.rail-btn {
+  appearance: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid #CCCCCC;
+  background: #FFFFFF;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+.rail-btn:hover { border-color: var(--ink); background: var(--soft); }
+.articles-rail {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding-bottom: 10px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #D4D4D0 transparent;
+}
+.articles-rail::-webkit-scrollbar { height: 6px; }
+.articles-rail::-webkit-scrollbar-thumb { background: #D4D4D0; border-radius: 999px; }
+.art-card {
+  flex: 0 0 285px;
+  scroll-snap-align: start;
+  border: 1.5px solid #DCDCD8;
+  border-radius: 14px;
+  padding: 20px 22px;
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.art-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--ink);
+  box-shadow: 0 10px 24px rgba(17, 17, 17, 0.06);
+}
+.art-site {
+  display: inline-block;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--soft);
+  padding: 2px 9px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+.art-card h3 {
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.55;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.art-card p {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.art-go {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.art-card:hover .art-go { color: var(--red-hover); }
+
 /* Footer */
 .foot-wrap {
   background: #FFFFFF;
@@ -1530,6 +1618,63 @@ footer code b { color: var(--ink); }
       </div>
     </div>
   </section>
+
+  <!-- 6. 関連記事（横スライド） -->
+  <section class="band" id="articles">
+    <div class="col">
+      <div class="sec-head">
+        <div class="sec-title-wrap">
+          <span class="sec-num">06</span>
+          <h2 class="sec-h">関連記事・リンク</h2>
+        </div>
+        <div class="rail-head-ctrl">
+          <span class="sec-sub">設計の裏側や開発の経緯</span>
+          <button type="button" class="rail-btn" id="rail-prev" aria-label="前の記事へ">‹</button>
+          <button type="button" class="rail-btn" id="rail-next" aria-label="次の記事へ">›</button>
+        </div>
+      </div>
+
+      <div class="rail-wrap">
+        <div class="articles-rail" id="articles-rail">
+          <a class="art-card" href="https://zenn.dev/anit/articles/e2bb5150783bf9" target="_blank" rel="noopener">
+            <div>
+              <span class="art-site">Zenn</span>
+              <h3>AIの日本語が自然な今、日本語スキルに「意味ズレを防ぐ」仕組みを足した話</h3>
+              <p>0トークン検査やHITL個人ルールなど、v3系の技術設計を詳しく書いています。</p>
+            </div>
+            <span class="art-go">記事を読む →</span>
+          </a>
+
+          <a class="art-card" href="https://note.com/anitt/n/n0fab23d6f5ea" target="_blank" rel="noopener">
+            <div>
+              <span class="art-site">note</span>
+              <h3>ChatGPTやClaudeの「上出来だけどそのまま使えない」を減らす日本語ガードを作った話</h3>
+              <p>普段のやりとりやES・メールでの困りごとから開発した経緯をまとめています。</p>
+            </div>
+            <span class="art-go">記事を読む →</span>
+          </a>
+
+          <a class="art-card" href="https://github.com/AnIT012/nihongo" target="_blank" rel="noopener">
+            <div>
+              <span class="art-site">GitHub</span>
+              <h3>AnIT012/nihongo（ソースコード・リリース）</h3>
+              <p>MITライセンス・外部依存ゼロ。検証の記録や署名付きZIPも公開しています。</p>
+            </div>
+            <span class="art-go">リポジトリを見る →</span>
+          </a>
+
+          <a class="art-card" href="https://x.com/sincostansinhk" target="_blank" rel="noopener">
+            <div>
+              <span class="art-site">X</span>
+              <h3>アップデート・検証の記録（@sincostansinhk）</h3>
+              <p>新しい改善や使い勝手の気づきを日々発信しています。</p>
+            </div>
+            <span class="art-go">Xを見る →</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <div class="foot-wrap">
@@ -1979,6 +2124,15 @@ if (heroEl && heroDot && !window.matchMedia('(prefers-reduced-motion: reduce)').
     void heroDot.offsetWidth;
     heroDot.classList.add('pop');
   });
+}
+
+// Articles horizontal rail prev/next buttons
+const railEl = document.getElementById('articles-rail');
+const railPrev = document.getElementById('rail-prev');
+const railNext = document.getElementById('rail-next');
+if (railEl && railPrev && railNext) {
+  railPrev.addEventListener('click', () => railEl.scrollBy({ left: -305, behavior: 'smooth' }));
+  railNext.addEventListener('click', () => railEl.scrollBy({ left: 305, behavior: 'smooth' }));
 }
 
 renderChips();
