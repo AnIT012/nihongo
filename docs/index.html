@@ -380,6 +380,21 @@ a { color: inherit; text-decoration: none; }
   line-height: 1.65;
   color: var(--muted);
 }
+.dl-modal-recopy {
+  display: none;
+  margin-top: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1.5px solid #D4D4D0;
+  background: #FAFAF9;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.dl-modal-recopy.show { display: inline-flex; align-items: center; gap: 6px; }
+.dl-modal-recopy:hover { border-color: var(--ink); background: #FFFFFF; }
 .dl-modal-sep {
   margin: 18px 0 20px;
   border: 0;
@@ -2061,6 +2076,7 @@ footer code b { color: var(--ink); }
     </button>
     <div class="dl-modal-file" id="dl-modal-file">nihongo-setup.md を保存しました</div>
     <p class="dl-modal-step" id="dl-modal-step">そのまま ChatGPT・Claude・Cursor などのチャット欄に添付して送るだけで使えます。</p>
+    <button type="button" class="dl-modal-recopy" id="dl-modal-recopy">チャット用ルールをもう一度コピー</button>
     <hr class="dl-modal-sep">
     <div class="dl-modal-hero">
       <div class="dl-modal-pal" role="img" aria-label="お辞儀するキャラクター"></div>
@@ -2244,8 +2260,17 @@ function buildCompactChatRule(useCustom) {
   ].join('\n');
 }
 
+function isInAppBrowser() {
+  const ua = navigator.userAgent || '';
+  if (/Twitter|Line\/|FBAN|FBAV|Instagram|Threads|MicroMessenger|Snapchat/i.test(ua)) return true;
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  if (isIOS && !/Safari\//i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua)) return true;
+  if (/Android/i.test(ua) && /;\s*wv\)/i.test(ua)) return true;
+  return false;
+}
+
 function downloadMarkdown(filename, content) {
-  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+  const blob = new Blob([content], { type: 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -2253,22 +2278,36 @@ function downloadMarkdown(filename, content) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+async function copyRawText(text) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (_) {}
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return !!ok;
+  } catch (_) {
+    return false;
+  }
 }
 
 async function copyText(text, successMsg) {
-  try {
-    await navigator.clipboard.writeText(text);
-    showStatus(successMsg, false);
-  } catch (_) {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    ta.remove();
-    showStatus(successMsg, false);
-  }
+  await copyRawText(text);
+  showStatus(successMsg, false);
 }
 
 function renderChips() {
@@ -2298,22 +2337,69 @@ function refreshPreview() {
 const dlModalBackdrop = document.getElementById('dl-modal-backdrop');
 const dlModalFile = document.getElementById('dl-modal-file');
 const dlModalStep = document.getElementById('dl-modal-step');
+const dlModalRecopy = document.getElementById('dl-modal-recopy');
 const dlModalCloseBtn = document.getElementById('dl-modal-close');
 const dlModalDismissBtn = document.getElementById('dl-modal-dismiss');
 let lastFocusedBeforeModal = null;
+let lastModalRuleText = '';
 
-function openDownloadModal(isCustom) {
+function openDownloadModal(isCustom, inAppMode = false) {
   lastFocusedBeforeModal = document.activeElement;
-  dlModalFile.textContent = isCustom
-    ? '設定入り nihongo-setup.md を保存しました'
-    : 'nihongo-setup.md を保存しました';
-  dlModalStep.textContent = isCustom
-    ? '普段の AI チャットへ添付して送ると、選んだNG表現や同期設定が確認カード付きで反映されます。'
-    : 'ChatGPT・Claude・Cursor など、普段の入力欄にファイルを添付して送ってください。';
+  if (inAppMode) {
+    lastModalRuleText = buildCompactChatRule(isCustom);
+    dlModalFile.textContent = isCustom
+      ? '設定入りチャット用ルールをコピーしました'
+      : 'チャット用ルールをコピーしました';
+    dlModalStep.textContent = 'Xなどのアプリ内ブラウザではファイル保存ができないため、そのまま貼れるルールをコピーしました。ChatGPTやClaudeのチャット欄に貼り付けて送ってください（ファイルで保存したい場合はSafari / Chromeで開いてください）。';
+    dlModalRecopy.textContent = 'チャット用ルールをもう一度コピー';
+    dlModalRecopy.classList.add('show');
+  } else {
+    dlModalFile.textContent = isCustom
+      ? '設定入り nihongo-setup.md を保存しました'
+      : 'nihongo-setup.md を保存しました';
+    dlModalStep.textContent = isCustom
+      ? '普段の AI チャットへ添付して送ると、選んだNG表現や同期設定が確認カード付きで反映されます。'
+      : 'ChatGPT・Claude・Cursor など、普段の入力欄にファイルを添付して送ってください。';
+    dlModalRecopy.classList.remove('show');
+  }
   dlModalBackdrop.classList.add('open');
   dlModalBackdrop.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
   dlModalCloseBtn.focus();
+}
+
+dlModalRecopy.addEventListener('click', async () => {
+  if (!lastModalRuleText) return;
+  await copyRawText(lastModalRuleText);
+  dlModalRecopy.textContent = '✓ コピーしました！そのままチャットへ貼れます';
+});
+
+function triggerDownloadOrInAppCopy(isCustom, onHero) {
+  if (isInAppBrowser()) {
+    const ruleText = buildCompactChatRule(isCustom);
+    copyRawText(ruleText);
+    const msg = 'アプリ内ブラウザのため、そのまま貼れるチャット用ルールをコピーしました。ChatGPTやClaudeに貼り付けて使えます（ファイル保存はSafari / Chromeで開いてください）。';
+    if (onHero) {
+      const hs = document.getElementById('hero-status');
+      hs.textContent = msg;
+      hs.classList.add('show');
+    } else {
+      showStatus(msg, false);
+    }
+    openDownloadModal(isCustom, true);
+    return;
+  }
+  downloadMarkdown('nihongo-setup.md', buildSetupMarkdown(isCustom));
+  if (onHero) {
+    const hs = document.getElementById('hero-status');
+    hs.textContent = 'nihongo-setup.md をダウンロードしました。そのまま ChatGPT / Claude / Cursor などのチャット欄にドラッグ＆ドロップ（または「＋」から添付）して送ってください。';
+    hs.classList.add('show');
+  } else {
+    showStatus(isCustom
+      ? '設定入りの nihongo-setup.md をダウンロードしました。AIチャットに添付すると確認カード付きで反映されます。'
+      : 'nihongo-setup.md をダウンロードしました。そのまま ChatGPT / Claude / Cursor などのチャット欄に添付して送ってください。', false);
+  }
+  openDownloadModal(isCustom, false);
 }
 
 function closeDownloadModal() {
@@ -2336,11 +2422,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.getElementById('btn-hero-dl').addEventListener('click', () => {
-  downloadMarkdown('nihongo-setup.md', buildSetupMarkdown(false));
-  const hs = document.getElementById('hero-status');
-  hs.textContent = 'nihongo-setup.md をダウンロードしました。そのまま ChatGPT / Claude / Cursor などのチャット欄にドラッグ＆ドロップ（または「＋」から添付）して送ってください。';
-  hs.classList.add('show');
-  openDownloadModal(false);
+  triggerDownloadOrInAppCopy(false, true);
 });
 
 document.getElementById('btn-hero-custom').addEventListener('click', () => {
@@ -2357,9 +2439,7 @@ document.getElementById('btn-hero-custom').addEventListener('click', () => {
 });
 
 document.getElementById('btn-quick-dl').addEventListener('click', () => {
-  downloadMarkdown('nihongo-setup.md', buildSetupMarkdown(false));
-  showStatus('nihongo-setup.md をダウンロードしました。そのまま ChatGPT / Claude / Cursor などのチャット欄に添付して送ってください。', false);
-  openDownloadModal(false);
+  triggerDownloadOrInAppCopy(false, false);
 });
 
 document.getElementById('btn-clear-ng').addEventListener('click', () => {
@@ -2455,9 +2535,7 @@ document.querySelectorAll('#cloud-providers .cloud-opt').forEach(btn => {
 });
 
 document.getElementById('btn-custom-dl').addEventListener('click', () => {
-  downloadMarkdown('nihongo-setup.md', buildSetupMarkdown(true));
-  showStatus('設定入りの nihongo-setup.md をダウンロードしました。AIチャットに添付すると確認カード付きで反映されます。', false);
-  openDownloadModal(true);
+  triggerDownloadOrInAppCopy(true, false);
 });
 
 document.getElementById('btn-custom-copy').addEventListener('click', () => {
