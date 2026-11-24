@@ -229,6 +229,39 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 28px;
 }
 
+/* Use-Case Impact Strip (Right under Hero) */
+.use-strip {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.use-card {
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  padding: 20px 20px 18px;
+  background: #FFFFFF;
+}
+.use-tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--red-hover);
+  margin-bottom: 6px;
+}
+.use-card h2 {
+  font-size: 15.5px;
+  font-weight: 900;
+  line-height: 1.45;
+  margin-bottom: 7px;
+  color: var(--ink);
+}
+.use-card p {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
 /* Before / After Measured Card */
 .ba-card {
   border: 3px solid var(--ink);
@@ -725,7 +758,7 @@ footer code b { color: var(--red); }
   .sec { padding-top: 64px; }
   .sec-h { font-size: 24px; }
   .ba-card, .cap-main, .install-box { padding: 22px 18px; border-radius: 22px; }
-  .cap-grid, .opt-pair, .demo-grid, .radio-grid, .radio-grid.two {
+  .cap-grid, .opt-pair, .demo-grid, .radio-grid, .radio-grid.two, .use-strip {
     grid-template-columns: 1fr;
   }
 }
@@ -761,6 +794,25 @@ footer code b { color: var(--red); }
         <span>無料・登録不要</span>
         <span>運営サーバー保存ゼロ</span>
         <span>MIT</span>
+      </div>
+    </section>
+
+    <!-- 1.5 入れると何が変わるか（利用シーン別） -->
+    <section class="use-strip" aria-label="使うと変わること">
+      <div class="use-card">
+        <span class="use-tag">就活生・学生</span>
+        <h2>ESやレポートに自分の経験をそのまま残せる</h2>
+        <p>AIが勝手に実績や感想を盛らず、話したエピソードだけを自然な言葉に整えます。</p>
+      </div>
+      <div class="use-card">
+        <span class="use-tag">仕事・普段使い</span>
+        <h2>メールやチャットの書き直しが減る</h2>
+        <p>高すぎる敬語や頼んでいない約束を止め、そのまま送れる文に近づけます。</p>
+      </div>
+      <div class="use-card">
+        <span class="use-tag">開発・AIヘビーユーザー</span>
+        <h2>推敲のズレを防ぎ、文体を全AIで共有できる</h2>
+        <p>数字や「必ず」の抜けを0トークンで検出し、自分のルールを複数AIで使い回せます。</p>
       </div>
     </section>
 
