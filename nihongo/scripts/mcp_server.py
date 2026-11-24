@@ -519,6 +519,11 @@ class NihongoMcpServer:
                         "confirmed_by_user=true を指定して再実行してください。"
                     ),
                 }
+            reason_str = str(args.get("reason") or "")
+            if reject_ids and reason_str:
+                pii_err = inbox_mod._check_pii([inbox_mod._normalize_value(reason_str)])
+                if pii_err:
+                    raise ValueError(pii_err)
             appr_res = (
                 inbox_mod.approve_entries(
                     approve_ids,
@@ -532,7 +537,7 @@ class NihongoMcpServer:
             rej_res = (
                 inbox_mod.reject_entries(
                     reject_ids,
-                    reason=str(args.get("reason", "")),
+                    reason=reason_str,
                     storage=self.storage,
                 )
                 if reject_ids
@@ -567,7 +572,7 @@ class NihongoMcpServer:
                 }
             return inbox_mod.reject_entries(
                 str_ids,
-                reason=str(args.get("reason", "")),
+                reason=str(args.get("reason") or ""),
                 storage=self.storage,
             )
 
@@ -602,9 +607,9 @@ class NihongoMcpServer:
         raise ValueError(f"不正な action です: {action!r}（approve / reject / batch を指定）")
 
     def _tool_check_meaning_diff(self, args: dict[str, Any]) -> dict[str, Any]:
-        orig = str(args.get("orig", ""))
-        draft = str(args.get("draft", ""))
-        request = str(args.get("request", ""))
+        orig = str(args.get("orig") or "")
+        draft = str(args.get("draft") or "")
+        request = str(args.get("request") or "")
         scene = args.get("scene")
         check_commas = args.get("check_commas") is True
         raw_proj = args.get("project_dir")
@@ -622,7 +627,7 @@ class NihongoMcpServer:
         if prof_info["exists"]:
             forbidden = cli_mod.parse_profile_text(prof_info["raw"], scene=scene)
 
-        findings = revert_broken.remaining(orig, draft, request)
+        findings = revert_broken.remaining(orig, draft, request) if orig.strip() else []
         if forbidden or scene:
             findings = findings + cli_mod.check_profile_drift(orig, draft, forbidden, scene=scene)
         formatted = [cli_mod._format_finding(x) for x in findings]

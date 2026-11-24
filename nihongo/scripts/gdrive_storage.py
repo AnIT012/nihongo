@@ -346,6 +346,7 @@ class GoogleDriveStorage:
 
     def _write_text_file(self, filename: str, content: str, *, mime_type: str) -> None:
         data_bytes = content.encode("utf-8")
+        was_cached = filename in self._file_id_cache
         file_id = self._find_file_id(filename)
         if file_id:
             url = f"{DRIVE_UPLOAD_API}/{urllib.parse.quote(file_id, safe='')}?uploadType=media"
@@ -359,8 +360,25 @@ class GoogleDriveStorage:
                 return
             if status != 404:
                 raise GoogleDriveStorageError(f"Google Drive ファイル更新に失敗しました（HTTP {status}）。")
-            # キャッシュ済み ID が削除されていた場合は破棄して再作成へフォールバック
+            # キャッシュ済み ID が 404 の場合は、他端末が再作成した同名ファイルを再検索してから判断する
             self._file_id_cache.pop(filename, None)
+            if was_cached:
+                refreshed_id = self._find_file_id(filename, bypass_cache=True)
+                if refreshed_id:
+                    retry_url = f"{DRIVE_UPLOAD_API}/{urllib.parse.quote(refreshed_id, safe='')}?uploadType=media"
+                    retry_status, _ = self._api_request(
+                        "PATCH",
+                        retry_url,
+                        headers={"Content-Type": f"{mime_type}; charset=UTF-8"},
+                        body=data_bytes,
+                    )
+                    if retry_status in (200, 201):
+                        return
+                    if retry_status != 404:
+                        raise GoogleDriveStorageError(
+                            f"Google Drive ファイル更新に失敗しました（HTTP {retry_status}）。"
+                        )
+                    self._file_id_cache.pop(filename, None)
 
         parent_id = self._ensure_parent_id()
         status, body = self._create_multipart(filename, parent_id, data_bytes, mime_type)

@@ -404,14 +404,33 @@ def propose_entry(
                 "message": f"過去に却下済みの候補のため再登録しませんでした（ID: {existing['id']}）。",
             }
 
-    # profile.md にすでに同じ表現が含まれている場合は重複登録しない
+    # profile.md の該当場面・種別にすでに同じ項目が登録されている場合は重複登録しない
     already_in_profile = False
     existing_profile = store.read_profile_text()
     if existing_profile is not None:
-        p_text = unicodedata.normalize("NFKC", existing_profile)
-        needle = unicodedata.normalize("NFKC", _strip_outer_quotes(val))
-        if needle and needle in p_text:
-            already_in_profile = True
+        parsed_sec = parse_profile_structured(existing_profile).get(scene_norm) or {}
+        needle = unicodedata.normalize("NFKC", _strip_outer_quotes(val)).strip(" \t\u3000〜～")
+        if needle:
+            if kind_norm == "forbidden":
+                existing_items = {
+                    unicodedata.normalize("NFKC", w).strip(" \t\u3000〜～")
+                    for w in parsed_sec.get("forbidden", [])
+                }
+                already_in_profile = needle in existing_items
+            elif kind_norm == "first_person":
+                fp_raw = str(parsed_sec.get("first_person") or "")
+                existing_fps = {
+                    unicodedata.normalize("NFKC", p.strip())
+                    for p in re.split(r"[／/、,]", fp_raw)
+                    if p.strip()
+                }
+                already_in_profile = needle in existing_fps
+            else:
+                existing_rules = {
+                    unicodedata.normalize("NFKC", r).strip()
+                    for r in parsed_sec.get("rules", [])
+                }
+                already_in_profile = needle in existing_rules
     if already_in_profile and not allow_resubmit:
         return {
             "created": False,
@@ -563,10 +582,30 @@ def apply_entry_to_profile_text(profile_text: str, entry: dict[str, Any]) -> tup
         m = field_re.match(lines[field_idx])
         assert m is not None
         prefix, rhs = m.group(1), m.group(2).strip()
-        rhs_norm = unicodedata.normalize("NFKC", rhs)
-        needle_norm = unicodedata.normalize("NFKC", value.strip("「」『』\"' "))
-        if needle_norm and needle_norm in rhs_norm:
-            return ("\n".join(lines).rstrip("\n") + "\n", False, f"[{scene}] {label} にはすでに含まれています。")
+        needle_norm = unicodedata.normalize("NFKC", _strip_outer_quotes(value)).strip(" \t\u3000〜～")
+        if needle_norm:
+            if kind == "forbidden":
+                existing_toks = {
+                    unicodedata.normalize("NFKC", _strip_outer_quotes(t)).strip(" \t\u3000〜～")
+                    for t in _split_quoted_tokens(rhs)
+                }
+                dup_found = needle_norm in existing_toks
+            elif kind == "first_person":
+                existing_fps = {
+                    unicodedata.normalize("NFKC", t.strip())
+                    for t in re.split(r"[／/、,]", rhs)
+                    if t.strip()
+                }
+                dup_found = needle_norm in existing_fps
+            else:
+                existing_parts = {
+                    unicodedata.normalize("NFKC", p.strip())
+                    for p in _split_quoted_sentences(rhs)
+                    if p.strip()
+                }
+                dup_found = needle_norm in existing_parts
+            if dup_found:
+                return ("\n".join(lines).rstrip("\n") + "\n", False, f"[{scene}] {label} にはすでに含まれています。")
 
         if not rhs:
             new_rhs = formatted
@@ -1004,6 +1043,36 @@ def _split_quoted_tokens(rhs: str) -> list[str]:
 
 _STRUCT_PLACEHOLDER_RE = re.compile(r"[（(]\s*(?:例|記入例|未記入)\s*(?:[：:][^）)]*)?[）)]")
 _STRUCT_SKIP_TOKENS = frozenset({"", "...", "…", "-", "—", "なし", "特になし"})
+_KNOWN_PROFILE_LABELS = frozenset({"場面", "一人称", "絶対に言わない表現", "書く時の考え方", "口調・記号"})
+
+
+def _split_quoted_sentences(text: str) -> list[str]:
+    """引用符の内側を守りながら、外側の句点「。」で文を分割する。"""
+    quote_pairs = {"「": "」", "『": "』", '"': '"', "'": "'", "“": "”"}
+    parts: list[str] = []
+    buf: list[str] = []
+    closing: str | None = None
+    for ch in text:
+        if closing is not None:
+            buf.append(ch)
+            if ch == closing:
+                closing = None
+            continue
+        if ch in quote_pairs:
+            closing = quote_pairs[ch]
+            buf.append(ch)
+            continue
+        if ch == "。":
+            piece = "".join(buf).strip()
+            if piece:
+                parts.append(piece)
+            buf = []
+            continue
+        buf.append(ch)
+    tail = "".join(buf).strip()
+    if tail:
+        parts.append(tail)
+    return parts
 
 
 def parse_profile_structured(raw_text: str | None) -> dict[str, dict[str, Any]]:
@@ -1030,9 +1099,9 @@ def parse_profile_structured(raw_text: str | None) -> dict[str, dict[str, Any]]:
             if not stripped or stripped.startswith("#"):
                 continue
             m = field_re.match(stripped)
-            if not m:
+            if not m or m.group(1).strip() not in _KNOWN_PROFILE_LABELS:
                 clean = stripped.lstrip("-*・ ").strip()
-                if clean:
+                if clean and clean not in result[sc]["rules"]:
                     result[sc]["rules"].append(clean)
                 continue
             lbl = m.group(1).strip()
@@ -1054,7 +1123,7 @@ def parse_profile_structured(raw_text: str | None) -> dict[str, dict[str, Any]]:
             if rhs:
                 cleaned = _STRUCT_PLACEHOLDER_RE.sub("", rhs).strip()
                 if cleaned:
-                    for part in [p.strip() for p in cleaned.split("。") if p.strip()]:
+                    for part in _split_quoted_sentences(cleaned):
                         if part not in result[sc]["rules"]:
                             result[sc]["rules"].append(part)
     return result
