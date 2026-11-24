@@ -908,22 +908,29 @@ footer code b { color: var(--red); }
         <div class="customizer" id="customizer">
           <div class="cust-group">
             <div class="cust-lbl">
-              避ける表現を選ぶ
-              <span>複数選択可・あとから会話でも追加できます</span>
+              避ける表現を選ぶ（任意・空のままでもOK）
+              <span style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <span>使いながら会話で1つずつ増やせます</span>
+                <button type="button" class="link-btn" id="btn-clear-ng" style="padding:3px 9px;font-size:12px;">すべて外す</button>
+              </span>
             </div>
             <div class="chip-row" id="ng-chips"></div>
             <div class="add-row">
-              <input type="text" id="custom-ng-input" placeholder="追加したい表現を入力（例：ご査収のほど、承知いたしました）">
+              <input type="text" id="custom-ng-input" placeholder="気になる言い回しがあれば追加（例：承知いたしました、いかがでしょうか）">
               <button type="button" id="btn-add-ng">追加する</button>
             </div>
           </div>
 
           <div class="cust-group">
-            <div class="cust-lbl">よく使う場面</div>
-            <div class="radio-grid" id="scene-radios">
-              <label class="r-opt on"><input type="radio" name="scene" value="work" checked><b>仕事・社内</b><small>Slack・PR・ドキュメント</small></label>
-              <label class="r-opt"><input type="radio" name="scene" value="formal"><b>社外・目上</b><small>メール・公式お知らせ</small></label>
-              <label class="r-opt"><input type="radio" name="scene" value="casual"><b>普段・雑談</b><small>メモ・チャット</small></label>
+            <div class="cust-lbl">
+              よく使う場面
+              <span>あとから別の場面もそのまま使えます</span>
+            </div>
+            <div class="radio-grid two" id="scene-radios">
+              <label class="r-opt on"><input type="radio" name="scene" value="common" checked><b>全場面バランス（迷ったらこれ）</b><small>普段〜仕事・就活まで幅広く</small></label>
+              <label class="r-opt"><input type="radio" name="scene" value="work"><b>仕事・開発・研究</b><small>Slack・PR・レポート・議事録</small></label>
+              <label class="r-opt"><input type="radio" name="scene" value="formal"><b>社外メール・就活ES・公式</b><small>目上・取引先・応募書類</small></label>
+              <label class="r-opt"><input type="radio" name="scene" value="casual"><b>LINE・SNS・普段のチャット</b><small>友達・X・メモ・雑談</small></label>
             </div>
           </div>
 
@@ -934,7 +941,7 @@ footer code b { color: var(--red); }
             </div>
             <div class="radio-grid two" id="sync-radios">
               <label class="r-opt on"><input type="radio" name="sync" value="local" checked><b>このPCだけで使う</b><small>~/.nihongo/profile.md</small></label>
-              <label class="r-opt"><input type="radio" name="sync" value="gdrive"><b>自分のGoogle Driveで同期</b><small>複数PC共有＋スマホから添付</small></label>
+              <label class="r-opt"><input type="radio" name="sync" value="gdrive"><b>クラウド同期フォルダで共有</b><small>Google Drive・Dropbox・iCloud 等</small></label>
             </div>
           </div>
 
@@ -969,13 +976,16 @@ const DEFAULT_NGS = [
   '恐れ入りますが',
   'させていただきます',
   'ご査収のほど',
+  'いかがでしょうか',
+  'まずは結論から申し上げますと',
+  'ご参考になれば幸いです',
   '何卒よろしくお願い申し上げます',
 ];
 
 const state = {
   selectedNg: new Set(['いただけますと幸いです', '恐れ入りますが', 'させていただきます']),
   customNg: [],
-  scene: 'work',
+  scene: 'common',
   sync: 'local',
 };
 
@@ -1005,15 +1015,16 @@ function getAllSelectedNg(useCustom) {
 
 function buildSetupMarkdown(useCustom) {
   const ngList = getAllSelectedNg(useCustom);
-  const sceneKey = useCustom ? state.scene : 'work';
+  const sceneKey = useCustom ? state.scene : 'common';
   const syncPref = useCustom ? state.sync : 'local';
   const sceneJa = {
-    work: '仕事・社内チャット・ドキュメント',
-    formal: '社外メール・目上・公式お知らせ',
-    casual: '普段のチャット・雑談',
-  }[sceneKey] || '仕事・社内チャット・ドキュメント';
+    common: '全場面バランス（普段〜仕事・就活まで幅広く）',
+    work: '仕事・開発・研究（Slack・PR・レポート・議事録）',
+    formal: '社外メール・就活ES・公式（目上・取引先・応募書類）',
+    casual: 'LINE・SNS・普段のチャット（友達・X・メモ・雑談）',
+  }[sceneKey] || '全場面バランス（普段〜仕事・就活まで幅広く）';
   const syncLabel = syncPref === 'gdrive'
-    ? '自分の Google Drive 同期フォルダ（複数PC・スマホ共有）'
+    ? '自分の Google Drive / Dropbox / iCloud 同期フォルダ（複数PC・スマホ共有）'
     : 'この PC のローカル（~/.nihongo/profile.md）';
   const ngLine = ngList.length > 0
     ? ngList.map(w => '「' + w.replace(/^[「『"']+|[」』"']+$/g, '') + '」').join('、')
@@ -1054,7 +1065,7 @@ function buildSetupMarkdown(useCustom) {
     '- CLI・MCP 導入: `pip install "git+https://github.com/AnIT012/nihongo.git@v3.1.0"`',
     '- スキル導入（対応環境）: `npx skills add AnIT012/nihongo -g`（またはリポジトリの `nihongo/` フォルダをスキル配置先へコピー）',
     '- AI アプリ自動登録: `nihongo-mcp init --target all`（同期フォルダ選択時は `--home "<同期フォルダ>/nihongo"` を付与）',
-    '- 初期ルール反映: 既存 `profile.md` があれば上書きせず未登録の表現だけ追記マージ（新規は `nihongo-check profile init`）',
+    '- 初期ルール反映: 新規は `nihongo-check profile init`、未登録の表現は `nihongo-check inbox propose --scene <場面> --kind forbidden --value "<表現>"` と `nihongo-check inbox approve --all` で既存設定を壊さず追記マージ',
     '- 疎通・診断確認: `nihongo-mcp --self-test` と `nihongo-check doctor` を実行',
     '',
     '完了したら「以降は普段どおり話すだけで自動適用されます。今のルールや承認待ちはチャットで「ルール見せて」「承認待ちある？」と聞くだけで確認できます」と 1 行で案内する。',
@@ -1077,10 +1088,11 @@ function buildSetupMarkdown(useCustom) {
 function buildCompactChatRule(useCustom) {
   const ngList = getAllSelectedNg(useCustom);
   const sceneJa = {
-    work: '仕事・社内チャット・ドキュメント',
-    formal: '社外メール・目上・公式お知らせ',
-    casual: '普段のチャット・雑談',
-  }[state.scene] || '仕事・社内チャット・ドキュメント';
+    common: '全場面バランス',
+    work: '仕事・開発・研究',
+    formal: '社外メール・就活ES・公式',
+    casual: 'LINE・SNS・普段のチャット',
+  }[state.scene] || '全場面バランス';
   const sceneLine = useCustom ? '\n- 想定する場面：' + sceneJa : '';
   const ngLine = ngList.length > 0
     ? '\n- 避ける表現：' + ngList.map(w => '「' + w + '」').join('、')
@@ -1147,7 +1159,7 @@ function refreshPreview() {
 document.getElementById('btn-hero-dl').addEventListener('click', () => {
   downloadMarkdown('nihongo-setup.md', buildSetupMarkdown(false));
   const hs = document.getElementById('hero-status');
-  hs.textContent = 'nihongo-setup.md をダウンロードしました。そのまま今お使いのAIチャットに添付してください。';
+  hs.textContent = 'nihongo-setup.md をダウンロードしました。そのまま ChatGPT / Claude / Cursor などのチャット欄にドラッグ＆ドロップ（または「＋」から添付）して送ってください。';
   hs.classList.add('show');
 });
 
@@ -1161,12 +1173,19 @@ document.getElementById('btn-hero-custom').addEventListener('click', () => {
     btn.textContent = '設定を閉じる';
     refreshPreview();
   }
-  document.getElementById('install').scrollIntoView({ behavior: 'smooth' });
+  drawer.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 document.getElementById('btn-quick-dl').addEventListener('click', () => {
   downloadMarkdown('nihongo-setup.md', buildSetupMarkdown(false));
-  showStatus('nihongo-setup.md をダウンロードしました。そのまま今お使いのAIチャットに添付してください。', false);
+  showStatus('nihongo-setup.md をダウンロードしました。そのまま ChatGPT / Claude / Cursor などのチャット欄に添付して送ってください。', false);
+});
+
+document.getElementById('btn-clear-ng').addEventListener('click', () => {
+  state.selectedNg.clear();
+  renderChips();
+  refreshPreview();
+  showStatus('選択をすべて外しました。空のまま始めて、会話しながら少しずつ増やせます。', false);
 });
 
 document.getElementById('btn-open-custom').addEventListener('click', () => {
