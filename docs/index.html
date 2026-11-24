@@ -303,7 +303,7 @@ a { color: inherit; text-decoration: none; }
   font-weight: 700;
 }
 .hero-status.show { display: block; }
-/* Post-Download Blurred Backdrop Modal */
+/* Post-Download Editorial Frosted-Glass Overlay */
 .dl-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -311,14 +311,14 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
-  background: rgba(17, 17, 17, 0.34);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  padding: 20px;
+  background: rgba(248, 248, 247, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.18s ease, visibility 0.18s ease;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 .dl-modal-backdrop.open {
   opacity: 1;
@@ -327,121 +327,127 @@ a { color: inherit; text-decoration: none; }
 }
 .dl-modal {
   position: relative;
-  width: min(460px, 100%);
+  width: min(560px, 100%);
   background: #FFFFFF;
-  border: 1px solid #E2E2DE;
-  border-radius: 18px;
-  padding: 26px 26px 22px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.16);
+  border: 1.5px solid var(--ink);
+  border-radius: 6px;
+  padding: 40px 42px 36px;
   text-align: left;
-  transform: translateY(8px) scale(0.985);
-  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(10px);
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .dl-modal-backdrop.open .dl-modal {
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
 }
 .dl-modal-close {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  border: 1px solid transparent;
+  top: 18px;
+  right: 18px;
+  width: 36px;
+  height: 36px;
+  border: 0;
   background: transparent;
   color: var(--muted);
-  font: inherit;
-  font-size: 20px;
-  line-height: 1;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.14s ease, color 0.14s ease;
+  transition: color 0.14s ease;
 }
-.dl-modal-close:hover { background: var(--soft); color: var(--ink); }
-.dl-modal-badge {
+.dl-modal-close:hover { color: var(--ink); }
+.dl-modal-file {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: #F2FAF4;
-  border: 1px solid #CBEAD2;
-  color: var(--ok);
-  font-size: 12px;
-  font-weight: 800;
+  gap: 8px;
+  font-family: "Space Mono", ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+}
+.dl-modal-file::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  flex: none;
 }
 .dl-modal h3 {
-  margin-top: 12px;
-  font-size: 19px;
+  margin-top: 14px;
+  font-size: clamp(24px, 3.4vw, 30px);
   font-weight: 900;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--ink);
-  line-height: 1.4;
+  line-height: 1.3;
 }
 .dl-modal-step {
-  margin-top: 8px;
-  font-size: 13.5px;
-  line-height: 1.75;
-  color: var(--body);
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--muted);
 }
 .dl-modal-sep {
-  margin: 18px 0 16px;
+  margin: 26px 0 22px;
   border: 0;
-  border-top: 1px solid #ECECE8;
-}
-.dl-modal-kicker {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--muted);
-  letter-spacing: 0.02em;
+  border-top: 1px solid var(--line);
 }
 .dl-modal-support-txt {
-  margin-top: 6px;
+  font-size: 15.5px;
+  line-height: 1.85;
+  color: var(--ink);
+  font-weight: 500;
+}
+.dl-modal-support-sub {
+  margin-top: 4px;
   font-size: 13.5px;
-  line-height: 1.75;
-  color: var(--body);
+  color: var(--muted);
 }
 .dl-modal-actions {
-  margin-top: 18px;
+  margin-top: 26px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
 }
 .dl-modal-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  width: 100%;
-  padding: 12px 18px;
-  border-radius: 999px;
+  gap: 8px;
+  padding: 13px 24px;
+  border-radius: 4px;
   border: 1.5px solid var(--ink);
   background: var(--ink);
   color: #FFFFFF;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
   text-decoration: none;
-  transition: opacity 0.14s ease, transform 0.14s ease;
+  transition: background 0.14s ease, border-color 0.14s ease;
 }
-.dl-modal-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+.dl-modal-primary:hover { background: var(--red); border-color: var(--red); }
 .dl-modal-dismiss {
-  width: 100%;
-  padding: 9px 14px;
-  border-radius: 999px;
+  padding: 10px 4px;
   border: 0;
   background: transparent;
   color: var(--muted);
   font: inherit;
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 700;
   cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  transition: color 0.14s ease, text-decoration-color 0.14s ease;
 }
-.dl-modal-dismiss:hover { color: var(--ink); background: var(--soft); }
+.dl-modal-dismiss:hover { color: var(--ink); text-decoration-color: var(--ink); }
 @media (max-width: 520px) {
-  .dl-modal { padding: 22px 20px 18px; }
-  .dl-modal h3 { font-size: 17px; }
+  .dl-modal { padding: 30px 24px 24px; }
+  .dl-modal h3 { font-size: 20.5px; }
+  .dl-modal-support-txt { font-size: 14.5px; }
+  .dl-modal-actions { gap: 8px; }
+  .dl-modal-primary { width: 100%; }
+  .dl-modal-dismiss { width: 100%; text-align: center; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dl-modal-backdrop, .dl-modal { transition: none !important; }
@@ -2005,16 +2011,18 @@ footer code b { color: var(--ink); }
 
 <div class="dl-modal-backdrop" id="dl-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="dl-modal-title" aria-hidden="true">
   <div class="dl-modal">
-    <button type="button" class="dl-modal-close" id="dl-modal-close" aria-label="閉じる">×</button>
-    <span class="dl-modal-badge">✓ ダウンロードしました</span>
-    <h3 id="dl-modal-title">nihongo-setup.md を保存しました</h3>
-    <p class="dl-modal-step" id="dl-modal-step">そのまま ChatGPT / Claude / Cursor などのチャット欄に添付して送るだけで使えます。</p>
+    <button type="button" class="dl-modal-close" id="dl-modal-close" aria-label="閉じる">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="dl-modal-file" id="dl-modal-file">nihongo-setup.md を保存しました</div>
+    <h3 id="dl-modal-title">このままチャットに貼るだけです。</h3>
+    <p class="dl-modal-step" id="dl-modal-step">ChatGPT・Claude・Cursor など、普段の入力欄にファイルを添付して送ってください。</p>
     <hr class="dl-modal-sep">
-    <div class="dl-modal-kicker">開発の応援について（任意）</div>
-    <p class="dl-modal-support-txt">nihongoは無料のまま使い続けられます。もし日々の文章作成に役立ったら、学生の開発環境維持を100円から応援してもらえると嬉しいです（登録不要・任意）。</p>
+    <p class="dl-modal-support-txt">nihongo は無料のまま使い続けられます。もし役立ったら、大学生の開発費を 100 円から応援してもらえると嬉しいです。</p>
+    <p class="dl-modal-support-sub">OFUSE（会員登録不要・任意）</p>
     <div class="dl-modal-actions">
-      <a class="dl-modal-primary" href="https://ofuse.me/754edfb1" target="_blank" rel="noopener">OFUSEで応援する（100円〜）→</a>
-      <button type="button" class="dl-modal-dismiss" id="dl-modal-dismiss">あとで（閉じる）</button>
+      <a class="dl-modal-primary" href="https://ofuse.me/754edfb1" target="_blank" rel="noopener">100円から応援する →</a>
+      <button type="button" class="dl-modal-dismiss" id="dl-modal-dismiss">閉じる</button>
     </div>
   </div>
 </div>
@@ -2238,7 +2246,7 @@ function refreshPreview() {
 }
 
 const dlModalBackdrop = document.getElementById('dl-modal-backdrop');
-const dlModalTitle = document.getElementById('dl-modal-title');
+const dlModalFile = document.getElementById('dl-modal-file');
 const dlModalStep = document.getElementById('dl-modal-step');
 const dlModalCloseBtn = document.getElementById('dl-modal-close');
 const dlModalDismissBtn = document.getElementById('dl-modal-dismiss');
@@ -2246,12 +2254,12 @@ let lastFocusedBeforeModal = null;
 
 function openDownloadModal(isCustom) {
   lastFocusedBeforeModal = document.activeElement;
-  dlModalTitle.textContent = isCustom
-    ? '設定入りの nihongo-setup.md を保存しました'
+  dlModalFile.textContent = isCustom
+    ? '設定入り nihongo-setup.md を保存しました'
     : 'nihongo-setup.md を保存しました';
   dlModalStep.textContent = isCustom
-    ? 'そのまま AI チャットに添付して送ると、選んだNG表現や同期設定が確認カード付きで反映されます。'
-    : 'そのまま ChatGPT / Claude / Cursor などのチャット欄に添付して送るだけで使えます。';
+    ? '普段の AI チャットへ添付して送ると、選んだNG表現や同期設定が確認カード付きで反映されます。'
+    : 'ChatGPT・Claude・Cursor など、普段の入力欄にファイルを添付して送ってください。';
   dlModalBackdrop.classList.add('open');
   dlModalBackdrop.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
