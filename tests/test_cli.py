@@ -436,7 +436,7 @@ class PackagingAndExamplesTests(unittest.TestCase):
     def test_pyproject_metadata(self) -> None:
         pyproject_path = os.path.join(REPO_ROOT, "pyproject.toml")
         content = read_utf8(pyproject_path)
-        self.assertIn('version = "3.1.0"', content)
+        self.assertIn('version = "3.1.1"', content)
         self.assertIn('requires-python = ">=3.10"', content)
         self.assertIn('nihongo-check = "nihongo_check.cli:main"', content)
         self.assertIn('packages = ["nihongo_check"]', content)

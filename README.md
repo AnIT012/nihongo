@@ -2,7 +2,7 @@
 
 # nihongo
 
-[![v3.1.0](https://img.shields.io/badge/-v3.1.0-D7261E?style=flat-square)](CHANGELOG.md)
+[![v3.1.1](https://img.shields.io/badge/-v3.1.1-D7261E?style=flat-square)](CHANGELOG.md)
 [![stars](https://img.shields.io/github/stars/AnIT012/nihongo?style=flat-square&labelColor=111111&color=D7261E)](https://github.com/AnIT012/nihongo/stargazers)
 [![license](https://img.shields.io/badge/license-MIT-D7261E?style=flat-square&labelColor=111111&color=D7261E)](LICENSE)
 [![works with](https://img.shields.io/badge/works_with-Claude_%7C_Antigravity_%7C_Codex_%7C_Cursor_%7C_ChatGPT_%7C_Muse-D7261E?style=flat-square&labelColor=111111&color=D7261E)](#インストール)
@@ -21,7 +21,7 @@ nihongoは、読み手を騙さないことを大事にしています。依頼�
 
 AIが書いた日本語は一見きれいに見えても、敬語が1段高すぎたり、頼んでいない約束が混ざったり、推敲の拍子に日時や「必ず」が落ちたりします。nihongo v3.0 は、**入れた初日はまず誰でも困りやすい一般的なズレを減らし、使い続けるうちに自分の書き方や避けたい表現を1行ずつ覚えて、手直しを減らしていく**仕組みです。次の3つで仕上げと確認を分担します。
 
-- **軽量スキル（Lite / Full）**：普段のやりとりは短いLite（約1,200字）で、メール・資料・技術文書はFull（約93行＋21本の詳細資料）で書き分けます。依頼に無い事実や約束を足さず、相手と場面に合う日本語に整えます。
+- **軽量スキル（Lite / Full）**：普段のやりとりは短いLite（約1,200字）で、メール・資料・技術文書はFull（約93行＋22本の詳細資料）で書き分けます。依頼に無い事実や約束を足さず、相手と場面に合う日本語に整えます。
 - **会話で育つ Personal**：`~/.nihongo/profile.md` に自分の書き方を4つの箱（`[common]` / `[casual]` / `[work]` / `[formal]`）と「絶対に言わない表現」に分けて保存します。会話で直した癖だけを1行確認してから追記し、裏で勝手に書き換えることはありません。
 - **0トークン自動チェッカー（`nihongo-check`）**：Python 3.10+ の標準ライブラリだけで動くCLIです。原文と編集後の文を比べ、日時・数字・否定・条件・求める強さ（「必ず」など）のズレや、避けたい表現の混入など**見直す候補**を0トークンで見つけます。Claude Code の Hook や GitHub Actions にもそのまま組み込めます。
 
@@ -146,7 +146,7 @@ nihongoには、毎回読み込む短いLiteと、詳しい手順が入ったFul
 
 | | Lite | Full |
 |---|---|---|
-| ファイル | `nihongo/ALWAYS.md` | `nihongo/SKILL.md` と `references/`（21本） |
+| ファイル | `nihongo/ALWAYS.md` | `nihongo/SKILL.md` と `references/`（22本） |
 | 使う場面 | 普段の返事、雑談、短い質問 | メール、お知らせ、ES、資料、README、UIの文言 |
 | 読み込まれ方 | 設定に入れておけば毎回 | 人に出す文章を書く時に自動で。名前を出して呼ぶこともできる |
 | サイズ（目安） | 約1,200字（v2.3.2 の 2,704字から約55%軽量化） | 約93行・約5,675字（v2.3.2 の 275行・12,819字から約56%軽量化。該当する `references/` のみ追加読み込み） |
@@ -170,10 +170,10 @@ echo '@~/.claude/skills/nihongo/ALWAYS.md' >> ~/.claude/CLAUDE.md
 <details>
 <summary><b>Antigravity</b></summary>
 
-[最新のリリース](https://github.com/AnIT012/nihongo/releases/latest)から `nihongo-v3.1.0.zip` を落として展開するか、このリポジトリの `nihongo/` フォルダを `~/.gemini/config/skills/nihongo/` に配置します。
+[最新のリリース](https://github.com/AnIT012/nihongo/releases/latest)から `nihongo-v3.1.1.zip` を落として展開するか、このリポジトリの `nihongo/` フォルダを `~/.gemini/config/skills/nihongo/` に配置します。
 
 ```bash
-git clone --depth 1 --branch v3.1.0 https://github.com/AnIT012/nihongo.git /tmp/nihongo-src
+git clone --depth 1 --branch v3.1.1 https://github.com/AnIT012/nihongo.git /tmp/nihongo-src
 mkdir -p ~/.gemini/config/skills
 cp -r /tmp/nihongo-src/nihongo ~/.gemini/config/skills/nihongo
 ```
@@ -215,10 +215,10 @@ npx skills add AnIT012/nihongo -g
 <summary><b>Claude / ChatGPT アプリ（コマンド不要）</b></summary>
 
 - **いちばん簡単（Web版）**：[nihongo/WEB.md](nihongo/WEB.md) を開いて右上のコピーボタンを押し、ChatGPT の「設定 → パーソナライズ → カスタム指示」または Claude の「設定 → プロフィール → 応答の好み」に貼って保存します（無料プランでも使えます）。
-- **メール・資料・ES まで本格的に使う（Full）**：[最新のリリース](https://github.com/AnIT012/nihongo/releases/latest)から `nihongo-v3.1.0.zip` をダウンロードします。
-  - **Claude（Web / デスクトップアプリ）**：設定のスキル画面から `nihongo-v3.1.0.zip` をそのままアップロード（または解凍してプロジェクトのナレッジに追加）します。
-  - **ChatGPT**：My GPTs のナレッジに解凍したファイルを追加します（Skills 画面が使える環境では `nihongo-v3.1.0.zip` をそのままアップロードできます）。
-- ※GitHub トップの緑色の「Code → Download ZIP」はフォルダ構造が1段深いため、そのままではアップロードできません。必ず上の最新リリースページにある `nihongo-v3.1.0.zip` を使ってください。
+- **メール・資料・ES まで本格的に使う（Full）**：[最新のリリース](https://github.com/AnIT012/nihongo/releases/latest)から `nihongo-v3.1.1.zip` をダウンロードします。
+  - **Claude（Web / デスクトップアプリ）**：設定のスキル画面から `nihongo-v3.1.1.zip` をそのままアップロード（または解凍してプロジェクトのナレッジに追加）します。
+  - **ChatGPT**：My GPTs のナレッジに解凍したファイルを追加します（Skills 画面が使える環境では `nihongo-v3.1.1.zip` をそのままアップロードできます）。
+- ※GitHub トップの緑色の「Code → Download ZIP」はフォルダ構造が1段深いため、そのままではアップロードできません。必ず上の最新リリースページにある `nihongo-v3.1.1.zip` を使ってください。
 - Web / スマホ版で自分の書き方を1行ずつ育てたい時は、言い回しを直したあとに「設定欄にそのまま足せる1行を作って」と頼めば、ファイル保存や MCP なしでもカスタム指示に1行足すだけで育てられます。
 
 </details>
@@ -237,7 +237,7 @@ npx skills add AnIT012/nihongo -g
 Python 3.10+ の標準ライブラリだけで動き、追加の依存パッケージは要りません。
 
 ```bash
-pip install "git+https://github.com/AnIT012/nihongo.git@v3.1.0"
+pip install "git+https://github.com/AnIT012/nihongo.git@v3.1.1"
 ```
 
 pip で入れると `nihongo-check` コマンド（`nihongo_check` 名前空間）が使えるようになります。インストールせずに、スキル内の `python3 nihongo/scripts/cli.py` をそのまま実行することもできます。

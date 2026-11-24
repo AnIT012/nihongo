@@ -1323,7 +1323,7 @@ footer code b { color: var(--ink); }
       </div>
       <div class="hero-status" id="hero-status" role="status" aria-live="polite"></div>
       <div class="hero-meta">
-        <span>v3.1.0</span>
+        <span>v3.1.1</span>
         <span>無料・登録不要</span>
         <span>運営サーバー保存なし</span>
       </div>
@@ -1670,7 +1670,7 @@ footer code b { color: var(--ink); }
         </div>
         <div class="how-item">
           <b>スマホ・Webで毎回効かせたい方</b>
-          <p>Claudeは<a href="https://github.com/AnIT012/nihongo/releases/latest/download/nihongo-v3.1.0.zip">スキル用ZIP（v3.1.0）</a>を「設定 → 機能 → スキル」に1回入れるとスマホにも同期されます。ChatGPTはコピー文をカスタム指示へ貼ります。</p>
+          <p>Claudeは<a href="https://github.com/AnIT012/nihongo/releases/latest/download/nihongo.zip">スキル用ZIP（v3.1.1）</a>を「設定 → 機能 → スキル」に1回入れるとスマホにも同期されます。ChatGPTはコピー文をカスタム指示へ貼ります。</p>
         </div>
         <div class="how-item">
           <b>PC開発ツールで全部入れたい方</b>
@@ -1741,19 +1741,29 @@ footer code b { color: var(--ink); }
           <a href="https://github.com/AnIT012/nihongo/blob/main/CHANGELOG.md" target="_blank" rel="noopener">すべての履歴を見る（GitHub）→</a>
         </div>
         <div class="cl-row">
-          <span class="cl-ver">v3.1.0</span>
+          <span class="cl-ver">v3.1</span>
           <span class="cl-date">2026-11-24</span>
-          <span class="cl-txt">公式サイト（1ファイル導入・カスタマイズ）を公開。チャット完結のMCP操作とクラウド同期フォルダ対応へ刷新。</span>
+          <span class="cl-txt">公式サイトと1ファイル導入を公開。承認制の受信箱、依存ゼロのローカルMCP、クラウド同期フォルダ対応、Windows・同期周りの安定化（v3.1.1）を追加。</span>
         </div>
         <div class="cl-row">
-          <span class="cl-ver">v3.0.0</span>
+          <span class="cl-ver">v3.0</span>
           <span class="cl-date">2026-11-23</span>
-          <span class="cl-txt">0トークン自動検査（nihongo-check）、確認制の個人ルール受信箱、ローカルMCP（nihongo-mcp）を追加。</span>
+          <span class="cl-txt">Lite / Full を約55%軽量化。4場面＋NG管理の個人設定（Personal）と、0トークン検査（nihongo-check）を追加。</span>
         </div>
         <div class="cl-row">
-          <span class="cl-ver">v2.0.0</span>
+          <span class="cl-ver">v2.3</span>
+          <span class="cl-date">2026-11-18</span>
+          <span class="cl-txt">自分の文から口調を覚える書き方メモ、なりすまし・詐欺文の拒否、書き言葉ガイド、署名付き配布を追加。</span>
+        </div>
+        <div class="cl-row">
+          <span class="cl-ver">v2.0</span>
           <span class="cl-date">2026-11-17</span>
-          <span class="cl-txt">普段のチャット向け軽量版（Lite）と場面別の手引き（Full）の2本立てへ構成を刷新。</span>
+          <span class="cl-txt">普段の返事にも毎回使える軽量版（Lite）を追加し、場面別の手引き（Full）との2本立てに刷新。</span>
+        </div>
+        <div class="cl-row">
+          <span class="cl-ver">v1.0</span>
+          <span class="cl-date">2026-11-17</span>
+          <span class="cl-txt">最初の公開。場面別の日本語ガイドに加え、1.x系で意味ズレ検査スクリプトと検証記録を整備。</span>
         </div>
       </div>
     </div>
@@ -1879,7 +1889,7 @@ function buildSetupMarkdown(useCustom) {
     '※ChatGPT の Code Interpreter や Claude Desktop の隔離サンドボックス環境も含みます。ホスト PC へのコマンド導入は実行できません。',
     '- 下の「ユーザーの初期ルール」と「共通ルール」を、**今開いているこの会話から直ちに適用**する。',
     '- 最初の返答は専門用語（Python / MCP / JSON 等）を出さず、「nihongo の日本語ルールを適用しました。このまま文章作成や手直しをどうぞ（毎回自動で効かせたい場合は、Claude は設定→スキルへ最新版ZIPを登録、ChatGPT はカスタム指示や ' + webPlaceHint + ' に置いておけます）」と 1〜2 行で返す。',
-    '- もしユーザーから「インストールしたい」「毎回自動で効かせたい」と聞かれた場合は、①コマンド不要なら Claude の「設定 → 機能 → スキル」へ `https://github.com/AnIT012/nihongo/releases/latest/download/nihongo-v3.1.0.zip` を1回アップロードする方法（スマホアプリにも自動同期）、②0トークン自動検査やクラウド同期まで全自動で入れたいなら Claude Code / Cursor / Antigravity にこのファイルをそのまま渡す方法を簡潔に案内する。',
+    '- もしユーザーから「インストールしたい」「毎回自動で効かせたい」と聞かれた場合は、①コマンド不要なら Claude の「設定 → 機能 → スキル」へ `https://github.com/AnIT012/nihongo/releases/latest/download/nihongo.zip` を1回アップロードする方法（スマホアプリにも自動同期）、②0トークン自動検査やクラウド同期まで全自動で入れたいなら Claude Code / Cursor / Antigravity にこのファイルをそのまま渡す方法を簡潔に案内する。',
     '',
     '## B. ローカル PC の開発エージェント（Claude Code / Cursor / Codex / Antigravity 等）の場合',
     'ユーザー自身の PC のファイルシステムとシェルへ直接アクセスできる環境でのみ実行してください。**勝手に実行せず**、必ず次の順序と 2 回の承認を守ってください。',
@@ -1893,7 +1903,7 @@ function buildSetupMarkdown(useCustom) {
     '',
     '### 2. 確認カード 1（導入・更新の承認・必須）',
     '正本リポジトリの安全性を確認したうえで、既存の `nihongo-check` や `profile.md` の有無を調べ、ユーザーに以下を提示して OK を待つ:',
-    '- `https://github.com/AnIT012/nihongo` から v3.1.0（または最新のリリース版）を取得（未導入なら新規導入、導入済みなら既存設定を保ったまま更新）',
+    '- `https://github.com/AnIT012/nihongo` から v3.1.1（または最新のリリース版）を取得（未導入なら新規導入、導入済みなら既存設定を保ったまま更新）',
     '- 下の初期ルールを `profile.md` に反映（**既存の `profile.md` がある場合は絶対に上書きせず、未登録の項目だけ追記マージ**）',
     '- この PC に導入済みの AI アプリ（Claude Desktop / Claude Code / Cursor / Antigravity）へ `nihongo-mcp init` で自動登録（既存設定は `.bak` に退避してから追記、未導入アプリはスキップ。より厳格な CLI 限定承認にしたい場合は `--strict-hitl` を選択可）',
     '',
@@ -1904,7 +1914,7 @@ function buildSetupMarkdown(useCustom) {
     '- C: 今開いている作業フォルダ専用にする（`nihongo-check profile init --project` で `./.nihongo/profile.md` を作成）',
     '',
     '### 4. 承認後の実行コマンド（AI が代行）',
-    '- CLI・MCP 導入: `pip install "git+https://github.com/AnIT012/nihongo.git@v3.1.0"`',
+    '- CLI・MCP 導入: `pip install "git+https://github.com/AnIT012/nihongo.git@v3.1.1"`',
     '- スキル導入（対応環境）: `npx skills add AnIT012/nihongo -g`（またはリポジトリの `nihongo/` フォルダをスキル配置先へコピー）',
     '- AI アプリ自動登録: `nihongo-mcp init --target all`（' + homeExample + '。解除したい時は `nihongo-mcp init --target all --remove`）',
     '- 初期ルール反映: 新規は `nihongo-check profile init`、未登録の表現は `nihongo-check inbox propose --scene ' + sceneKey + ' --kind forbidden --value "<表現>" --json` で返った **その ID だけ** を `nihongo-check inbox approve <ID>` で反映（前から溜まっていた未確認候補を巻き込む `--all` は使わない）',

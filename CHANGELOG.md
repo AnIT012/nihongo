@@ -1,5 +1,14 @@
 # 変更履歴
 
+## 3.1.1（2026-11-24）
+
+### 導入・同期・Windows 対応の安定化
+
+- **同期フォルダの保存先を一本化（`~/.nihongo/config.json`）**：`nihongo-mcp init --home <同期フォルダ>` 実行時に保存先を記録し、CLI（`nihongo-check`）・MCP（`nihongo-mcp`）・スキル・`doctor` が同じフォルダを参照するように統一しました。既存の `~/.nihongo/profile.md` は上書きせず安全に引き継ぎます。
+- **未導入アプリへの設定作成を防止＆解除コマンド（`--remove`）追加**：`nihongo-mcp init --target all` で未導入のクライアント（例：未インストールの Cursor 等）へ設定ファイルを作らないようにし、他の MCP サーバー設定を残したまま `nihongo` だけを外せる `--remove` を追加しました。また、Windows の Microsoft Store 版 Claude Desktop の設定パスも自動検出します。
+- **Windows の `python3` エラー解消と誤検知・承認手順の修正**：`SKILL.md` とフック例から `python3` 固定呼び出しを除いて `nihongo-check` コマンドへ統一し、`check_meaning.py` の「ください→下さい」誤検知を解消しました。導入ガイドの承認コマンドも `inbox approve <ID>` 指定へ改め、未確認の他候補を巻き込まないようにしています。
+- **手引き 22 本への拡充と品質基盤**：`references/marketing-copy.md` を追加（計 22 本）し、お知らせタイトル・LINE 敬語・ES ドラフト・スライド構成の 4 点をベンチマーク結果から改善しました。導入 E2E テスト（`tests/test_e2e_setup_flow.py`）と Ubuntu / Windows 両対応の GitHub Actions CI を追加し、配布 ZIP は最新版固定 URL（`nihongo.zip`）にも対応しています。
+
 ## 3.1.0（2026-11-24）
 
 ### Personal を育てる HITL 受信箱・ゼロ依存 MCP・2層プロファイル

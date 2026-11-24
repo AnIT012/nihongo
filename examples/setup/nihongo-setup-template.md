@@ -29,7 +29,7 @@
 - C: 今開いている作業フォルダ専用にする（`nihongo-check profile init --project` で `./.nihongo/profile.md` を作成）
 
 ### 4. 承認後の実行コマンド（AI が代行）
-- CLI・MCP 導入: `pip install "git+https://github.com/AnIT012/nihongo.git@v3.1.0"`
+- CLI・MCP 導入: `pip install "git+https://github.com/AnIT012/nihongo.git@v3.1.1"`
 - スキル導入（対応環境）: `npx skills add AnIT012/nihongo -g`（またはリポジトリの `nihongo/` フォルダをスキル配置先へコピー）
 - AI アプリ自動登録: `nihongo-mcp init --target all`（同期フォルダ選択時は `--home "<同期フォルダ>/nihongo"` を付与）
 - 初期ルール反映: 既存 `profile.md` があれば上書きせず未登録の表現だけ追記マージ（新規は `nihongo-check profile init`）
