@@ -381,56 +381,55 @@ a { color: inherit; text-decoration: none; }
   color: var(--body);
 }
 
-/* Section 3: よくあるAIのズレ (4 Relatable AI Pain Cards) */
-.pain-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
+/* Section 3: よくあるAIのズレ (Clean 3-Column Open Hairline Table, No Cards) */
+.drift-table {
+  width: 100%;
+  border-collapse: collapse;
 }
-.pain-card {
-  background: #FFFFFF;
-  border: 1px solid #E2E2DE;
-  border-radius: 14px;
-  padding: 22px 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 14px;
+.drift-table th {
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 0 18px 12px 0;
+  border-bottom: 1.5px solid var(--ink);
 }
-.pain-num {
-  display: inline-block;
-  font-size: 12px;
-  font-weight: 800;
+.drift-table th:last-child {
+  padding-right: 0;
   color: var(--red-hover);
-  background: var(--warn-bg);
-  padding: 2px 9px;
-  border-radius: 999px;
-  margin-bottom: 10px;
 }
-.pain-card h3 {
-  font-size: 16.5px;
-  font-weight: 900;
-  line-height: 1.45;
-  margin-bottom: 8px;
-  color: var(--ink);
-}
-.pain-card p {
+.drift-table td {
+  padding: 16px 18px 16px 0;
+  border-bottom: 1px solid #DFDFDB;
+  vertical-align: top;
   font-size: 14px;
   line-height: 1.75;
+}
+.drift-table tr:last-child td {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.drift-table td:first-child {
+  width: 22%;
+  font-weight: 900;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.drift-table td:nth-child(2) {
+  width: 39%;
   color: var(--muted);
 }
-.pain-fix {
-  padding-top: 12px;
-  border-top: 1px solid #EFEFED;
-  font-size: 13.5px;
-  line-height: 1.65;
+.drift-table td:last-child {
+  width: 39%;
+  padding-right: 0;
   color: var(--ink);
   font-weight: 700;
 }
-.pain-fix span {
-  font-family: "Space Grotesk", sans-serif;
-  color: var(--red-hover);
-  margin-right: 6px;
+.m-lbl {
+  display: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  margin-bottom: 2px;
 }
 
 /* Section 4: 4つの機能 (Crisp 2x2 Framed Feature Cards with Names & Specs) */
@@ -1020,9 +1019,34 @@ footer code b { color: var(--ink); }
   .band { padding: 60px 0; }
   .sec-head { padding-bottom: 16px; margin-bottom: 28px; }
   .sec-h { font-size: 24px; }
-  .cap-grid, .opt-pair, .demo-grid, .radio-grid, .radio-grid.two, .use-grid, .pain-grid {
+  .cap-grid, .opt-pair, .demo-grid, .radio-grid, .radio-grid.two, .use-grid {
     grid-template-columns: 1fr;
   }
+  .drift-table thead { display: none; }
+  .drift-table, .drift-table tbody, .drift-table tr, .drift-table td {
+    display: block;
+    width: 100% !important;
+  }
+  .drift-table tr {
+    padding: 16px 0;
+    border-bottom: 1px solid #DFDFDB;
+  }
+  .drift-table tr:first-child { padding-top: 0; }
+  .drift-table tr:last-child { border-bottom: 0; padding-bottom: 0; }
+  .drift-table td {
+    border-bottom: 0;
+    padding: 0;
+    white-space: normal !important;
+  }
+  .drift-table td:first-child {
+    font-size: 15.5px;
+    margin-bottom: 8px;
+  }
+  .drift-table td:nth-child(2) {
+    margin-bottom: 8px;
+  }
+  .m-lbl { display: block; color: var(--muted); }
+  .drift-table td:last-child .m-lbl { color: var(--red-hover); }
   .use-grid { gap: 26px; }
   .cap-grid { gap: 14px; }
   .cloud-grid { grid-template-columns: 1fr 1fr; }
@@ -1057,11 +1081,11 @@ footer code b { color: var(--ink); }
       </div>
       <h1 class="hero-title">AIの出力への<span>手直し</span>を減らそう。</h1>
       <p class="hero-lead">
-        AIの過剰な敬語や意味のズレを防ぎ、自分の書き方を残せる日本語ガード。
+        過剰な敬語や意味のズレを防ぎ、自分の書き方を残せる日本語ガード。
       </p>
       <div class="hero-actions">
         <button type="button" class="hero-dl" id="btn-hero-dl">今すぐダウンロード ↓</button>
-        <button type="button" class="hero-jump" id="btn-hero-custom">設定してから作る ↓</button>
+        <button type="button" class="hero-jump" id="btn-hero-custom">カスタマイズしてダウンロード ↓</button>
       </div>
       <div class="hero-status" id="hero-status" role="status" aria-live="polite"></div>
       <div class="hero-meta">
@@ -1079,24 +1103,24 @@ footer code b { color: var(--ink); }
           <span class="sec-num">01</span>
           <h2 class="sec-h">nihongoとは</h2>
         </div>
-        <span class="sec-sub">使うと、日々の文章作成がこう変わります</span>
+        <span class="sec-sub">使うと日々の文章がこう変わります</span>
       </div>
 
       <div class="use-grid">
         <div class="use-item">
           <span class="use-tag">就活生・学生</span>
-          <h3>ESの下書きや連絡メールを、自分の言葉のまま整えられます</h3>
-          <p>書いた経験をAIが勝手に盛らず、表現のクセや硬さだけを自然な日本語に直します。</p>
+          <h3>ESの下書きや連絡メールを自分の言葉のまま整えます</h3>
+          <p>書いた経験を盛らず、表現の硬さやクセだけを直します。</p>
         </div>
         <div class="use-item">
           <span class="use-tag">仕事・普段の連絡</span>
-          <h3>メールやLINEを書き直さず、そのまま送れます</h3>
-          <p>高すぎる敬語や「こちらで調整します」のような頼んでいない約束を止めます。大事な日時や「必ず」の言い換えも防ぎます。</p>
+          <h3>メールやLINEを書き直さずそのまま送れます</h3>
+          <p>高すぎる敬語や頼んでいない約束を止め、大事な日時や「必ず」の言い換えも防ぎます。</p>
         </div>
         <div class="use-item">
           <span class="use-tag">AIをよく使う人</span>
           <h3>毎回「もっと自然に」と頼み直さなくて済みます</h3>
-          <p>会話で直した口調や苦手な言い回しを保存できます。ChatGPTでもClaudeでも、どのAIでも同じ自分の書き方に揃います。</p>
+          <p>会話で直した口調や苦手な言い回しを保存でき、ChatGPTでもClaudeでも同じ自分の書き方にそろえられます。</p>
         </div>
       </div>
     </div>
@@ -1122,12 +1146,12 @@ footer code b { color: var(--ink); }
         <div class="fit-row">
           <span class="fit-mark best" aria-label="得意">◎</span>
           <span class="fit-name">ES・自己PR・UI文言・お知らせ</span>
-          <span class="fit-desc">事実を盛らず、場面ごとの型に合わせて仕上げます</span>
+          <span class="fit-desc">事実を盛らず場面ごとの型に合わせます</span>
         </div>
         <div class="fit-row">
           <span class="fit-mark" aria-label="対応">○</span>
           <span class="fit-name">記事・技術文書・企画書・議事録</span>
-          <span class="fit-desc">構成整理・推敲と、数字や約束のズレ検出に対応します</span>
+          <span class="fit-desc">構成の整理や推敲と、数字や約束のズレ検出に対応します</span>
         </div>
         <div class="fit-row">
           <span class="fit-mark" aria-label="対応">○</span>
@@ -1156,42 +1180,45 @@ footer code b { color: var(--ink); }
           <span class="sec-num">03</span>
           <h2 class="sec-h">よくあるAIのズレ</h2>
         </div>
-        <span class="sec-sub">「きれいだけど、そのまま出せない」4つの原因</span>
+        <span class="sec-sub">「きれいだけどそのまま出せない」主な原因</span>
       </div>
 
-      <div class="pain-grid">
-        <div class="pain-card">
-          <div>
-            <h3>大事なニュアンスが勝手に弱まる</h3>
-            <p>「15時までに必ず」が「15時頃までにいただけますと幸いです」になり、締切や必須の度合いがぼやけてしまいます。</p>
-          </div>
-          <div class="pain-fix"><span>nihongo</span>原文の日時・数字・「必ず」の強さを守り、ズレがあれば自動検出します。</div>
-        </div>
-
-        <div class="pain-card">
-          <div>
-            <h3>頼んでいない約束や前置きが付く</h3>
-            <p>「そちらに合わせます」「何でもお気軽にどうぞ」など、引き受けていない約束や長い挨拶を勝手に足してしまいます。</p>
-          </div>
-          <div class="pain-fix"><span>nihongo</span>依頼にない約束や理由は一切足さず、分からない所だけ空欄にします。</div>
-        </div>
-
-        <div class="pain-card">
-          <div>
-            <h3>状況や相手との距離感に合っていない</h3>
-            <p>同僚へのチャットが社長宛てのように硬すぎたり、逆に目上への連絡で不自然に砕けたりして手直しが増えます。</p>
-          </div>
-          <div class="pain-fix"><span>nihongo</span>普段・仕事・公式など相手と場面に合わせて、敬語の高さをちょうどよく整えます。</div>
-        </div>
-
-        <div class="pain-card">
-          <div>
-            <h3>自分の言葉がAI定番のテンプレに消える</h3>
-            <p>ESや紹介文を整えると「革新的な〜」「大変有意義な〜」といった、一発でAIと分かる表現に塗り替えられます。</p>
-          </div>
-          <div class="pain-fix"><span>nihongo</span>書いた事実だけを自然な日本語に整え、嫌いな表現は個人ルールで止められます。</div>
-        </div>
-      </div>
+      <table class="drift-table">
+        <thead>
+          <tr>
+            <th>よくあるズレ</th>
+            <th>素のAIがやりがちなこと</th>
+            <th>nihongoの対処</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ニュアンスが弱まる</td>
+            <td><span class="m-lbl">素のAI</span>「明日15時までに必ず」が「15時頃までにいただけますと幸いです」にぼやける</td>
+            <td><span class="m-lbl">nihongo</span>日時・数字・「必ず」の強さを変えず、ズレがあれば検出します</td>
+          </tr>
+          <tr>
+            <td>余計な約束が付く</td>
+            <td><span class="m-lbl">素のAI</span>「そちらに合わせます」「何でもお気軽に」など頼んでいない申し出を足す</td>
+            <td><span class="m-lbl">nihongo</span>依頼にない約束や理由は足さず、分からない所だけ空欄にします</td>
+          </tr>
+          <tr>
+            <td>距離感に合わない</td>
+            <td><span class="m-lbl">素のAI</span>同僚へのチャットが取引先並みに硬くなったり、目上へ砕けすぎたりする</td>
+            <td><span class="m-lbl">nihongo</span>相手と場面に合わせて敬語の高さをちょうどよく整えます</td>
+          </tr>
+          <tr>
+            <td>前置きとまとめが長い</td>
+            <td><span class="m-lbl">素のAI</span>相手の言葉を言い直してから本題に入り、最後に無難な感想を並べる</td>
+            <td><span class="m-lbl">nihongo</span>余計な前置きと言い直しを省き、頼まれた中身だけを返します</td>
+          </tr>
+          <tr>
+            <td>AI定番の表現になる</td>
+            <td><span class="m-lbl">素のAI</span>ESや紹介文が「革新的な」「大変有意義な」のようなテンプレ文に変わる</td>
+            <td><span class="m-lbl">nihongo</span>書いた事実だけを自然な言葉に整え、嫌いな表現は個人ルールで止めます</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </section>
 
@@ -1203,7 +1230,7 @@ footer code b { color: var(--ink); }
           <span class="sec-num">04</span>
           <h2 class="sec-h">4つの機能</h2>
         </div>
-        <span class="sec-sub">普段の返事から、大事な書類のチェックまで</span>
+        <span class="sec-sub">普段の返事から大事な書類の確認まで</span>
       </div>
 
       <div class="cap-grid">
@@ -1213,8 +1240,8 @@ footer code b { color: var(--ink); }
               <span class="cap-name">Lite</span>
               <span class="cap-role">普段のチャット用</span>
             </div>
-            <h3>約1,100字で短い返事や雑談を軽く整えます</h3>
-            <p>重くならずに効くので、スマホのChatGPTやClaudeの通常チャットでもそのまま使えます。</p>
+            <h3>約1,100字で短い返事や雑談を整えます</h3>
+            <p>重くならずに効くため、スマホのChatGPTやClaudeの通常チャットでもそのまま使えます。</p>
           </div>
           <div class="cap-specs">
             <span>スマホ・Web即対応</span>
@@ -1228,11 +1255,11 @@ footer code b { color: var(--ink); }
               <span class="cap-name">Full</span>
               <span class="cap-role">メール・ES・資料用</span>
             </div>
-            <h3>22本の場面別資料を必要な時だけ読み込みます</h3>
+            <h3>22本の場面別手引きを必要な時だけ読み込みます</h3>
             <p>メール・就活ES・UI文言・技術文書・企画書・告知文まで、相手と媒体の型に合わせます。</p>
           </div>
           <div class="cap-specs">
-            <span>22本の専門手引き</span>
+            <span>22本の場面別手引き</span>
             <span>必要な分だけ読込</span>
           </div>
         </div>
@@ -1243,8 +1270,8 @@ footer code b { color: var(--ink); }
               <span class="cap-name">Check</span>
               <span class="cap-role">0トークン自動検査</span>
             </div>
-            <h3>日時・数字・「必ず」のズレを0トークンで検出</h3>
-            <p>Python標準ライブラリだけで動作。編集前後の意味ズレや避けたい表現を機械的に見つけます。</p>
+            <h3>日時・数字・「必ず」のズレを自動で検出します</h3>
+            <p>Python標準ライブラリだけで動き、編集前後の意味ズレや避けたい表現を機械的に見つけます。</p>
           </div>
           <div class="cap-specs">
             <span>0トークン実行</span>
@@ -1258,12 +1285,12 @@ footer code b { color: var(--ink); }
               <span class="cap-name">Personal</span>
               <span class="cap-role">会話で育つ個人ルール</span>
             </div>
-            <h3>直した口調やNG表現を承認後に残せます</h3>
-            <p>普段・仕事・公式など4場面で自動切替。DropboxやGoogle Driveで複数端末に共有できます。</p>
+            <h3>直した口調やNG表現を確認後に残せます</h3>
+            <p>普段・仕事・公式など4つの場面で切り替わり、DropboxやGoogle Driveで複数端末に共有できます。</p>
           </div>
           <div class="cap-specs">
             <span>承認制で勝手に変わらない</span>
-            <span>4場面自動切替</span>
+            <span>4場面で自動切替</span>
           </div>
         </div>
       </div>
@@ -1310,16 +1337,16 @@ footer code b { color: var(--ink); }
         <div class="opt-card featured">
           <div>
             <h3>とりあえず入れてみる</h3>
-            <p>標準設定のまま始められます。すでに導入済みの方の更新にも対応しています。</p>
+            <p>標準設定のまま始められます。導入済みの方の更新にも対応しています。</p>
           </div>
           <button type="button" class="action-btn primary" id="btn-quick-dl">ファイルをダウンロード ↓</button>
         </div>
         <div class="opt-card">
           <div>
-            <h3>設定してから作る</h3>
-            <p>避ける表現や場面、Dropboxなどの同期先を選んでから自分用を作ります。</p>
+            <h3>カスタマイズしてダウンロード</h3>
+            <p>避ける表現や場面、Dropboxなどの同期先を選んでからダウンロードします。</p>
           </div>
-          <button type="button" class="action-btn secondary" id="btn-open-custom" aria-expanded="false" aria-controls="customizer">設定を開いて作る</button>
+          <button type="button" class="action-btn secondary" id="btn-open-custom" aria-expanded="false" aria-controls="customizer">カスタマイズを開く</button>
         </div>
       </div>
 
@@ -1622,7 +1649,7 @@ document.getElementById('btn-hero-custom').addEventListener('click', () => {
     drawer.classList.add('open');
     btn.classList.add('open');
     btn.setAttribute('aria-expanded', 'true');
-    btn.textContent = '設定を閉じる';
+    btn.textContent = 'カスタマイズを閉じる';
     refreshPreview();
   }
   drawer.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1646,7 +1673,7 @@ document.getElementById('btn-open-custom').addEventListener('click', () => {
   const isOpen = drawer.classList.toggle('open');
   btn.classList.toggle('open', isOpen);
   btn.setAttribute('aria-expanded', String(isOpen));
-  btn.textContent = isOpen ? '設定を閉じる' : '設定を開いて作る';
+  btn.textContent = isOpen ? 'カスタマイズを閉じる' : 'カスタマイズを開く';
   if (isOpen) refreshPreview();
 });
 
