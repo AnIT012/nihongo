@@ -307,6 +307,8 @@ v2.2.0 時点の基準結果です（v3系での再計測は未実施）。推�
 
 Claude（Anthropic）と一緒に作りました。方針を決め、ルールの一部を書き、目隠しの判定で採用するかを決めたのは作者です。
 
+nihongo は MIT ライセンスで無料のまま開発・アップデートを続けています。日々の文章作成に役立ったら、学生の開発環境維持として [OFUSE（100円〜・会員登録不要・任意）](https://ofuse.me/754edfb1) から応援してもらえると嬉しいです。
+
 ## チーム・企業での導入相談
 
 自社専用の日本語ルール設計や社内AIへの導入・同期についてのご相談は、[お問い合わせフォーム](https://docs.google.com/forms/d/e/1FAIpQLSdub3SihSvTguflQWWttOQUnLvWf_QerZ4r2SNfMO4tYD6ACg/viewform)または [X (@sincostansinhk)](https://x.com/sincostansinhk) のDMからご連絡ください。
