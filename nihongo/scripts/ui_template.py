@@ -1,11 +1,11 @@
-"""nihongo ローカル承認 UI の HTML/CSS/JS テンプレート（Clean SaaS ワークスペース型・外部通信ゼロ）。"""
+"""nihongo 全AI共通コントロールパネル UI テンプレート（Personal中心・Clean SaaS・外部通信ゼロ）。"""
 from __future__ import annotations
 
 import json
 
 
 def render_ui_html(csrf_token: str) -> str:
-    """127.0.0.1 専用ローカル承認ワークスペースの単一 HTML を返す（外部リソース・外部通信ゼロ）。"""
+    """127.0.0.1 専用ローカル管理画面の単一 HTML を返す（外部リソース・外部通信ゼロ）。"""
     token_json = json.dumps(csrf_token)
     return f"""<!doctype html>
 <html lang="ja">
@@ -13,7 +13,7 @@ def render_ui_html(csrf_token: str) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='%23D7261E'/%3E%3C/svg%3E">
-<title>nihongo — ローカル承認・ルール管理</title>
+<title>nihongo — 全AI共通ルール管理</title>
 <style>
 :root {{
   --bg: #F7F7F8;
@@ -43,7 +43,6 @@ body {{
   -webkit-font-smoothing: antialiased;
 }}
 
-/* App Shell */
 .app {{
   display: grid;
   grid-template-columns: 248px 1fr;
@@ -63,7 +62,7 @@ body {{
   height: 100vh;
 }}
 .brand-block {{
-  padding: 4px 10px 18px;
+  padding: 4px 10px 16px;
   border-bottom: 1px solid var(--line);
   margin-bottom: 14px;
 }}
@@ -104,6 +103,11 @@ body {{
   flex-direction: column;
   gap: 3px;
 }}
+.nav-sep {{
+  height: 1px;
+  background: var(--line);
+  margin: 10px 6px;
+}}
 .tab-btn {{
   appearance: none;
   border: 1px solid transparent;
@@ -127,6 +131,11 @@ body {{
   color: var(--ink);
   font-weight: 700;
 }}
+.tab-btn.muted-nav {{
+  color: var(--muted);
+  font-size: 13px;
+}}
+.tab-btn.muted-nav.active {{ color: var(--ink); }}
 .tab-left {{
   display: inline-flex;
   align-items: center;
@@ -199,10 +208,10 @@ body {{
 }}
 .btn-side:hover {{ background: var(--bg); color: var(--ink); }}
 
-/* Main Content */
+/* Main Workspace */
 .main {{
-  padding: 28px 36px 72px;
-  max-width: 960px;
+  padding: 28px 36px 76px;
+  max-width: 1060px;
   width: 100%;
 }}
 .panel {{ display: none; }}
@@ -210,7 +219,7 @@ body {{
 
 .toast {{
   display: none;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   padding: 10px 14px;
   border-radius: 10px;
   font-size: 13.5px;
@@ -231,13 +240,35 @@ body {{
   color: var(--ok);
 }}
 
+/* Pending Banner on Personal Tab */
+.pending-banner {{
+  display: none;
+  margin-bottom: 18px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid #FECACA;
+  border-left: 4px solid var(--red);
+  box-shadow: var(--shadow-sm);
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}}
+.pending-banner.show {{ display: flex; }}
+.pending-banner-txt {{
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}}
+
 .page-head {{
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 14px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }}
 .page-head h1 {{
   font-size: 20px;
@@ -255,6 +286,32 @@ body {{
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}}
+
+/* Segmented Mode Switch */
+.seg {{
+  display: inline-flex;
+  background: #ECECF0;
+  padding: 3px;
+  border-radius: 9px;
+  gap: 2px;
+}}
+.seg-btn {{
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+}}
+.seg-btn.active {{
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
 }}
 
 /* Buttons */
@@ -293,7 +350,126 @@ body {{
   box-shadow: none;
 }}
 .btn.subtle:hover {{ color: var(--ink); background: var(--surface); }}
+.btn.sm {{ padding: 5px 10px; font-size: 12px; }}
 .btn:disabled {{ opacity: 0.45; cursor: not-allowed; }}
+
+/* Quick Add Bar on Personal Tab */
+.quick-add {{
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  grid-template-columns: 145px 155px 1fr auto;
+  gap: 8px;
+  align-items: center;
+}}
+
+/* 4-Scene Personal Grid */
+.scene-grid {{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}}
+.scene-card {{
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}}
+.scene-card.common-card {{
+  grid-column: 1 / -1;
+  border-color: var(--line-strong);
+}}
+.sc-head {{
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}}
+.sc-head h2 {{
+  font-size: 15.5px;
+  font-weight: 800;
+}}
+.sc-code {{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--muted);
+}}
+.sc-sub {{
+  font-size: 12px;
+  color: var(--muted);
+}}
+.sc-section-lbl {{
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+}}
+.chip-wrap {{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}}
+.ng-chip {{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--red-soft);
+  border: 1px solid #FECACA;
+  color: var(--red-hover);
+  font-size: 12.5px;
+  font-weight: 700;
+}}
+.ng-chip.project-chip {{
+  background: #F4F4F6;
+  border-color: var(--line-strong);
+  color: var(--ink);
+}}
+.ng-chip .proj-mark {{
+  font-size: 10.5px;
+  color: var(--muted);
+  font-weight: 600;
+}}
+.chip-x {{
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--red-hover);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  border-radius: 4px;
+}}
+.chip-x:hover {{ background: rgba(215, 38, 30, 0.14); }}
+.rule-list {{
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}}
+.rule-list li {{
+  font-size: 13px;
+  color: var(--body);
+  padding: 5px 10px;
+  background: var(--bg);
+  border-radius: 7px;
+}}
+.muted-empty {{
+  font-size: 12.5px;
+  color: var(--muted);
+}}
 
 /* Surface Card */
 .surface-card {{
@@ -303,8 +479,20 @@ body {{
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }}
+.editor-bar {{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  background: #FAFAFB;
+  font-size: 12.5px;
+  color: var(--muted);
+  gap: 10px;
+  flex-wrap: wrap;
+}}
 
-/* Inbox List */
+/* Inbox Cards */
 .card-list {{
   display: flex;
   flex-direction: column;
@@ -326,10 +514,7 @@ body {{
   border-left: 4px solid var(--red);
   background: #FFFBFB;
 }}
-.item-main {{
-  flex: 1;
-  min-width: 0;
-}}
+.item-main {{ flex: 1; min-width: 0; }}
 .item-meta {{
   display: flex;
   flex-wrap: wrap;
@@ -350,20 +535,9 @@ body {{
   color: var(--body);
   border: 1px solid var(--line);
 }}
-.pill.kind {{
-  background: #F4F4F6;
-  color: var(--ink);
-}}
-.pill.status {{
-  background: var(--ok-soft);
-  color: var(--ok);
-  border-color: #BBF7D0;
-}}
-.pill.status.rej {{
-  background: var(--bg);
-  color: var(--muted);
-  border-color: var(--line);
-}}
+.pill.kind {{ background: #F4F4F6; color: var(--ink); }}
+.pill.ok {{ background: var(--ok-soft); color: var(--ok); border-color: #BBF7D0; }}
+.pill.rej {{ background: var(--bg); color: var(--muted); border-color: var(--line); }}
 .item-val {{
   font-size: 15.5px;
   font-weight: 700;
@@ -371,11 +545,7 @@ body {{
   word-break: break-word;
   margin-bottom: 4px;
 }}
-.item-note {{
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 3px;
-}}
+.item-note {{ font-size: 13px; color: var(--muted); margin-top: 3px; }}
 .diff-line {{
   display: inline-block;
   margin-top: 6px;
@@ -386,24 +556,9 @@ body {{
   border-radius: 6px;
   padding: 4px 9px;
 }}
-.warn-msg {{
-  margin-top: 8px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--red-hover);
-}}
-.item-side {{
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  flex-shrink: 0;
-}}
-.item-actions {{
-  display: flex;
-  gap: 7px;
-  align-items: center;
-}}
+.warn-msg {{ margin-top: 8px; font-size: 12.5px; font-weight: 600; color: var(--red-hover); }}
+.item-side {{ display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }}
+.item-actions {{ display: flex; gap: 7px; align-items: center; }}
 .force-check {{
   display: inline-flex;
   align-items: center;
@@ -418,16 +573,16 @@ body {{
   background: var(--surface);
   border: 1px dashed var(--line-strong);
   border-radius: var(--radius);
-  padding: 36px 24px;
+  padding: 32px 24px;
   text-align: center;
   color: var(--muted);
   font-size: 13.5px;
 }}
 
-/* Collapsible Add Form */
+/* Collapsible Form */
 .form-box {{
   display: none;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
@@ -435,11 +590,34 @@ body {{
   box-shadow: var(--shadow-md);
 }}
 .form-box.open {{ display: block; }}
-.form-box h3 {{
-  font-size: 14.5px;
-  font-weight: 700;
-  margin-bottom: 12px;
+.form-box h3 {{ font-size: 14.5px; font-weight: 700; margin-bottom: 12px; }}
+
+/* Apps & Sync Panel */
+.block-title {{
+  font-size: 14px;
+  font-weight: 800;
+  margin: 22px 0 10px;
+  color: var(--ink);
 }}
+.block-title:first-of-type {{ margin-top: 0; }}
+.app-row {{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+}}
+.app-row:first-child {{ border-top: 0; }}
+.app-name {{ font-weight: 700; font-size: 14px; }}
+.app-path {{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--muted);
+  word-break: break-all;
+}}
+
 .grid-2 {{
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -472,24 +650,13 @@ textarea.mono {{
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 13px;
   line-height: 1.65;
-  min-height: 320px;
+  min-height: 300px;
   border: 0;
   border-radius: 0;
   padding: 16px 18px;
   resize: vertical;
 }}
 textarea.mono:focus {{ box-shadow: none; }}
-
-.editor-bar {{
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--line);
-  background: #FAFAFB;
-  font-size: 12.5px;
-  color: var(--muted);
-}}
 
 .findings-box {{
   margin-top: 16px;
@@ -504,35 +671,33 @@ textarea.mono:focus {{ box-shadow: none; }}
   border-left: 4px solid var(--red);
   background: #FFFBFB;
 }}
-.findings-box ul {{
-  margin-top: 8px;
-  padding-left: 20px;
-}}
-.findings-box li {{
-  margin: 4px 0;
-  font-size: 13.5px;
-}}
+.findings-box ul {{ margin-top: 8px; padding-left: 20px; }}
+.findings-box li {{ margin: 4px 0; font-size: 13.5px; }}
 
-.sync-list {{
-  margin-top: 18px;
+details.skill-box {{
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 16px 18px;
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  padding: 12px 16px;
+  margin-top: 10px;
 }}
-.sync-list h3 {{
-  font-size: 14px;
+details.skill-box summary {{
+  cursor: pointer;
   font-weight: 700;
-  margin-bottom: 6px;
+  font-size: 13.5px;
 }}
-.sync-row {{
+pre.skill-pre {{
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border-radius: 8px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12.5px;
-  padding: 7px 0;
-  border-top: 1px solid var(--line);
-  word-break: break-all;
-  color: var(--body);
+  font-size: 12px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 260px;
+  overflow-y: auto;
 }}
 
 .history-head {{
@@ -542,6 +707,9 @@ textarea.mono:focus {{ box-shadow: none; }}
   margin: 24px 0 10px;
 }}
 
+@media (max-width: 1040px) {{
+  .scene-grid {{ grid-template-columns: 1fr; }}
+}}
 @media (max-width: 820px) {{
   .app {{ grid-template-columns: 1fr; }}
   .sidebar {{
@@ -559,11 +727,8 @@ textarea.mono:focus {{ box-shadow: none; }}
     margin-bottom: 10px;
   }}
   .logo {{ margin-bottom: 0; font-size: 22px; }}
-  .nav-list {{
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 6px;
-  }}
+  .nav-list {{ flex-direction: row; flex-wrap: wrap; gap: 6px; }}
+  .nav-sep {{ display: none; }}
   .tab-btn {{ padding: 7px 11px; font-size: 12.5px; }}
   .side-foot {{
     margin-top: 10px;
@@ -575,9 +740,10 @@ textarea.mono:focus {{ box-shadow: none; }}
   .meta-bar {{ max-width: 65%; }}
   .btn-side {{ width: auto; }}
   .main {{ padding: 20px 16px 56px; }}
+  .quick-add {{ grid-template-columns: 1fr; }}
+  .scene-grid, .grid-2 {{ grid-template-columns: 1fr; }}
   .item-card {{ flex-direction: column; gap: 12px; }}
   .item-side {{ align-items: flex-start; width: 100%; }}
-  .grid-2 {{ grid-template-columns: 1fr; }}
 }}
 </style>
 </head>
@@ -587,21 +753,22 @@ textarea.mono:focus {{ box-shadow: none; }}
     <div>
       <div class="brand-block">
         <div class="logo">nih<i></i>ngo</div>
-        <span class="local-pill">Local · 外部通信なし</span>
+        <span class="local-pill">全AI共通 · 外部通信なし</span>
       </div>
       <nav class="nav-list" aria-label="メニュー">
-        <button class="tab-btn active" data-tab="inbox" type="button">
+        <button class="tab-btn active" data-tab="profile" type="button">
+          <span class="tab-left"><span class="tab-ico">≡</span>自分のルール</span>
+        </button>
+        <button class="tab-btn" data-tab="inbox" type="button">
           <span class="tab-left"><span class="tab-ico">●</span>承認待ち</span>
           <span class="count-dot" id="pending-count">0</span>
         </button>
-        <button class="tab-btn" data-tab="profile" type="button">
-          <span class="tab-left"><span class="tab-ico">≡</span>自分のルール</span>
+        <button class="tab-btn" data-tab="connect" type="button">
+          <span class="tab-left"><span class="tab-ico">⇄</span>AI接続・同期</span>
         </button>
-        <button class="tab-btn" data-tab="check" type="button">
-          <span class="tab-left"><span class="tab-ico">✓</span>0トークン検査</span>
-        </button>
-        <button class="tab-btn" data-tab="export" type="button">
-          <span class="tab-left"><span class="tab-ico">↓</span>1ファイル書き出し</span>
+        <div class="nav-sep"></div>
+        <button class="tab-btn muted-nav" data-tab="check" type="button">
+          <span class="tab-left"><span class="tab-ico">✓</span>動作テスト（0トークン）</span>
         </button>
       </nav>
     </div>
@@ -615,12 +782,76 @@ textarea.mono:focus {{ box-shadow: none; }}
   <main class="main">
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <!-- Inbox Panel -->
-    <section class="panel active" id="panel-inbox">
+    <!-- 1. Personal Rules Panel (DEFAULT MAIN VIEW) -->
+    <section class="panel active" id="panel-profile">
+      <div class="pending-banner" id="pending-banner">
+        <span class="pending-banner-txt" id="pending-banner-txt">承認待ちの候補があります</span>
+        <button class="btn primary sm" id="btn-goto-inbox" type="button">承認待ちを確認 →</button>
+      </div>
+
       <div class="page-head">
         <div>
-          <h1>受信箱の承認待ち</h1>
-          <p class="page-sub">普段の会話から拾われた候補です。承認したものだけが profile.md に反映されます。</p>
+          <h1>自分のルール（Personal）</h1>
+          <p class="page-sub">全AIが共通で参照する正本（profile.md）です。ここで変更すると接続中の全AIへ反映されます。</p>
+        </div>
+        <div class="head-actions">
+          <div class="seg" role="tablist" aria-label="表示形式">
+            <button class="seg-btn active" id="mode-cards" type="button">4場面カード</button>
+            <button class="seg-btn" id="mode-raw" type="button">Markdown（生ファイル）</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual 4-Scene Card View -->
+      <div id="view-cards">
+        <div class="quick-add">
+          <select id="qa-scene" aria-label="場面">
+            <option value="common">共通（全場面）</option>
+            <option value="casual">普段・雑談</option>
+            <option value="work">社内・同僚</option>
+            <option value="formal">社外・目上</option>
+          </select>
+          <select id="qa-kind" aria-label="種類">
+            <option value="forbidden">避ける表現（NG）</option>
+            <option value="rule">書く時の考え方</option>
+            <option value="tone">口調・記号</option>
+            <option value="first_person">一人称</option>
+          </select>
+          <input type="text" id="qa-value" placeholder="追加したい表現やルールを入力（例：ご査収のほど）">
+          <button class="btn dark" id="btn-qa-add" type="button">追加</button>
+        </div>
+
+        <div class="scene-grid" id="scene-grid"></div>
+      </div>
+
+      <!-- Raw Markdown Editor View -->
+      <div id="view-raw" style="display:none;">
+        <div class="surface-card">
+          <div class="editor-bar">
+            <span id="editor-path">profile.md</span>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span>UTF-8 · PII自動ガード有効</span>
+              <button class="btn primary sm" id="btn-save-profile" type="button">変更を保存</button>
+            </div>
+          </div>
+          <textarea class="mono" id="profile-editor" spellcheck="false"></textarea>
+        </div>
+        <div class="surface-card" id="project-raw-card" style="display:none;margin-top:14px;">
+          <div class="editor-bar">
+            <span id="project-raw-path">案件別上書き（.nihongo/profile.md）</span>
+            <span>読み取り専用プレビュー（2層適用中）</span>
+          </div>
+          <textarea class="mono" id="project-raw-editor" readonly style="min-height:140px;background:#FAFAFB;"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Pending Inbox Panel -->
+    <section class="panel" id="panel-inbox">
+      <div class="page-head">
+        <div>
+          <h1>承認待ち（受信箱）</h1>
+          <p class="page-sub">普段の会話で直した癖の候補です。承認した分だけが profile.md に反映されます（--strict-hitl 運用にも対応）。</p>
         </div>
         <div class="head-actions">
           <button class="btn" id="btn-toggle-add" type="button">＋ 候補を追加</button>
@@ -644,7 +875,7 @@ textarea.mono:focus {{ box-shadow: none; }}
           <div>
             <label class="fld" for="prop-kind">種類</label>
             <select id="prop-kind">
-              <option value="forbidden">NG表現（絶対に言わない）</option>
+              <option value="forbidden">避ける表現（NG）</option>
               <option value="rule">書く時の考え方</option>
               <option value="tone">口調・記号</option>
               <option value="first_person">一人称</option>
@@ -673,41 +904,59 @@ textarea.mono:focus {{ box-shadow: none; }}
       </div>
     </section>
 
-    <!-- Profile Panel -->
-    <section class="panel" id="panel-profile">
+    <!-- 3. All-AI Connect & Sync Panel -->
+    <section class="panel" id="panel-connect">
       <div class="page-head">
         <div>
-          <h1>自分のルール（profile.md）</h1>
-          <p class="page-sub">保存時にメール・電話・APIキーが含まれていないか自動で検査します。</p>
-        </div>
-        <div class="head-actions">
-          <button class="btn primary" id="btn-save-profile" type="button">変更を保存</button>
+          <h1>AI接続・同期</h1>
+          <p class="page-sub">このPC内のAIアプリ接続状況、複数PC同期、他端末への1ファイル書き出しをまとめて確認できます。</p>
         </div>
       </div>
 
-      <div class="surface-card">
-        <div class="editor-bar">
-          <span id="editor-path">profile.md</span>
-          <span>UTF-8 · PII自動ガード有効</span>
+      <div class="block-title">この PC の AI アプリ接続状況（MCP）</div>
+      <div class="surface-card" id="mcp-list"></div>
+
+      <div class="block-title">複数 PC 同期フォルダ候補（Google Drive / Dropbox / OneDrive）</div>
+      <div class="surface-card" id="sync-list-card"></div>
+
+      <div class="block-title">他 PC・スマホ AI へ持ち運ぶ（nihongo-setup.md）</div>
+      <div class="surface-card" style="padding:16px 18px;">
+        <div class="grid-2" style="margin-bottom:12px;">
+          <div>
+            <label class="fld" for="exp-scene">既定の場面</label>
+            <select id="exp-scene">
+              <option value="work">仕事・社内チャット・ドキュメント</option>
+              <option value="formal">社外メール・目上・公式お知らせ</option>
+              <option value="casual">普段のチャット・雑談</option>
+            </select>
+          </div>
+          <div>
+            <label class="fld" for="exp-sync">他 PC 導入時の推奨保存先</label>
+            <select id="exp-sync">
+              <option value="local">ローカル（~/.nihongo/profile.md）</option>
+              <option value="gdrive">自分の Google Drive 同期フォルダ</option>
+            </select>
+          </div>
         </div>
-        <textarea class="mono" id="profile-editor" spellcheck="false"></textarea>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button class="btn primary" id="btn-export-dl" type="button">今のルール入り nihongo-setup.md をダウンロード ↓</button>
+        </div>
+        <details style="margin-top:12px;">
+          <summary style="cursor:pointer;font-size:12.5px;font-weight:700;color:var(--muted);">生成ファイルの中身を見る</summary>
+          <textarea class="mono" id="export-preview" readonly style="margin-top:8px;min-height:180px;border:1px solid var(--line);border-radius:8px;background:#FAFAFB;"></textarea>
+        </details>
       </div>
 
-      <div class="sync-list" id="sync-box" style="display:none;">
-        <h3>この PC で検出した同期フォルダ候補</h3>
-        <p style="font-size:12.5px;color:var(--muted);margin-bottom:8px;">
-          <code>nihongo-mcp init --target all --home "&lt;パス&gt;"</code> に渡すと複数 PC で同じルールを共有できます。
-        </p>
-        <div id="sync-rows"></div>
-      </div>
+      <div class="block-title">入っているスキルの中身（読み取り専用）</div>
+      <div id="skills-wrap"></div>
     </section>
 
-    <!-- 0-Token Check Panel -->
+    <!-- 4. Utility: 0-Token Test Panel -->
     <section class="panel" id="panel-check">
       <div class="page-head">
         <div>
-          <h1>0トークン意味ズレ検査</h1>
-          <p class="page-sub">AI編集後の数字・日時・「必ず」の弱まりと、避ける表現の混入をローカルで即時検出します。</p>
+          <h1>動作テスト（0トークン検査）</h1>
+          <p class="page-sub">普段はフックやMCPが裏で自動実行する検査エンジンを、送信前チェックやルール確認用に試せます。</p>
         </div>
         <div class="head-actions">
           <select id="check-scene" style="width:auto;">
@@ -732,45 +981,6 @@ textarea.mono:focus {{ box-shadow: none; }}
       </div>
       <div id="check-result"></div>
     </section>
-
-    <!-- Export Panel -->
-    <section class="panel" id="panel-export">
-      <div class="page-head">
-        <div>
-          <h1>1ファイル書き出し（nihongo-setup.md）</h1>
-          <p class="page-sub">今のルールを引き継いだ導入ファイルを生成します。別PCやスマホのChatGPT/Claudeへそのまま添付できます。</p>
-        </div>
-        <div class="head-actions">
-          <button class="btn primary" id="btn-export-dl" type="button">ダウンロード ↓</button>
-        </div>
-      </div>
-
-      <div class="grid-2" style="margin-bottom:14px;">
-        <div class="surface-card" style="padding:14px 16px;">
-          <label class="fld" for="exp-scene">既定の場面</label>
-          <select id="exp-scene">
-            <option value="work">仕事・社内チャット・ドキュメント</option>
-            <option value="formal">社外メール・目上・公式お知らせ</option>
-            <option value="casual">普段のチャット・雑談</option>
-          </select>
-        </div>
-        <div class="surface-card" style="padding:14px 16px;">
-          <label class="fld" for="exp-sync">他 PC 導入時の推奨保存先</label>
-          <select id="exp-sync">
-            <option value="local">ローカル（~/.nihongo/profile.md）</option>
-            <option value="gdrive">自分の Google Drive 同期フォルダ</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="surface-card">
-        <div class="editor-bar">
-          <span>nihongo-setup.md プレビュー</span>
-          <span>ローカル生成・外部送信なし</span>
-        </div>
-        <textarea class="mono" id="export-preview" readonly></textarea>
-      </div>
-    </section>
   </main>
 </div>
 
@@ -778,10 +988,31 @@ textarea.mono:focus {{ box-shadow: none; }}
 const CSRF = {token_json};
 let STATE = null;
 
+const SCENE_META = [
+  {{ key: 'common', title: '共通ルール', sub: '全場面で適用（避ける表現・一人称・基本方針）' }},
+  {{ key: 'work', title: '社内・同僚', sub: 'Slack・PR・社内ドキュメント' }},
+  {{ key: 'formal', title: '社外・目上', sub: '取引先メール・公式お知らせ（崩し表現ガードあり）' }},
+  {{ key: 'casual', title: '普段・雑談', sub: '友達・メモ・カジュアルな連絡' }},
+];
+
+let toastTimer = null;
 function showToast(msg, kind) {{
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.className = 'toast show ' + (kind || '');
+  if (toastTimer) clearTimeout(toastTimer);
+  if (kind !== 'error') {{
+    toastTimer = setTimeout(() => {{ el.className = 'toast'; }}, 4500);
+  }}
+}}
+
+function switchTab(tabKey) {{
+  const toastEl = document.getElementById('toast');
+  if (toastEl && !toastEl.classList.contains('error')) {{
+    toastEl.className = 'toast';
+  }}
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabKey));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tabKey));
 }}
 
 async function apiGet(path) {{
@@ -806,6 +1037,21 @@ async function apiPost(path, payload) {{
   return data;
 }}
 
+async function copyCmd(text) {{
+  try {{
+    await navigator.clipboard.writeText(text);
+    showToast('コマンドをコピーしました: ' + text, 'ok');
+  }} catch (_) {{
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    showToast('コマンドをコピーしました: ' + text, 'ok');
+  }}
+}}
+
 function shortPath(p) {{
   if (!p) return '';
   const parts = p.split(/[\\\\/]/);
@@ -822,13 +1068,142 @@ function renderMeta(state) {{
   bar.appendChild(p);
   document.getElementById('editor-path').textContent = state.profile.profile_path || 'profile.md';
 
+  const projCard = document.getElementById('project-raw-card');
   if (state.profile.project_profile_path) {{
     const l = document.createElement('div');
     l.className = 'meta-item layer';
     l.title = state.profile.project_profile_path;
     l.textContent = '2層: ' + shortPath(state.profile.project_profile_path);
     bar.appendChild(l);
+    projCard.style.display = 'block';
+    document.getElementById('project-raw-path').textContent = '案件別上書き: ' + state.profile.project_profile_path;
+    document.getElementById('project-raw-editor').value = state.project_raw || '';
+  }} else {{
+    projCard.style.display = 'none';
   }}
+}}
+
+function renderSceneCards(state) {{
+  const grid = document.getElementById('scene-grid');
+  grid.textContent = '';
+  const gStruct = state.structured_global || {{}};
+  const pStruct = state.structured_project || null;
+
+  SCENE_META.forEach(meta => {{
+    const card = document.createElement('div');
+    card.className = 'scene-card' + (meta.key === 'common' ? ' common-card' : '');
+
+    const head = document.createElement('div');
+    head.className = 'sc-head';
+    const left = document.createElement('div');
+    const h2 = document.createElement('h2');
+    h2.textContent = meta.title;
+    const sub = document.createElement('div');
+    sub.className = 'sc-sub';
+    sub.textContent = meta.sub;
+    left.appendChild(h2);
+    left.appendChild(sub);
+    const code = document.createElement('span');
+    code.className = 'sc-code';
+    code.textContent = '[' + meta.key + ']';
+    head.appendChild(left);
+    head.appendChild(code);
+    card.appendChild(head);
+
+    const gSec = gStruct[meta.key] || {{ first_person: '', forbidden: [], rules: [] }};
+    const pSec = pStruct ? (pStruct[meta.key] || {{ forbidden: [], rules: [] }}) : {{ forbidden: [], rules: [] }};
+
+    if (meta.key === 'common' && gSec.first_person) {{
+      const fpWrap = document.createElement('div');
+      const fpLbl = document.createElement('div');
+      fpLbl.className = 'sc-section-lbl';
+      fpLbl.textContent = '一人称';
+      const fpVal = document.createElement('span');
+      fpVal.className = 'pill kind';
+      fpVal.textContent = gSec.first_person;
+      fpWrap.appendChild(fpLbl);
+      fpWrap.appendChild(fpVal);
+      card.appendChild(fpWrap);
+    }}
+
+    // Forbidden chips (global removable + project overlay read-only)
+    const ngSec = document.createElement('div');
+    const ngLbl = document.createElement('div');
+    ngLbl.className = 'sc-section-lbl';
+    ngLbl.textContent = '避ける表現（NG）';
+    ngSec.appendChild(ngLbl);
+
+    const chips = document.createElement('div');
+    chips.className = 'chip-wrap';
+    const gForb = gSec.forbidden || [];
+    const pForb = (pSec.forbidden || []).filter(w => !gForb.includes(w));
+
+    if (gForb.length === 0 && pForb.length === 0) {{
+      const empty = document.createElement('span');
+      empty.className = 'muted-empty';
+      empty.textContent = '未登録';
+      chips.appendChild(empty);
+    }} else {{
+      gForb.forEach(word => {{
+        const chip = document.createElement('span');
+        chip.className = 'ng-chip';
+        chip.appendChild(document.createTextNode(word));
+        const xBtn = document.createElement('button');
+        xBtn.type = 'button';
+        xBtn.className = 'chip-x';
+        xBtn.title = '「' + word + '」を削除';
+        xBtn.textContent = '×';
+        xBtn.addEventListener('click', async () => {{
+          try {{
+            await apiPost('/api/profile/remove-forbidden', {{ scene: meta.key, value: word }});
+            showToast('「' + word + '」を削除しました。', 'ok');
+            await loadState();
+          }} catch (err) {{
+            showToast('削除できませんでした: ' + err.message, 'error');
+          }}
+        }});
+        chip.appendChild(xBtn);
+        chips.appendChild(chip);
+      }});
+      pForb.forEach(word => {{
+        const chip = document.createElement('span');
+        chip.className = 'ng-chip project-chip';
+        chip.appendChild(document.createTextNode(word));
+        const pm = document.createElement('span');
+        pm.className = 'proj-mark';
+        pm.textContent = '案件別';
+        chip.appendChild(pm);
+        chips.appendChild(chip);
+      }});
+    }}
+    ngSec.appendChild(chips);
+    card.appendChild(ngSec);
+
+    // Style rules
+    const rSec = document.createElement('div');
+    const rLbl = document.createElement('div');
+    rLbl.className = 'sc-section-lbl';
+    rLbl.textContent = meta.key === 'common' ? '書く時の考え方' : '口調・ルール';
+    rSec.appendChild(rLbl);
+    const rules = [...(gSec.rules || []), ...(pSec.rules || []).map(r => '【案件別】' + r)];
+    if (rules.length === 0) {{
+      const empty = document.createElement('span');
+      empty.className = 'muted-empty';
+      empty.textContent = '未登録';
+      rSec.appendChild(empty);
+    }} else {{
+      const ul = document.createElement('ul');
+      ul.className = 'rule-list';
+      rules.forEach(r => {{
+        const li = document.createElement('li');
+        li.textContent = r;
+        ul.appendChild(li);
+      }});
+      rSec.appendChild(ul);
+    }}
+    card.appendChild(rSec);
+    grid.appendChild(card);
+  }});
 }}
 
 function buildItemCard(item, isHistory) {{
@@ -858,7 +1233,7 @@ function buildItemCard(item, isHistory) {{
   }}
   if (isHistory) {{
     const st = document.createElement('span');
-    st.className = 'pill status' + (item.status === 'approved' ? '' : ' rej');
+    st.className = 'pill ' + (item.status === 'approved' ? 'ok' : 'rej');
     st.textContent = item.status === 'approved' ? '承認済み' : '却下済み';
     meta.appendChild(st);
   }}
@@ -947,16 +1322,120 @@ function buildItemCard(item, isHistory) {{
   return card;
 }}
 
+function renderConnectPanel(state) {{
+  const mcpEl = document.getElementById('mcp-list');
+  mcpEl.textContent = '';
+  (state.mcp_clients || []).forEach(c => {{
+    const row = document.createElement('div');
+    row.className = 'app-row';
+    const left = document.createElement('div');
+    const name = document.createElement('div');
+    name.className = 'app-name';
+    name.textContent = c.label;
+    const p = document.createElement('div');
+    p.className = 'app-path';
+    p.textContent = c.config_path;
+    left.appendChild(name);
+    left.appendChild(p);
+
+    const right = document.createElement('div');
+    right.style.display = 'flex';
+    right.style.alignItems = 'center';
+    right.style.gap = '8px';
+    const badge = document.createElement('span');
+    badge.className = 'pill ' + (c.configured ? 'ok' : 'rej');
+    badge.textContent = c.configured ? '接続済み' : (c.error ? 'JSONエラー' : '未接続');
+    right.appendChild(badge);
+    if (!c.configured) {{
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn sm';
+      btn.textContent = '登録コマンドをコピー';
+      btn.addEventListener('click', () => copyCmd(c.init_cmd));
+      right.appendChild(btn);
+    }}
+    row.appendChild(left);
+    row.appendChild(right);
+    mcpEl.appendChild(row);
+  }});
+
+  const syncEl = document.getElementById('sync-list-card');
+  syncEl.textContent = '';
+  const folders = state.sync_folders || [];
+  if (folders.length === 0) {{
+    const r = document.createElement('div');
+    r.className = 'app-row';
+    r.textContent = '既知のクラウド同期フォルダは検出されませんでした（ローカル既定を使用中）。';
+    r.style.color = '#63636B';
+    syncEl.appendChild(r);
+  }} else {{
+    folders.forEach(f => {{
+      const row = document.createElement('div');
+      row.className = 'app-row';
+      const left = document.createElement('div');
+      const name = document.createElement('div');
+      name.className = 'app-name';
+      name.textContent = f.provider;
+      const p = document.createElement('div');
+      p.className = 'app-path';
+      p.textContent = f.suggested_home;
+      left.appendChild(name);
+      left.appendChild(p);
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn sm';
+      btn.textContent = '同期コマンドをコピー';
+      btn.addEventListener('click', () => copyCmd('nihongo-mcp init --target all --home "' + f.suggested_home + '"'));
+      row.appendChild(left);
+      row.appendChild(btn);
+      syncEl.appendChild(row);
+    }});
+  }}
+
+  const skillsWrap = document.getElementById('skills-wrap');
+  skillsWrap.textContent = '';
+  const previews = state.skills_preview || {{}};
+  const defs = [
+    ['lite', 'Lite 常駐ルール（nihongo/ALWAYS.md）'],
+    ['web', 'Web・スマホ版（nihongo/WEB.md）'],
+  ];
+  defs.forEach(([k, label]) => {{
+    if (!previews[k]) return;
+    const det = document.createElement('details');
+    det.className = 'skill-box';
+    const sum = document.createElement('summary');
+    sum.textContent = label;
+    const pre = document.createElement('pre');
+    pre.className = 'skill-pre';
+    pre.textContent = previews[k];
+    det.appendChild(sum);
+    det.appendChild(pre);
+    skillsWrap.appendChild(det);
+  }});
+}}
+
 async function loadState() {{
   try {{
     STATE = await apiGet('/api/state');
     renderMeta(STATE);
+    renderSceneCards(STATE);
+    renderConnectPanel(STATE);
 
     const pending = STATE.pending_inbox || [];
     const cntEl = document.getElementById('pending-count');
     cntEl.textContent = String(pending.length);
     cntEl.className = 'count-dot' + (pending.length === 0 ? ' zero' : '');
     document.getElementById('btn-approve-all').disabled = pending.length === 0;
+
+    const banner = document.getElementById('pending-banner');
+    if (pending.length > 0) {{
+      document.getElementById('pending-banner-txt').textContent =
+        '普段の会話から拾われた承認待ちの候補が ' + pending.length + ' 件あります。';
+      banner.classList.add('show');
+    }} else {{
+      banner.classList.remove('show');
+    }}
 
     const listEl = document.getElementById('inbox-list');
     listEl.textContent = '';
@@ -982,22 +1461,6 @@ async function loadState() {{
     }}
 
     document.getElementById('profile-editor').value = STATE.profile.global_raw || STATE.default_template || '';
-
-    const syncBox = document.getElementById('sync-box');
-    const syncRows = document.getElementById('sync-rows');
-    syncRows.textContent = '';
-    const folders = STATE.sync_folders || [];
-    if (folders.length > 0) {{
-      syncBox.style.display = 'block';
-      folders.forEach(f => {{
-        const row = document.createElement('div');
-        row.className = 'sync-row';
-        row.textContent = '[' + f.provider + '] ' + f.suggested_home;
-        syncRows.appendChild(row);
-      }});
-    }} else {{
-      syncBox.style.display = 'none';
-    }}
     await refreshExportPreview();
   }} catch (err) {{
     showToast('読み込みに失敗しました: ' + err.message, 'error');
@@ -1016,15 +1479,48 @@ async function refreshExportPreview() {{
 }}
 
 document.querySelectorAll('.tab-btn').forEach(btn => {{
-  btn.addEventListener('click', () => {{
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-  }});
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+}});
+document.getElementById('btn-goto-inbox').addEventListener('click', () => switchTab('inbox'));
+document.getElementById('btn-reload').addEventListener('click', loadState);
+
+document.getElementById('mode-cards').addEventListener('click', () => {{
+  document.getElementById('mode-cards').classList.add('active');
+  document.getElementById('mode-raw').classList.remove('active');
+  document.getElementById('view-cards').style.display = 'block';
+  document.getElementById('view-raw').style.display = 'none';
+}});
+document.getElementById('mode-raw').addEventListener('click', () => {{
+  document.getElementById('mode-raw').classList.add('active');
+  document.getElementById('mode-cards').classList.remove('active');
+  document.getElementById('view-raw').style.display = 'block';
+  document.getElementById('view-cards').style.display = 'none';
 }});
 
-document.getElementById('btn-reload').addEventListener('click', loadState);
+document.getElementById('btn-qa-add').addEventListener('click', async () => {{
+  const scene = document.getElementById('qa-scene').value;
+  const kind = document.getElementById('qa-kind').value;
+  const inp = document.getElementById('qa-value');
+  const value = inp.value.trim();
+  if (!value) {{
+    showToast('追加する内容を入力してください。', 'error');
+    return;
+  }}
+  try {{
+    const res = await apiPost('/api/profile/add-item', {{ scene, kind, value }});
+    inp.value = '';
+    showToast(res.message || 'profile.md に追加しました。', 'ok');
+    await loadState();
+  }} catch (err) {{
+    showToast(err.message, 'error');
+  }}
+}});
+document.getElementById('qa-value').addEventListener('keydown', (e) => {{
+  if (e.key === 'Enter') {{
+    e.preventDefault();
+    document.getElementById('btn-qa-add').click();
+  }}
+}});
 
 document.getElementById('btn-toggle-add').addEventListener('click', () => {{
   document.getElementById('add-form-box').classList.toggle('open');

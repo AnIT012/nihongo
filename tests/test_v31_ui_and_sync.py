@@ -110,6 +110,78 @@ class LayeredProfileAndSyncTests(unittest.TestCase):
         self.assertIsNone(inbox_mod.find_project_profile("   ", global_profile_path="gdrive://nihongo/profile.md"))
         self.assertIsNone(inbox_mod.find_project_profile("/nonexistent_nihongo_dir_12345", global_profile_path="gdrive://nihongo/profile.md"))
 
+    def test_structured_profile_parse_add_and_remove(self) -> None:
+        raw = (
+            "# 私の書き方\n\n"
+            "## [common]\n"
+            "- 一人称：私\n"
+            "- 絶対に言わない表現：「いただけますと幸いです」、「もし、よろしければ」、（例：〜）\n"
+            "- 書く時の考え方：理由の後ろは読点を打たない。短く書く\n\n"
+            "## [work]\n"
+            "- 場面：社内チャット・PR\n"
+            "- 口調・記号：簡潔なです・ます\n"
+        )
+        parsed = inbox_mod.parse_profile_structured(raw)
+        self.assertEqual(parsed["common"]["first_person"], "私")
+        self.assertEqual(
+            parsed["common"]["forbidden"],
+            ["いただけますと幸いです", "もし、よろしければ"],
+        )
+        self.assertEqual(
+            parsed["common"]["rules"],
+            ["理由の後ろは読点を打たない", "短く書く"],
+        )
+        self.assertEqual(parsed["work"]["rules"], ["簡潔なです・ます"])
+        self.assertEqual(parsed["formal"]["forbidden"], [])
+
+        with tempfile.TemporaryDirectory() as d:
+            store = inbox_mod.LocalFileStorage(home=d)
+            r1 = inbox_mod.add_profile_rule_direct(
+                scene="common", kind="forbidden", value="ご査収のほど", storage=store
+            )
+            self.assertTrue(r1["added"])
+            r2 = inbox_mod.add_profile_rule_direct(
+                scene="common", kind="forbidden", value="恐れ入りますが", storage=store
+            )
+            self.assertTrue(r2["added"])
+            r_fp = inbox_mod.add_profile_rule_direct(
+                scene="work", kind="first_person", value="私", storage=store
+            )
+            self.assertTrue(r_fp["added"])
+
+            # PII guard and [formal] guard enforced on direct add
+            with self.assertRaises(ValueError):
+                inbox_mod.add_profile_rule_direct(
+                    scene="common", kind="rule", value="連絡先 user@example.com", storage=store
+                )
+            with self.assertRaises(ValueError):
+                inbox_mod.add_profile_rule_direct(
+                    scene="formal", kind="tone", value="語尾に「っす」を使う", storage=store
+                )
+
+            # Surgical removal preserves remaining forbidden expression and other fields
+            rem = inbox_mod.remove_forbidden_from_profile(
+                scene="common", value="ご査収のほど", storage=store
+            )
+            self.assertTrue(rem["removed"])
+            after = inbox_mod.parse_profile_structured(store.read_profile_text())
+            self.assertEqual(after["common"]["forbidden"], ["恐れ入りますが"])
+            self.assertEqual(after["common"]["first_person"], "私")
+
+            # Removing the last forbidden item leaves empty list cleanly
+            rem2 = inbox_mod.remove_forbidden_from_profile(
+                scene="common", value="恐れ入りますが", storage=store
+            )
+            self.assertTrue(rem2["removed"])
+            after2 = inbox_mod.parse_profile_structured(store.read_profile_text())
+            self.assertEqual(after2["common"]["forbidden"], [])
+
+            # Removing nonexistent item returns removed=False without crashing
+            rem3 = inbox_mod.remove_forbidden_from_profile(
+                scene="common", value="存在しない表現", storage=store
+            )
+            self.assertFalse(rem3["removed"])
+
 
 class FakeDriveBackend:
     """Google Drive REST API v3 のインメモリ擬似バックエンド（単体テスト用）。"""
@@ -484,6 +556,68 @@ class LocalUiServerTests(unittest.TestCase):
         exp = json.loads(raw)
         self.assertIn("いただけますと幸いです", exp["markdown"])
         self.assertIn("確認カード 1", exp["markdown"])
+
+    def test_personal_visual_endpoints_and_state_metadata(self) -> None:
+        h = {"X-Nihongo-CSRF": self.csrf}
+        # 1. Direct add via /api/profile/add-item
+        st, _, raw = self._request(
+            "POST",
+            "/api/profile/add-item",
+            body={"scene": "common", "kind": "forbidden", "value": "ご査収のほど"},
+            headers=h,
+        )
+        self.assertEqual(st, 200)
+        self.assertTrue(json.loads(raw)["added"])
+
+        st, _, raw = self._request(
+            "POST",
+            "/api/profile/add-item",
+            body={"scene": "common", "kind": "forbidden", "value": "恐れ入りますが"},
+            headers=h,
+        )
+        self.assertEqual(st, 200)
+
+        # PII & [formal] guard rejected with 400
+        st_pii, _, _ = self._request(
+            "POST",
+            "/api/profile/add-item",
+            body={"scene": "common", "kind": "rule", "value": "mail: test@example.com"},
+            headers=h,
+        )
+        self.assertEqual(st_pii, 400)
+        st_formal, _, _ = self._request(
+            "POST",
+            "/api/profile/add-item",
+            body={"scene": "formal", "kind": "tone", "value": "語尾に「っす」を使う"},
+            headers=h,
+        )
+        self.assertEqual(st_formal, 400)
+
+        # 2. Verify /api/state exposes structured_global, mcp_clients, skills_preview
+        st, _, raw = self._request("GET", "/api/state")
+        self.assertEqual(st, 200)
+        state = json.loads(raw)
+        self.assertIn("ご査収のほど", state["structured_global"]["common"]["forbidden"])
+        self.assertIn("恐れ入りますが", state["structured_global"]["common"]["forbidden"])
+        self.assertEqual(len(state["mcp_clients"]), 4)
+        self.assertIn("lite", state["skills_preview"])
+        self.assertIn("web", state["skills_preview"])
+
+        # 3. Remove 1 forbidden chip via /api/profile/remove-forbidden
+        st, _, raw = self._request(
+            "POST",
+            "/api/profile/remove-forbidden",
+            body={"scene": "common", "value": "ご査収のほど"},
+            headers=h,
+        )
+        self.assertEqual(st, 200)
+        self.assertTrue(json.loads(raw)["removed"])
+
+        st, _, raw = self._request("GET", "/api/state")
+        self.assertEqual(st, 200)
+        state_after = json.loads(raw)
+        self.assertNotIn("ご査収のほど", state_after["structured_global"]["common"]["forbidden"])
+        self.assertIn("恐れ入りますが", state_after["structured_global"]["common"]["forbidden"])
 
 
 if __name__ == "__main__":

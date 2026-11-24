@@ -67,6 +67,62 @@ def _load_web_md_fallback() -> str | None:
     return None
 
 
+def _load_skill_previews() -> dict[str, str]:
+    """入っている Lite (ALWAYS.md) / Web版 (WEB.md) の読み取り専用プレビューを返す。"""
+    base = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+    previews: dict[str, str] = {}
+    for key, fname in (("lite", "ALWAYS.md"), ("web", "WEB.md")):
+        p = os.path.join(base, fname)
+        if os.path.isfile(p):
+            try:
+                with open(p, encoding="utf-8-sig") as f:
+                    previews[key] = f.read().strip()
+            except (OSError, UnicodeDecodeError):
+                pass
+    return previews
+
+
+def _collect_mcp_clients() -> list[dict[str, Any]]:
+    """ローカル PC の主要 AI アプリの MCP 登録状況を読み取り専用で確認する。"""
+    if __package__:
+        from . import mcp_server as mcp_mod
+    else:
+        import mcp_server as mcp_mod  # noqa: E402
+
+    labels = {
+        "claude-desktop": "Claude Desktop",
+        "claude-code": "Claude Code",
+        "cursor": "Cursor",
+        "antigravity": "Antigravity",
+    }
+    clients: list[dict[str, Any]] = []
+    for target in mcp_mod.INIT_TARGETS:
+        cfg_path = mcp_mod.resolve_client_config_path(target)
+        exists = os.path.isfile(cfg_path)
+        configured = False
+        error: str | None = None
+        if exists:
+            try:
+                with open(cfg_path, encoding="utf-8-sig") as f:
+                    raw = f.read()
+                if raw.strip():
+                    parsed = json.loads(raw)
+                    if isinstance(parsed, dict) and isinstance(parsed.get("mcpServers"), dict):
+                        configured = "nihongo" in parsed["mcpServers"]
+            except Exception as exc:
+                error = str(exc)
+        clients.append({
+            "target": target,
+            "label": labels.get(target, target),
+            "config_path": cfg_path,
+            "config_exists": exists,
+            "configured": configured,
+            "error": error,
+            "init_cmd": f"nihongo-mcp init --target {target}",
+        })
+    return clients
+
+
 def _render_ui_html(csrf_token: str) -> str:
     return ui_template.render_ui_html(csrf_token)
 
@@ -211,15 +267,30 @@ class _UiRequestHandler(http.server.BaseHTTPRequestHandler):
                     all_items = inbox_mod.list_inbox(status="all", storage=self.server.storage)
                 pending = [x for x in all_items if x.get("status") == "pending"]
                 history = [x for x in all_items if x.get("status") != "pending"][-20:][::-1]
+
+                proj_raw = ""
+                if prof.get("project_profile_path") and os.path.isfile(prof["project_profile_path"]):
+                    try:
+                        if os.path.getsize(prof["project_profile_path"]) <= inbox_mod.MAX_PROJECT_PROFILE_BYTES:
+                            with open(prof["project_profile_path"], encoding="utf-8-sig") as pf:
+                                proj_raw = pf.read()
+                    except (OSError, UnicodeDecodeError):
+                        proj_raw = ""
+
                 self._send_json(
                     200,
                     {
                         "version": cli_mod.__version__,
                         "profile": prof,
+                        "structured_global": inbox_mod.parse_profile_structured(prof.get("global_raw")),
+                        "structured_project": inbox_mod.parse_profile_structured(proj_raw) if proj_raw else None,
+                        "project_raw": proj_raw,
                         "default_template": inbox_mod.DEFAULT_PROFILE_TEMPLATE,
                         "pending_inbox": self._enrich_items(pending),
                         "history_inbox": self._enrich_items(history),
                         "sync_folders": inbox_mod.detect_sync_folders(),
+                        "mcp_clients": _collect_mcp_clients(),
+                        "skills_preview": _load_skill_previews(),
                     },
                 )
             except Exception as exc:
@@ -296,6 +367,28 @@ class _UiRequestHandler(http.server.BaseHTTPRequestHandler):
                     raise ValueError("content は文字列で指定してください。")
                 with self.server.state_lock:
                     res = inbox_mod.save_profile_direct(data["content"], storage=self.server.storage)
+                self._send_json(200, res)
+                return
+
+            if path == "/api/profile/add-item":
+                with self.server.state_lock:
+                    res = inbox_mod.add_profile_rule_direct(
+                        scene=str(data.get("scene") or "common"),
+                        kind=str(data.get("kind") or "forbidden"),
+                        value=str(data.get("value") or ""),
+                        force=data.get("force") is True,
+                        storage=self.server.storage,
+                    )
+                self._send_json(200, res)
+                return
+
+            if path == "/api/profile/remove-forbidden":
+                with self.server.state_lock:
+                    res = inbox_mod.remove_forbidden_from_profile(
+                        scene=str(data.get("scene") or "common"),
+                        value=str(data.get("value") or ""),
+                        storage=self.server.storage,
+                    )
                 self._send_json(200, res)
                 return
 

@@ -972,6 +972,191 @@ def save_profile_direct(
     }
 
 
+def _split_quoted_tokens(rhs: str) -> list[str]:
+    """引用符「...」の内側を守りながら、外側の区切り（、,／/・）で分割する。"""
+    quote_pairs = {"「": "」", "『": "』", '"': '"', "'": "'", "“": "”"}
+    seps = set("、,／/・")
+    tokens: list[str] = []
+    buf: list[str] = []
+    closing: str | None = None
+    for ch in rhs:
+        if closing is not None:
+            buf.append(ch)
+            if ch == closing:
+                closing = None
+            continue
+        if ch in quote_pairs:
+            closing = quote_pairs[ch]
+            buf.append(ch)
+            continue
+        if ch in seps:
+            piece = "".join(buf).strip()
+            if piece:
+                tokens.append(piece)
+            buf = []
+            continue
+        buf.append(ch)
+    tail = "".join(buf).strip()
+    if tail:
+        tokens.append(tail)
+    return tokens
+
+
+_STRUCT_PLACEHOLDER_RE = re.compile(r"[（(]\s*(?:例|記入例|未記入)\s*(?:[：:][^）)]*)?[）)]")
+_STRUCT_SKIP_TOKENS = frozenset({"", "...", "…", "-", "—", "なし", "特になし"})
+
+
+def parse_profile_structured(raw_text: str | None) -> dict[str, dict[str, Any]]:
+    """profile.md を 4 場面（common/casual/work/formal）の構造化 dict に変換する。"""
+    result: dict[str, dict[str, Any]] = {}
+    for sc in VALID_SCENES:
+        result[sc] = {
+            "scene": sc,
+            "first_person": "",
+            "forbidden": [],
+            "rules": [],
+        }
+    if not raw_text or not raw_text.strip():
+        return result
+
+    _, sections, preamble_rules, _ = _split_profile_sections(raw_text)
+    if preamble_rules:
+        sections["common"] = [*preamble_rules, *sections.get("common", [])]
+
+    field_re = re.compile(r"^\s*[-*・]\s*(?:\*\*)?([^：:]+?)(?:\*\*)?\s*[：:]\s*(.*)$")
+    for sc in VALID_SCENES:
+        for line in sections.get(sc, []):
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            m = field_re.match(stripped)
+            if not m:
+                clean = stripped.lstrip("-*・ ").strip()
+                if clean:
+                    result[sc]["rules"].append(clean)
+                continue
+            lbl = m.group(1).strip()
+            rhs = m.group(2).strip()
+            if lbl == "場面":
+                continue
+            if lbl == "一人称":
+                if rhs and not rhs.startswith(("（例", "(例")):
+                    result[sc]["first_person"] = rhs
+                continue
+            if lbl == "絶対に言わない表現":
+                cleaned_rhs = _STRUCT_PLACEHOLDER_RE.sub("", rhs).strip()
+                for tok in _split_quoted_tokens(cleaned_rhs):
+                    v = _strip_outer_quotes(tok).strip(" \t\u3000〜～")
+                    if v and v not in _STRUCT_SKIP_TOKENS and not v.startswith(("例：", "例:", "記入例")):
+                        if v not in result[sc]["forbidden"]:
+                            result[sc]["forbidden"].append(v)
+                continue
+            if rhs:
+                cleaned = _STRUCT_PLACEHOLDER_RE.sub("", rhs).strip()
+                if cleaned:
+                    for part in [p.strip() for p in cleaned.split("。") if p.strip()]:
+                        if part not in result[sc]["rules"]:
+                            result[sc]["rules"].append(part)
+    return result
+
+
+def add_profile_rule_direct(
+    *,
+    scene: str,
+    kind: str,
+    value: str,
+    force: bool = False,
+    storage: ProfileStorage | None = None,
+    profile_path: str | None = None,
+) -> dict[str, Any]:
+    """ローカルUIから本人操作で1件のルール／避ける表現を直接 profile.md に追加する（PII・formalガード付き）。"""
+    sc = scene.strip().lower()
+    kd = kind.strip().lower()
+    if sc not in VALID_SCENES:
+        raise ValueError(f"不正な scene です: {scene!r}")
+    if kd not in VALID_KINDS:
+        raise ValueError(f"不正な kind です: {kind!r}")
+    val = _normalize_value(value)
+    if not val:
+        raise ValueError("追加する内容を入力してください。")
+    if len(val) > MAX_VALUE_LEN:
+        raise ValueError(f"内容が長すぎます（上限 {MAX_VALUE_LEN} 文字）。")
+    if kd == "first_person":
+        sc = "common"
+
+    pii_err = _check_pii([val])
+    if pii_err:
+        raise ValueError(pii_err)
+    warning = _check_formal_boundary(sc, kd, val)
+    if warning and not force:
+        raise ValueError(warning)
+
+    store = _resolve_storage(storage, profile_path=profile_path)
+    current = store.read_profile_text() or ""
+    updated, changed, summary = apply_entry_to_profile_text(
+        current,
+        {"scene": sc, "kind": kd, "value": val},
+    )
+    if changed or not current.strip():
+        store.write_profile_text(updated)
+    return {
+        "added": changed,
+        "profile_path": store.profile_location,
+        "message": summary,
+    }
+
+
+def remove_forbidden_from_profile(
+    *,
+    scene: str,
+    value: str,
+    storage: ProfileStorage | None = None,
+    profile_path: str | None = None,
+) -> dict[str, Any]:
+    """指定場面の「絶対に言わない表現」から1語を外科的に削除する（他行は一切触らない）。"""
+    sc = scene.strip().lower()
+    if sc not in VALID_SCENES:
+        raise ValueError(f"不正な scene です: {scene!r}")
+    needle = unicodedata.normalize("NFKC", _strip_outer_quotes(_normalize_value(value))).strip(" \t\u3000〜～")
+    if not needle:
+        raise ValueError("削除する表現が空です。")
+
+    store = _resolve_storage(storage, profile_path=profile_path)
+    raw = store.read_profile_text()
+    if not raw:
+        return {"removed": False, "message": "profile.md がまだありません。"}
+
+    lines = _normalize_newlines(raw).split("\n")
+    bounds = _find_section_bounds(lines, sc)
+    if bounds is None:
+        return {"removed": False, "message": f"[{sc}] セクションが見つかりませんでした。"}
+
+    sec_start, sec_end = bounds
+    field_re = re.compile(r"^(\s*[-*・]\s*(?:\*\*)?絶対に言わない表現(?:\*\*)?\s*[：:])(.*)$")
+    removed = False
+    for idx in range(sec_start + 1, sec_end):
+        m = field_re.match(lines[idx])
+        if not m:
+            continue
+        prefix, rhs = m.group(1), m.group(2).strip()
+        kept: list[str] = []
+        for tok in _split_quoted_tokens(rhs):
+            norm_tok = unicodedata.normalize("NFKC", _strip_outer_quotes(tok)).strip(" \t\u3000〜～")
+            if norm_tok == needle:
+                removed = True
+                continue
+            kept.append(tok)
+        if removed:
+            lines[idx] = f"{prefix}{'、'.join(kept)}" if kept else prefix
+            break
+
+    if removed:
+        updated = "\n".join(lines).rstrip("\n") + "\n"
+        store.write_profile_text(updated)
+        return {"removed": True, "message": f"「{value}」を削除しました。"}
+    return {"removed": False, "message": f"「{value}」は [{sc}] に見つかりませんでした。"}
+
+
 def detect_sync_folders(home_dir: str | None = None) -> list[dict[str, str]]:
     """PC 内に既にある Google Drive / Dropbox / iCloud Drive / OneDrive の同期フォルダ候補を検出する。"""
     home = os.path.abspath(os.path.expanduser(home_dir or "~"))
