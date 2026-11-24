@@ -88,9 +88,9 @@ a { color: inherit; text-decoration: none; }
 
 /* Section 1: Quiet Framed Hero */
 .hero-frame {
-  border: 3.5px solid var(--ink);
-  border-radius: 32px;
-  padding: 64px 56px 54px;
+  border: 2.5px solid var(--ink);
+  border-radius: 28px;
+  padding: 64px 56px 52px;
   position: relative;
   margin-top: 16px;
   background: #FFFFFF;
@@ -98,25 +98,25 @@ a { color: inherit; text-decoration: none; }
 }
 .cut {
   position: absolute;
-  top: -13px;
+  top: -11px;
   left: 50%;
   transform: translateX(-50%);
   background: #FFFFFF;
-  padding: 0 20px;
+  padding: 0 18px;
   font-family: "Space Mono", ui-monospace, monospace;
-  font-size: 14px;
-  letter-spacing: 0.32em;
-  padding-left: calc(20px + 0.32em);
-  color: var(--ink);
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  padding-left: calc(18px + 0.28em);
+  color: var(--muted);
   white-space: nowrap;
 }
 .hero-logo {
   font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   font-weight: 700;
-  font-size: 80px;
+  font-size: 76px;
   line-height: 1;
   letter-spacing: -0.03em;
-  margin-bottom: 26px;
+  margin-bottom: 24px;
 }
 .hero-logo i {
   display: inline-block;
@@ -130,15 +130,15 @@ a { color: inherit; text-decoration: none; }
   font-size: 28px;
   font-weight: 900;
   line-height: 1.45;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   letter-spacing: -0.01em;
 }
 .hero-title span { color: var(--red); }
 .hero-lead {
-  font-size: 16px;
-  color: var(--body);
-  max-width: 620px;
-  margin: 0 auto 36px;
+  font-size: 15.5px;
+  color: var(--muted);
+  max-width: 560px;
+  margin: 0 auto 34px;
 }
 .hero-actions {
   display: flex;
@@ -149,11 +149,11 @@ a { color: inherit; text-decoration: none; }
 }
 .hero-dl {
   appearance: none;
-  border: 2.5px solid var(--red);
+  border: 2px solid var(--red);
   background: var(--red);
   color: #FFFFFF;
   font: inherit;
-  font-size: 15.5px;
+  font-size: 15px;
   font-weight: 800;
   padding: 13px 26px;
   border-radius: 999px;
@@ -168,24 +168,24 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   gap: 6px;
   background: #FFFFFF;
-  border: 2.5px solid var(--ink);
+  border: 1.5px solid #CCCCCC;
   color: var(--ink);
   font: inherit;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
   padding: 13px 24px;
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.14s ease, color 0.14s ease;
+  transition: border-color 0.14s ease, background 0.14s ease;
 }
-.hero-jump:hover { background: var(--ink); color: #FFFFFF; }
+.hero-jump:hover { border-color: var(--ink); background: var(--soft); }
 .hero-status {
   display: none;
-  margin: 16px auto 0;
+  margin: 18px auto 0;
   max-width: 560px;
   padding: 10px 16px;
-  border-radius: 12px;
-  border: 2px solid var(--ok);
+  border-radius: 10px;
+  border: 1.5px solid var(--ok);
   background: #F2FAF4;
   color: var(--ok);
   font-size: 13.5px;
@@ -194,229 +194,157 @@ a { color: inherit; text-decoration: none; }
 .hero-status.show { display: block; }
 .hero-meta {
   margin-top: 24px;
-  font-family: "Space Grotesk", sans-serif;
-  font-size: 13.5px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--muted);
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 10px 18px;
+  gap: 6px 18px;
 }
 
 /* Sections */
 .sec {
-  padding-top: 84px;
-}
-.sec-cap {
-  font-family: "Space Mono", ui-monospace, monospace;
-  font-size: 13px;
-  letter-spacing: 0.28em;
-  color: var(--muted);
-  margin-bottom: 10px;
+  padding-top: 100px;
 }
 .sec-h {
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 900;
-  line-height: 1.38;
-  margin-bottom: 18px;
-  letter-spacing: -0.01em;
+  line-height: 1.4;
+  margin-bottom: 12px;
+  letter-spacing: -0.015em;
 }
 .sec-p {
-  font-size: 15.5px;
-  color: var(--body);
-  max-width: 740px;
-  margin-bottom: 28px;
+  font-size: 15px;
+  color: var(--muted);
+  max-width: 640px;
+  margin-bottom: 34px;
 }
 
-/* Use-Case Impact Section (1 Editorial Section, No Rounded Boxes) */
+/* Section 2: For You (Open 3-Column Editorial — Zero Boxes, Zero Jargon) */
 .use-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-top: 2px solid var(--ink);
-  border-bottom: 1px solid var(--line);
+  gap: 36px;
+  margin-top: 32px;
 }
 .use-item {
-  padding: 26px 24px 28px;
-}
-.use-item:first-child {
-  padding-left: 0;
-}
-.use-item:last-child {
-  padding-right: 0;
-}
-.use-item + .use-item {
-  border-left: 1px solid var(--line);
+  border-top: 1.5px solid var(--line);
+  padding-top: 20px;
 }
 .use-tag {
   display: inline-block;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: var(--red-hover);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--muted);
   margin-bottom: 8px;
 }
 .use-item h3 {
-  font-size: 16.5px;
+  font-size: 17px;
   font-weight: 900;
-  line-height: 1.48;
-  margin-bottom: 9px;
+  line-height: 1.5;
+  margin-bottom: 10px;
   color: var(--ink);
 }
 .use-item p {
-  font-size: 13.5px;
-  line-height: 1.75;
-  color: var(--muted);
-}
-
-/* Before / After Editorial Comparison (Open on White, No Outer Box) */
-.ba-card {
-  padding-top: 4px;
-}
-.ba-prompt {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding-bottom: 16px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--line);
   font-size: 14.5px;
-  font-weight: 700;
+  line-height: 1.8;
   color: var(--body);
 }
-.ba-lbl {
-  background: var(--ink);
-  color: #FFFFFF;
-  border-radius: 4px;
-  padding: 2px 9px;
-  font-size: 11.5px;
+
+/* Section 3: Before / After Side-by-Side Comparison */
+.ba-prompt {
+  font-size: 15px;
+  color: var(--ink);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  margin-bottom: 18px;
+}
+.ba-prompt span {
+  font-weight: 500;
+  color: var(--muted);
+  margin-right: 6px;
+}
+.ba-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 }
 .ba-before {
   background: var(--soft);
-  border-left: 3px solid #CCCCCC;
-  padding: 18px 22px;
-  margin-bottom: 14px;
+  padding: 22px 24px;
+}
+.ba-after {
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--red);
+  padding: 20px 24px 22px;
 }
 .ba-sub {
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--muted);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
+.ba-after .ba-sub { color: var(--red-hover); }
 .ba-before p {
-  font-size: 15.5px;
+  font-size: 15px;
   line-height: 1.9;
   color: var(--body);
 }
-.err {
-  background: rgba(215, 38, 30, 0.11);
-  color: var(--red-hover);
-  border-bottom: 2px solid var(--red);
-  font-weight: 900;
-  padding: 1px 4px;
-  border-radius: 3px;
-}
-.ba-after {
-  border-top: 1px solid var(--line);
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  border-left: 4px solid var(--red);
-  padding: 20px 22px;
-  background: #FFFFFF;
-}
-.ba-after .ba-sub { color: var(--red-hover); }
 .ba-after p {
-  font-size: 16.5px;
+  font-size: 15.5px;
   font-weight: 700;
   line-height: 1.9;
   color: var(--ink);
 }
+.err {
+  border-bottom: 2px solid var(--red);
+  padding-bottom: 1px;
+  color: var(--ink);
+}
 .slot {
-  background: rgba(215, 38, 30, 0.1);
-  color: var(--red-hover);
-  font-weight: 900;
+  background: #EFEFEE;
+  color: var(--ink);
+  font-weight: 800;
   padding: 1px 6px;
   border-radius: 4px;
   white-space: nowrap;
 }
-.ba-note {
-  margin-top: 14px;
-  font-size: 13px;
-  color: var(--muted);
-}
 
-/* Capability 2x2 Editorial Grid (Hairline Rules + Selective Red Focus) */
+/* Section 4: Capabilities (Clean 2x2 Open Editorial Grid) */
 .cap-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0 24px;
-  border-top: 2px solid var(--ink);
+  gap: 34px 44px;
+  margin-top: 32px;
 }
 .cap-box {
-  border-bottom: 1px solid var(--line);
-  padding: 24px 16px 26px;
-  background: transparent;
-}
-.cap-box.accent {
-  background: var(--warn-bg);
-  border-bottom: 2px solid var(--red);
-}
-.cap-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
 }
 .cap-box h3 {
-  font-family: "Space Grotesk", sans-serif;
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-.cap-box.accent h3 {
-  color: var(--red-hover);
-}
-.cap-tag {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--muted);
-}
-.cap-box.accent .cap-tag {
-  color: var(--red-hover);
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.45;
+  margin-bottom: 8px;
+  color: var(--ink);
 }
 .cap-box p {
   font-size: 14.5px;
   color: var(--body);
-  line-height: 1.75;
-}
-.cap-box code {
-  font-family: "Space Mono", ui-monospace, monospace;
-  font-size: 12.5px;
-  background: var(--soft);
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-.cap-box.accent code {
-  background: rgba(215, 38, 30, 0.12);
-  color: var(--ink);
+  line-height: 1.8;
 }
 .demo-fold {
-  margin-top: 22px;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  padding: 15px 0;
-  background: transparent;
+  margin-top: 28px;
 }
 .demo-fold summary {
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--muted);
+  display: inline-block;
 }
+.demo-fold summary:hover { color: var(--ink); }
 .term {
   margin-top: 14px;
   background: #141416;
@@ -464,18 +392,15 @@ a { color: inherit; text-decoration: none; }
   background: var(--warn-bg);
 }
 
-/* Section 4: Install / Download 2 Options (Open Wrapper + 2 Clean Action Cards) */
-.install-box {
-  padding-top: 4px;
-}
+/* Section 5: Install / Download 2 Options (2 Clean Action Cards) */
 .opt-pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 .opt-card {
-  border: 1.5px solid #D4D4D4;
+  border: 1.5px solid #D8D8D8;
   border-radius: 14px;
   padding: 24px 24px 22px;
   background: #FFFFFF;
@@ -643,8 +568,8 @@ a { color: inherit; text-decoration: none; }
 }
 .radio-grid.two { grid-template-columns: 1fr 1fr; }
 .r-opt {
-  border: 2px solid #CCCCCC;
-  border-radius: 12px;
+  border: 1.5px solid #D4D4D4;
+  border-radius: 10px;
   padding: 11px 13px;
   cursor: pointer;
   display: block;
@@ -653,6 +578,117 @@ a { color: inherit; text-decoration: none; }
 .r-opt.on { border-color: var(--ink); background: var(--soft); }
 .r-opt b { font-size: 13.5px; }
 .r-opt small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* Cloud Sync Toggle Switch + Provider Picker */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.toggle-copy b {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.toggle-copy small {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.switch {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  flex-shrink: 0;
+}
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+.switch-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: #D0D0CE;
+  transition: background 0.16s ease;
+}
+.switch-track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.16s ease;
+}
+.switch input:checked + .switch-track {
+  background: var(--ink);
+}
+.switch input:checked + .switch-track::after {
+  transform: translateX(20px);
+}
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}
+.cloud-picker {
+  display: none;
+  padding-top: 14px;
+}
+.cloud-picker.open {
+  display: block;
+}
+.cloud-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.cloud-opt {
+  appearance: none;
+  font: inherit;
+  border: 1.5px solid #D4D4D4;
+  border-radius: 10px;
+  background: #FFFFFF;
+  padding: 10px 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.cloud-opt:hover { border-color: var(--ink); }
+.cloud-opt.on {
+  border-color: var(--ink);
+  background: var(--soft);
+}
+.cloud-opt b {
+  display: block;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.cloud-opt small {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.cloud-note {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
 
 .cust-actions {
   display: flex;
@@ -749,32 +785,25 @@ footer {
 }
 footer code {
   font-family: "Space Mono", ui-monospace, monospace;
-  color: var(--ink);
-  font-size: 13px;
+  color: var(--muted);
+  font-size: 12.5px;
 }
-footer code b { color: var(--red); }
+footer code b { color: var(--ink); }
 
 @media (max-width: 720px) {
   .col { padding: 0 18px; }
   .nav-r a:not(.nav-gh):not(.nav-keep) { display: none; }
-  .hero-frame { padding: 48px 22px 40px; border-radius: 24px; }
+  .hero-frame { padding: 48px 22px 40px; border-radius: 22px; }
   .hero-logo { font-size: 56px; }
   .hero-title { font-size: 19.5px; text-wrap: balance; }
-  .sec { padding-top: 64px; }
-  .sec-h { font-size: 24px; }
-  .cap-grid, .opt-pair, .demo-grid, .radio-grid, .radio-grid.two, .use-grid {
+  .sec { padding-top: 72px; }
+  .sec-h { font-size: 23px; }
+  .cap-grid, .opt-pair, .demo-grid, .radio-grid, .radio-grid.two, .use-grid, .ba-pair {
     grid-template-columns: 1fr;
   }
-  .use-item {
-    padding: 20px 0;
-  }
-  .use-item + .use-item {
-    border-left: 0;
-    border-top: 1px solid var(--line);
-  }
-  .cap-box {
-    padding: 20px 14px 22px;
-  }
+  .use-grid { gap: 24px; }
+  .cap-grid { gap: 24px; }
+  .cloud-grid { grid-template-columns: 1fr 1fr; }
 }
 </style>
 </head>
@@ -806,110 +835,84 @@ footer code b { color: var(--red); }
       <div class="hero-status" id="hero-status" role="status" aria-live="polite"></div>
       <div class="hero-meta">
         <span>無料・登録不要</span>
-        <span>運営サーバー保存ゼロ</span>
-        <span>MIT</span>
+        <span>運営サーバー保存なし</span>
       </div>
     </section>
 
-    <!-- 2. 使うと変わること（1セクション） -->
+    <!-- 2. 使うと変わること（初心者でも1発でわかる1セクション） -->
     <section class="sec" id="benefits">
-      <div class="sec-cap">FOR YOU</div>
       <h2 class="sec-h">使うと、こう変わります。</h2>
-      <p class="sec-p">
-        就活・仕事・開発まで、自分の話した内容や文体を崩さずに文章を整えられます。
-      </p>
       <div class="use-grid">
         <div class="use-item">
           <span class="use-tag">就活生・学生</span>
-          <h3>ESやレポートに自分の経験をそのまま残せる</h3>
-          <p>AIが勝手に実績や感想を盛らず、話したエピソードだけを自然な言葉に整えます。</p>
+          <h3>ESの下書きや連絡メールを、自分の言葉のまま整えられます</h3>
+          <p>書いた経験をAIが勝手に盛らず、表現のクセや硬さだけを自然な日本語に直します。</p>
         </div>
         <div class="use-item">
-          <span class="use-tag">仕事・普段使い</span>
-          <h3>メールやチャットの書き直しが減る</h3>
-          <p>高すぎる敬語や頼んでいない約束を止め、そのまま送れる文に近づけます。</p>
+          <span class="use-tag">仕事・普段の連絡</span>
+          <h3>メールやLINEを書き直さず、そのまま送れます</h3>
+          <p>高すぎる敬語や「こちらで調整します」のような頼んでいない約束を止めます。大事な日時や「必ず」の言い換えも防ぎます。</p>
         </div>
         <div class="use-item">
-          <span class="use-tag">開発・AIヘビーユーザー</span>
-          <h3>推敲のズレを防ぎ、文体を全AIで共有できる</h3>
-          <p>数字や「必ず」の抜けを0トークンで検出し、自分のルールを複数AIで使い回せます。</p>
+          <span class="use-tag">AIをよく使う人</span>
+          <h3>毎回「もっと自然に」と頼み直さなくて済みます</h3>
+          <p>会話で直した口調や苦手な言い回しを保存できます。ChatGPTでもClaudeでも、どのAIでも同じ自分の書き方に揃います。</p>
         </div>
       </div>
     </section>
 
-    <!-- 2. nihongo とは何か -->
+    <!-- 3. Before / After（1目で違いがわかる比較） -->
     <section class="sec" id="what">
-      <div class="sec-cap">WHAT IT FIXES</div>
-      <h2 class="sec-h">きれいな文章ほど、ズレに気づきにくい。</h2>
+      <h2 class="sec-h">きれいな文章でも、ズレが混ざります。</h2>
       <p class="sec-p">
-        素のAIでも日本語は自然ですが、頼んでいない約束や普段使わない硬い敬語が混ざります。
+        素のAIは頼んでいない約束や硬すぎる敬語を足してしまいます。nihongoは分からない所だけ空欄にして止めます。
       </p>
 
-      <div class="ba-card">
-        <div class="ba-prompt">
-          <span class="ba-lbl">依頼</span>
-          <span>明日の打ち合わせを来週にずらしたいメールを書いて</span>
-        </div>
+      <div class="ba-prompt"><span>依頼：</span>明日の打ち合わせを来週にずらしたいメールを書いて</div>
+      <div class="ba-pair">
         <div class="ba-before">
-          <div class="ba-sub">素のAIの出力（実測・抜粋）</div>
+          <div class="ba-sub">素のAI</div>
           <p>
             <span class="err">大変恐縮ですが</span>、日程を来週へ<span class="err">変更させていただくことは可能でしょうか</span>。上記以外にご都合のよいお時間帯がございましたら、<span class="err">そちらに合わせますので</span>お知らせください。
           </p>
         </div>
         <div class="ba-after">
-          <div class="ba-sub">nihongoを入れた出力</div>
+          <div class="ba-sub">nihongoあり</div>
           <p>
             急で申し訳ありません。明日の打ち合わせですが、<span class="slot">【理由】</span>のため来週へ変更いただけますか。<span class="slot">【候補日時】</span>でご都合はいかがでしょうか。
           </p>
         </div>
-        <p class="ba-note">依頼に無い約束は足さず、分からない値だけ空欄にします。敬語も必要以上に高くしません。</p>
       </div>
     </section>
 
-    <!-- 3. できること -->
+    <!-- 4. できること（専門用語を抑えた4つの柱） -->
     <section class="sec" id="capabilities">
-      <div class="sec-cap">CAPABILITIES</div>
-      <h2 class="sec-h">仕上げと確認を4つの機能で引き受ける。</h2>
-      <p class="sec-p">
-        普段の返事から重要な資料・編集後の検査まで、場面に応じて自動で切り替わります。
-      </p>
+      <h2 class="sec-h">普段の返事から、大事な書類まで整えます。</h2>
 
       <div class="cap-grid">
         <div class="cap-box">
-          <div class="cap-head">
-            <h3>Lite</h3>
-            <span class="cap-tag">普段の返事を軽く整える</span>
-          </div>
-          <p>約1,100〜1,260字の軽量ルール。雑談や短い連絡でも重くならず、ブラウザやスマホでもそのまま使えます。</p>
+          <h3>普段のチャットを軽く整えます</h3>
+          <p>雑談や短い連絡でも重くならず、スマホのChatGPTやClaudeでもそのまま使えます。</p>
         </div>
 
         <div class="cap-box">
-          <div class="cap-head">
-            <h3>Full</h3>
-            <span class="cap-tag">メール・資料・技術文書まで</span>
-          </div>
-          <p>93行の本編と21本の場面別資料。必要な資料だけを読み込み、敬語の段や構成まで場面に合わせます。</p>
-        </div>
-
-        <div class="cap-box accent">
-          <div class="cap-head">
-            <h3>Check</h3>
-            <span class="cap-tag">0トークンで意味ズレ検出</span>
-          </div>
-          <p>編集後の日時・数字・「必ず」の弱まりと避ける表現をPython標準ライブラリだけで検出。Claude Codeフック対応。</p>
+          <h3>メール・ES・資料を場面に合わせます</h3>
+          <p>相手や目的に合わせて敬語の段や構成を自動で切り替え、書き直しの手間を減らします。</p>
         </div>
 
         <div class="cap-box">
-          <div class="cap-head">
-            <h3>Personal</h3>
-            <span class="cap-tag">会話で育つ4場面の個人ルール</span>
-          </div>
-          <p>直した癖は受信箱に一時保存し、チャットで確認してOKした分だけ反映。Google Drive共有や案件別2層に対応。</p>
+          <h3>数字や約束のズレを自動でチェックします</h3>
+          <p>日時・数字・「必ず」の弱まりや避けたい言い回しを、追加料金ゼロで機械的に検出します。</p>
+        </div>
+
+        <div class="cap-box">
+          <h3>直した癖を自分のルールに残せます</h3>
+          <p>会話で直した好みは確認してから反映します。DropboxやGoogle Driveで複数端末に共有できます。</p>
         </div>
       </div>
 
       <details class="demo-fold">
-        <summary>Check（0トークン検査）の実行例とブラウザ内お試しを開く</summary>
+        <summary>チェック機能をブラウザで試す ▾</summary>
         <div class="term" aria-label="nihongo-check 実行例">
           $ nihongo-check diff orig.md draft.md --scene formal<br>
           <span class="r">- [確度・必須度] 「必須」表現が減少（1→0）</span><br>
@@ -934,105 +937,100 @@ footer code b { color: var(--red); }
       </details>
     </section>
 
-    <!-- 4. 導入する（2つのダウンロードオプション） -->
+    <!-- 5. 導入する（2つのダウンロードオプション） -->
     <section class="sec" id="install">
-      <div class="sec-cap">GET STARTED</div>
-      <h2 class="sec-h">今のチャットに1ファイルを貼るだけ。</h2>
+      <h2 class="sec-h">今のチャットに、1ファイル貼るだけで始められます。</h2>
       <p class="sec-p">
-        落とした <code>nihongo-setup.md</code> をAIに添付するだけ。ブラウザ版ならその場で効き、開発ツールなら承認後に自動設定まで終わります。
+        落としたファイルをAIに添付するだけです。スマホ・ブラウザ版はその場で効き、PCの開発ツールは確認のあと自動で設定されます。
       </p>
 
-      <div class="install-box">
-        <div class="opt-pair">
-          <div class="opt-card featured">
-            <div>
-              <h3>とりあえず入れてみる</h3>
-              <p>標準設定のまま始められます。すでに導入済みの方の更新にも対応。</p>
-            </div>
-            <button type="button" class="action-btn primary" id="btn-quick-dl">ファイルをダウンロード ↓</button>
+      <div class="opt-pair">
+        <div class="opt-card featured">
+          <div>
+            <h3>とりあえず入れてみる</h3>
+            <p>標準設定のまま始められます。すでに導入済みの方の更新にも対応しています。</p>
           </div>
-          <div class="opt-card">
-            <div>
-              <h3>ちょっと設定してから入れる</h3>
-              <p>避ける表現や場面、保存先を選んでから自分用のファイルを作ります。</p>
-            </div>
-            <button type="button" class="action-btn secondary" id="btn-open-custom" aria-expanded="false" aria-controls="customizer">設定を開いて作る</button>
+          <button type="button" class="action-btn primary" id="btn-quick-dl">ファイルをダウンロード ↓</button>
+        </div>
+        <div class="opt-card">
+          <div>
+            <h3>設定してから作る</h3>
+            <p>避ける表現や場面、Dropboxなどの同期先を選んでから自分用を作ります。</p>
+          </div>
+          <button type="button" class="action-btn secondary" id="btn-open-custom" aria-expanded="false" aria-controls="customizer">設定を開いて作る</button>
+        </div>
+      </div>
+
+      <div class="quick-links">
+        <button type="button" class="link-btn" id="btn-copy-chat">チャット用ルールをコピー</button>
+        <details style="display:inline-block;">
+          <summary style="cursor:pointer;font-size:13.5px;font-weight:700;color:var(--muted);list-style:none;">開発者・既存ユーザー向け ▾</summary>
+          <div class="quick-links" style="margin-top:8px;">
+            <button type="button" class="link-btn" id="btn-copy-npx">npx skills add AnIT012/nihongo をコピー</button>
+            <label class="link-btn" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+              <span>既存の profile.md を読み込む</span>
+              <input type="file" id="import-profile" accept=".md,.txt" style="display:none;">
+            </label>
+          </div>
+        </details>
+      </div>
+
+      <div class="status-bar" id="status-bar" role="status" aria-live="polite"></div>
+
+      <!-- Customizer Drawer -->
+      <div class="customizer" id="customizer">
+        <div class="cust-group">
+          <div class="cust-lbl">
+            避ける表現を選ぶ（空のままでもOK）
+            <button type="button" class="link-btn" id="btn-clear-ng" style="padding:3px 10px;font-size:12.5px;">すべて外す</button>
+          </div>
+          <div class="chip-row" id="ng-chips"></div>
+          <div class="add-row">
+            <input type="text" id="custom-ng-input" placeholder="気になる言い回しがあれば追加（例：承知いたしました）">
+            <button type="button" id="btn-add-ng">追加する</button>
           </div>
         </div>
 
-        <div class="quick-links">
-          <span>貼るだけの方：</span>
-          <button type="button" class="link-btn" id="btn-copy-chat">チャット用ルールをコピー</button>
-          <details style="display:inline-block;">
-            <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);list-style:none;">開発者・既存ユーザー向け ▾</summary>
-            <div class="quick-links" style="margin-top:8px;">
-              <button type="button" class="link-btn" id="btn-copy-npx">npx skills add AnIT012/nihongo をコピー</button>
-              <label class="link-btn" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
-                <span>既存の profile.md を読み込む</span>
-                <input type="file" id="import-profile" accept=".md,.txt" style="display:none;">
-              </label>
-            </div>
-          </details>
+        <div class="cust-group">
+          <div class="cust-lbl">よく使う場面</div>
+          <div class="radio-grid two" id="scene-radios">
+            <label class="r-opt on"><input type="radio" name="scene" value="common" checked><b>全場面バランス（迷ったらこれ）</b><small>普段〜仕事・就活まで幅広く</small></label>
+            <label class="r-opt"><input type="radio" name="scene" value="work"><b>仕事・開発・研究</b><small>Slack・PR・レポート・議事録</small></label>
+            <label class="r-opt"><input type="radio" name="scene" value="formal"><b>社外メール・就活ES・公式</b><small>目上・取引先・応募書類</small></label>
+            <label class="r-opt"><input type="radio" name="scene" value="casual"><b>LINE・SNS・普段のチャット</b><small>友達・X・メモ・雑談</small></label>
+          </div>
         </div>
 
-        <div class="status-bar" id="status-bar" role="status" aria-live="polite"></div>
-
-        <!-- Customizer Drawer -->
-        <div class="customizer" id="customizer">
-          <div class="cust-group">
-            <div class="cust-lbl">
-              避ける表現を選ぶ（任意・空のままでもOK）
-              <span style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                <span>使いながら会話で1つずつ増やせます</span>
-                <button type="button" class="link-btn" id="btn-clear-ng" style="padding:3px 9px;font-size:12px;">すべて外す</button>
-              </span>
-            </div>
-            <div class="chip-row" id="ng-chips"></div>
-            <div class="add-row">
-              <input type="text" id="custom-ng-input" placeholder="気になる言い回しがあれば追加（例：承知いたしました、いかがでしょうか）">
-              <button type="button" id="btn-add-ng">追加する</button>
-            </div>
-          </div>
-
-          <div class="cust-group">
-            <div class="cust-lbl">
-              よく使う場面
-              <span>あとから別の場面もそのまま使えます</span>
-            </div>
-            <div class="radio-grid two" id="scene-radios">
-              <label class="r-opt on"><input type="radio" name="scene" value="common" checked><b>全場面バランス（迷ったらこれ）</b><small>普段〜仕事・就活まで幅広く</small></label>
-              <label class="r-opt"><input type="radio" name="scene" value="work"><b>仕事・開発・研究</b><small>Slack・PR・レポート・議事録</small></label>
-              <label class="r-opt"><input type="radio" name="scene" value="formal"><b>社外メール・就活ES・公式</b><small>目上・取引先・応募書類</small></label>
-              <label class="r-opt"><input type="radio" name="scene" value="casual"><b>LINE・SNS・普段のチャット</b><small>友達・X・メモ・雑談</small></label>
+        <div class="cust-group">
+          <label class="toggle-row" for="sync-cloud-toggle">
+            <span class="toggle-copy">
+              <b>Dropbox や Google Drive で複数端末と共有する</b>
+              <small id="sync-summary-text">オフ：このPCだけで使います</small>
+            </span>
+            <span class="switch">
+              <input type="checkbox" id="sync-cloud-toggle" role="switch" aria-controls="cloud-picker">
+              <span class="switch-track" aria-hidden="true"></span>
+            </span>
+          </label>
+          <div class="cloud-picker" id="cloud-picker">
+            <div class="cloud-grid" id="cloud-providers" role="radiogroup" aria-label="同期するクラウドサービス">
+              <button type="button" class="cloud-opt on" data-provider="dropbox" aria-pressed="true"><b>Dropbox</b><small>Dropbox/nihongo</small></button>
+              <button type="button" class="cloud-opt" data-provider="gdrive" aria-pressed="false"><b>Google Drive</b><small>Google Drive/nihongo</small></button>
+              <button type="button" class="cloud-opt" data-provider="icloud" aria-pressed="false"><b>iCloud Drive</b><small>iCloud Drive/nihongo</small></button>
+              <button type="button" class="cloud-opt" data-provider="onedrive" aria-pressed="false"><b>OneDrive</b><small>OneDrive/nihongo</small></button>
             </div>
           </div>
-
-          <div class="cust-group">
-            <div class="cust-lbl">
-              PC開発ツール導入時の保存先（初期候補）
-              <span>ブラウザ・スマホの方はそのままでも使えます</span>
-            </div>
-            <div class="radio-grid two" id="sync-radios">
-              <label class="r-opt on"><input type="radio" name="sync" value="local" checked><b>このPCだけで使う</b><small>~/.nihongo/profile.md</small></label>
-              <label class="r-opt"><input type="radio" name="sync" value="gdrive"><b>クラウド同期フォルダで共有</b><small>Google Drive・Dropbox・iCloud 等</small></label>
-            </div>
-          </div>
-
-          <div class="cust-actions">
-            <button type="button" class="btn-dl" id="btn-custom-dl">この設定でダウンロード ↓</button>
-            <button type="button" class="btn-outline" id="btn-custom-copy">この設定をチャット用にコピー</button>
-          </div>
-
-          <details class="preview-details">
-            <summary>生成される nihongo-setup.md の中身を確認する</summary>
-            <pre class="preview-pre" id="setup-preview"></pre>
-          </details>
         </div>
 
-        <div class="after-flow">
-          <div class="after-row"><b>ChatGPT / Claude（Web・スマホ）</b><span>「＋」から添付するかコピー文を送信（ProjectsやGoogle Driveに置くと次回から自動）</span></div>
-          <div class="after-row"><b>Claude Code / Cursor / Antigravity</b><span>AIがGitHub正本の安全性を確認し、2回の承認後に既存設定を守りつつ自動導入</span></div>
+        <div class="cust-actions">
+          <button type="button" class="btn-dl" id="btn-custom-dl">この設定でダウンロード ↓</button>
+          <button type="button" class="btn-outline" id="btn-custom-copy">この設定をチャット用にコピー</button>
         </div>
+
+        <details class="preview-details">
+          <summary>生成される nihongo-setup.md の中身を確認する</summary>
+          <pre class="preview-pre" id="setup-preview"></pre>
+        </details>
       </div>
     </section>
   </main>
@@ -1055,11 +1053,19 @@ const DEFAULT_NGS = [
   '何卒よろしくお願い申し上げます',
 ];
 
+const CLOUD_PROVIDERS = {
+  dropbox: { name: 'Dropbox', folder: 'Dropbox/nihongo' },
+  gdrive: { name: 'Google Drive', folder: 'Google Drive/nihongo' },
+  icloud: { name: 'iCloud Drive', folder: 'iCloud Drive/nihongo' },
+  onedrive: { name: 'OneDrive', folder: 'OneDrive/nihongo' },
+};
+
 const state = {
   selectedNg: new Set(['いただけますと幸いです', '恐れ入りますが', 'させていただきます']),
   customNg: [],
   scene: 'common',
-  sync: 'local',
+  cloudSync: false,
+  cloudProvider: 'dropbox',
 };
 
 const PII_EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
@@ -1089,16 +1095,23 @@ function getAllSelectedNg(useCustom) {
 function buildSetupMarkdown(useCustom) {
   const ngList = getAllSelectedNg(useCustom);
   const sceneKey = useCustom ? state.scene : 'common';
-  const syncPref = useCustom ? state.sync : 'local';
+  const useCloud = useCustom && state.cloudSync;
+  const provider = CLOUD_PROVIDERS[state.cloudProvider] || CLOUD_PROVIDERS.dropbox;
   const sceneJa = {
     common: '全場面バランス（普段〜仕事・就活まで幅広く）',
     work: '仕事・開発・研究（Slack・PR・レポート・議事録）',
     formal: '社外メール・就活ES・公式（目上・取引先・応募書類）',
     casual: 'LINE・SNS・普段のチャット（友達・X・メモ・雑談）',
   }[sceneKey] || '全場面バランス（普段〜仕事・就活まで幅広く）';
-  const syncLabel = syncPref === 'gdrive'
-    ? '自分の Google Drive / Dropbox / iCloud 同期フォルダ（複数PC・スマホ共有）'
+  const syncLabel = useCloud
+    ? '自分の ' + provider.name + ' 同期フォルダ（' + provider.folder + ' を --home に指定して複数PC・スマホで共有）'
     : 'この PC のローカル（~/.nihongo/profile.md）';
+  const webPlaceHint = useCloud
+    ? 'Projects や ' + provider.name
+    : 'Projects や Dropbox・Google Drive';
+  const homeExample = useCloud
+    ? '`--home "<' + provider.name + ' の同期フォルダ>/nihongo"` を優先して提案・指定'
+    : '同期フォルダ選択時は `--home "<同期フォルダ>/nihongo"` を付与';
   const ngLine = ngList.length > 0
     ? ngList.map(w => '「' + w.replace(/^[「『"']+|[」』"']+$/g, '') + '」').join('、')
     : '（未設定・会話しながら追加）';
@@ -1111,7 +1124,7 @@ function buildSetupMarkdown(useCustom) {
     '## A. ブラウザ・スマホのチャット（ChatGPT / Claude / Gemini 等）の場合',
     '※ChatGPT の Code Interpreter や Claude の Artifacts などのサンドボックス環境も含みます。GitHub へのアクセスやコマンド導入は行わないでください。',
     '- 下の「ユーザーの初期ルール」と「共通ルール」を、**今開いているこの会話から直ちに適用**する。',
-    '- 最初の返答は専門用語（Python / MCP / JSON 等）を出さず、「nihongo の日本語ルールを適用しました。このまま文章作成や手直しをどうぞ（毎回貼りたくない場合は Projects や Google Drive に置いておけます）」と 1〜2 行で返す。',
+    '- 最初の返答は専門用語（Python / MCP / JSON 等）を出さず、「nihongo の日本語ルールを適用しました。このまま文章作成や手直しをどうぞ（毎回貼りたくない場合は ' + webPlaceHint + ' に置いておけます）」と 1〜2 行で返す。',
     '',
     '## B. ローカル PC の開発エージェント（Claude Code / Cursor / Codex / Antigravity 等）の場合',
     'ユーザー自身の PC のファイルシステムとシェルへ直接アクセスできる環境でのみ実行してください。**勝手に実行せず**、必ず次の順序と 2 回の承認を守ってください。',
@@ -1119,7 +1132,7 @@ function buildSetupMarkdown(useCustom) {
     '### 1. 安全性チェック（最初に確認して1行報告）',
     '- 正本リポジトリ: `https://github.com/AnIT012/nihongo`（MIT ライセンス）',
     '- 外部パッケージ依存ゼロ（Python 3.10+ の標準ライブラリのみで動作）',
-    '- 運営者サーバーへのデータ送信・保存は一切なし（`profile.md` と `inbox.jsonl` はユーザー端末または本人所有の Google Drive のみに保存）',
+    '- 運営者サーバーへのデータ送信・保存は一切なし（`profile.md` と `inbox.jsonl` はユーザー端末または本人所有のクラウド同期フォルダのみに保存）',
     '- 実名・住所・メールアドレス・電話番号・APIキーなどの個人情報は記録しない',
     '',
     '### 2. 確認カード 1（導入・更新の承認・必須）',
@@ -1131,13 +1144,13 @@ function buildSetupMarkdown(useCustom) {
     '### 3. 確認カード 2（保存先と同期の選択・必須）',
     '導入承認のあと、保存先を 1 つ選んでもらう（ユーザーの事前希望: ' + syncLabel + '）:',
     '- A: この PC だけで使う（`~/.nihongo/profile.md`）',
-    '- B: 自分の Google Drive / Dropbox / iCloud の同期フォルダに置く（`nihongo-mcp init --detect-sync` で検出し `--home <同期フォルダ>/nihongo` を指定）',
+    '- B: 自分の Dropbox / Google Drive / iCloud Drive / OneDrive の同期フォルダに置く（`nihongo-mcp init --detect-sync` で検出し `--home <同期フォルダ>/nihongo` を指定）',
     '- C: 今開いている作業フォルダ専用にする（`nihongo-check profile init --project` で `./.nihongo/profile.md` を作成）',
     '',
     '### 4. 承認後の実行コマンド（AI が代行）',
     '- CLI・MCP 導入: `pip install "git+https://github.com/AnIT012/nihongo.git@v3.1.0"`',
     '- スキル導入（対応環境）: `npx skills add AnIT012/nihongo -g`（またはリポジトリの `nihongo/` フォルダをスキル配置先へコピー）',
-    '- AI アプリ自動登録: `nihongo-mcp init --target all`（同期フォルダ選択時は `--home "<同期フォルダ>/nihongo"` を付与）',
+    '- AI アプリ自動登録: `nihongo-mcp init --target all`（' + homeExample + '）',
     '- 初期ルール反映: 新規は `nihongo-check profile init`、未登録の表現は `nihongo-check inbox propose --scene <場面> --kind forbidden --value "<表現>"` と `nihongo-check inbox approve --all` で既存設定を壊さず追記マージ',
     '- 疎通・診断確認: `nihongo-mcp --self-test` と `nihongo-check doctor` を実行',
     '',
@@ -1306,11 +1319,31 @@ document.querySelectorAll('input[name="scene"]').forEach(r => {
   });
 });
 
-document.querySelectorAll('input[name="sync"]').forEach(r => {
-  r.addEventListener('change', () => {
-    state.sync = r.value;
-    document.querySelectorAll('#sync-radios .r-opt').forEach(l => l.classList.remove('on'));
-    r.closest('.r-opt').classList.add('on');
+function updateSyncSummary() {
+  const txt = document.getElementById('sync-summary-text');
+  const picker = document.getElementById('cloud-picker');
+  const p = CLOUD_PROVIDERS[state.cloudProvider] || CLOUD_PROVIDERS.dropbox;
+  picker.classList.toggle('open', state.cloudSync);
+  txt.textContent = state.cloudSync
+    ? 'オン：' + p.name + ' で共有します（' + p.folder + '）'
+    : 'オフ：このPCだけで使います';
+}
+
+document.getElementById('sync-cloud-toggle').addEventListener('change', (e) => {
+  state.cloudSync = e.target.checked;
+  updateSyncSummary();
+  refreshPreview();
+});
+
+document.querySelectorAll('#cloud-providers .cloud-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.cloudProvider = btn.dataset.provider;
+    document.querySelectorAll('#cloud-providers .cloud-opt').forEach(b => {
+      const on = b === btn;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    updateSyncSummary();
     refreshPreview();
   });
 });
